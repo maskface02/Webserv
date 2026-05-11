@@ -6,7 +6,7 @@
 /*   By: zatais <zatais@student.1337.ma>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/08 21:52:23 by zatais            #+#    #+#             */
-/*   Updated: 2026/05/08 21:52:23 by zatais           ###   ########.fr       */
+/*   Updated: 2026/05/11 03:55:56 by zatais           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -94,8 +94,9 @@ size_t Config::toSize(std::string& s, std::string& context) {
   if (!s[i])
       throw std::runtime_error("config: size suffix not found in '" + s + "' for " + context);
 
+  std::string num = s.substr(0, i);
   int isOverflowed = 99;
-  long value = ft_atol(s, isOverflowed);
+  long value = ft_atol(num, isOverflowed);
   if (isOverflowed)
       throw std::runtime_error("config: size value too large for " + context);
   if (i < s.size()) {
@@ -196,6 +197,8 @@ void Config::parseListen(ServerConfig& server, std::vector<std::string>& values)
         throw std::runtime_error("config: listen has empty host or port");
     }
 
+    if (host == "localhost")
+        host = "127.0.0.1";
     if (!host.empty()) {
       if (!isValidIp(host))
         throw std::runtime_error("config: listen has invalid IP '" + host + "'");
