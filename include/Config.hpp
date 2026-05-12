@@ -6,7 +6,7 @@
 /*   By: zatais <zatais@student.1337.ma>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/07 22:39:56 by zatais            #+#    #+#             */
-/*   Updated: 2026/05/11 03:00:35 by zatais           ###   ########.fr       */
+/*   Updated: 2026/05/12 21:25:41 by zatais           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,6 @@
 #include <fstream>
 #include <sstream>
 #include <stdexcept>
-#include "../helperFunctions/helpers.hpp"
 
 
 struct RedirectConfig {
