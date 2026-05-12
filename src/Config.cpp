@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "../include/Config.hpp"
+#include <cerrno>
 
 Config::Config() {}
 
@@ -19,7 +20,7 @@ Config::~Config() {}
 /******************************************************************************/
 bool Config::isWhitespaceOnly(std::string& s) {
   for (size_t i = 0; i < s.size(); ++i)
-    if (!ft_isspace(static_cast<unsigned char>(s[i])))
+    if (!isspace(s[i]))
       return false;
   return true;
 }
@@ -49,7 +50,7 @@ std::vector<std::string> Config::tokenize(const std::string& input) {
       quote_char = c;
       continue;
     }
-    if (ft_isspace(c)) {
+    if (isspace(c)) {
       appendToken(tokens, current);
       current.clear();
       continue;
@@ -70,7 +71,7 @@ std::vector<std::string> Config::tokenize(const std::string& input) {
 
 bool Config::isDigits(const std::string& s) {
   for (size_t i = 0; i < s.size(); ++i)
-    if (!ft_isdigit(s[i]))
+    if (!isdigit(s[i]))
       return false;
   return true;
 }
@@ -78,16 +79,15 @@ bool Config::isDigits(const std::string& s) {
 int Config::toInt(std::string& s, const std::string& context, int min_value, int max_value) {
   if (!isDigits(s))
     throw std::runtime_error("config: invalid number '" + s + "' for " + context);
-  int isOverflowed = 0;
-  long value = ft_atol(s, isOverflowed);
-  if (isOverflowed || value > max_value || value < min_value)
+  long value = atol(s.c_str());
+  if (value > max_value || value < min_value)
       throw std::runtime_error("config: number out of range '" + s + "' for " + context);
   return static_cast<int>(value);
 }
 
 size_t Config::toSize(std::string& s, std::string& context) {
   size_t i = 0;
-  while (i < s.size() && ft_isdigit(s[i]))
+  while (i < s.size() && isdigit(s[i]))
     ++i;
   if (!i)
     throw std::runtime_error("config: invalid size value '" + s + "' for " + context);
@@ -95,12 +95,11 @@ size_t Config::toSize(std::string& s, std::string& context) {
       throw std::runtime_error("config: size suffix not found in '" + s + "' for " + context);
 
   std::string num = s.substr(0, i);
-  int isOverflowed = 99;
-  long value = ft_atol(num, isOverflowed);
-  if (isOverflowed)
+  long value = strtol(num.c_str(), NULL, 0);
+  if (errno == ERANGE || value > 5000)
       throw std::runtime_error("config: size value too large for " + context);
   if (i < s.size()) {
-    char suffix = static_cast<char>(ft_toupper(s[i]));
+    char suffix = static_cast<char>(toupper(s[i]));
     if (suffix == 'K')
       value *= 1024;
     else if (suffix == 'M')
@@ -142,7 +141,7 @@ bool Config::isValidIp(std::string& ip) {
       parts.push_back(current);
       current.clear();
     }
-    else if (ft_isdigit(ip[j]))
+    else if (isdigit(ip[j]))
       current += ip[j];
     else
       return false;
@@ -153,8 +152,7 @@ bool Config::isValidIp(std::string& ip) {
   if (parts.size() != 4)
     return false;
   for (size_t j = 0; j < 4; ++j) {
-    int isOverflowed = 0;
-    long val = ft_atol(parts[j], isOverflowed);
+    long val = atol(parts[j].c_str());
     if (val < 0 || val > 255)
       return false;
   }
