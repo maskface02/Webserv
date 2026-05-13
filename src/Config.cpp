@@ -6,7 +6,7 @@
 /*   By: zatais <zatais@student.1337.ma>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/08 21:52:23 by zatais            #+#    #+#             */
-/*   Updated: 2026/05/11 03:55:56 by zatais           ###   ########.fr       */
+/*   Updated: 2026/05/13 02:05:16 by zatais           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,10 @@
 Config::Config() {}
 
 Config::~Config() {}
+
+Config::Config(const Config& conf){
+  servers = conf.servers;
+}
 
 /******************************************************************************/
 bool Config::isWhitespaceOnly(std::string& s) {
@@ -365,9 +369,8 @@ std::vector<std::string> Config::readAndTokenize(std::string& path) {
 }
 
 
-void Config::load(const char* path) {
-  std::string p = path;
-  std::vector<std::string> tokens = readAndTokenize(p);
+void Config::load(std::string &path) {
+  std::vector<std::string> tokens = readAndTokenize(path);
   size_t idx = 0;
   while (idx < tokens.size()) {
     if (tokens[idx] == "server")

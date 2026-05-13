@@ -6,7 +6,7 @@
 /*   By: zatais <zatais@student.1337.ma>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/07 22:39:56 by zatais            #+#    #+#             */
-/*   Updated: 2026/05/12 21:25:41 by zatais           ###   ########.fr       */
+/*   Updated: 2026/05/13 01:58:21 by zatais           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,7 +55,6 @@ struct ServerConfig {
 
 class Config {
   private:
-    Config(const Config&);
     Config& operator=(const Config&);
 
     std::vector<ServerConfig>   servers;
@@ -80,7 +79,8 @@ class Config {
   public:
     Config();
     ~Config();
-    void                        load(const char* path);
+    Config(const Config&);
+    void                        load(std::string &path);
     std::vector<ServerConfig>   getServers() const;
 };
 #endif // !CONFIG
