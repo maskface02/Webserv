@@ -1,5 +1,6 @@
 #include "../include/Config.hpp"
 #include <iostream>
+#include <string>
 
 void printConfig(const Config& cfg) {
     std::vector<ServerConfig> servers = cfg.getServers();
@@ -58,7 +59,7 @@ void printConfig(const Config& cfg) {
 }
 
 int main(int argc, char** argv) {
-    const char* configPath = "test/test.conf";
+  std::string configPath = "test/test.conf";
     
     if (argc > 1)
         configPath = argv[1];
