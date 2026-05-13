@@ -13,5 +13,10 @@
 #include "../include/Server.hpp"
 
 Server::Server(){}
+
 Server::Server(Config& conf) : _config(conf){}
+
 Server::~Server(){}
+/******************************************************************************/
+
+

@@ -20,19 +20,17 @@ struct Client {
     int         fd;
     std::string read_buffer;
     std::string write_buffer;
-    int         state;          // 0=READING, 1=PROCESSING, 2=CGI_RUNNING, 3=WRITING
+    int         state;
     bool        keep_alive;
     int         server_idx;
     time_t      last_activity;
 
-    // CGI
     int         cgi_pid;
     int         cgi_stdin_fd;
     int         cgi_stdout_fd;
     std::string cgi_input_buffer;
     std::string cgi_output_buffer;
 
-    // Front-end opaque pointers
     void*       request_obj;
     void*       response_obj;
 
@@ -43,7 +41,7 @@ class Server {
     Config                      _config;
     std::vector<int>            _listen_fds;
     std::vector<struct pollfd>  _poll_fds;
-    std::map<int, Client*>      _clients;            // client_fd -> Client
+    std::map<int, Client*>      _clients;
     std::map<int, int>          _fd_to_server_idx;
 
     Server();
@@ -68,7 +66,6 @@ class Server {
 /*
 class Server {
 private:
-    Config                      config_;
 
     static const int            BACKLOG = 128;
     static const int            POLL_TIMEOUT = 1000; // ms
