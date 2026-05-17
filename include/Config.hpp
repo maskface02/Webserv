@@ -5,22 +5,16 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: zatais <zatais@student.1337.ma>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/05/07 22:39:56 by zatais            #+#    #+#             */
-/*   Updated: 2026/05/13 01:58:21 by zatais           ###   ########.fr       */
+/*   Created: 2026/05/08 11:21:06 by zatais            #+#    #+#             */
+/*   Updated: 2026/05/17 05:35:26 by zatais           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
 
 #ifndef CONFIG_HPP
 #define CONFIG_HPP
 
-#include <map>
-#include <string>
-#include <vector>
-#include <cstddef>
-#include <fstream>
-#include <sstream>
-#include <stdexcept>
-
+#include "WebServ.hpp"
 
 struct RedirectConfig {
     bool                        enabled;
@@ -55,10 +49,9 @@ struct ServerConfig {
 
 class Config {
   private:
-    Config& operator=(const Config&);
-
+    Config&                     operator=(const Config&);
     std::vector<ServerConfig>   servers;
-    
+
     int                         toInt(std::string& s, const std::string& context, int min_value, int max_value);
     bool                        isDigits(const std::string& s);
     bool                        isWhitespaceOnly(std::string& s);
@@ -83,4 +76,5 @@ class Config {
     void                        load(std::string &path);
     std::vector<ServerConfig>   getServers() const;
 };
+
 #endif // !CONFIG

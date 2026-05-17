@@ -10,8 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../include/Config.hpp"
-#include <cerrno>
+#include "../include/WebServ.hpp"
 
 Config::Config() {}
 
