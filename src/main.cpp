@@ -6,11 +6,11 @@
 /*   By: zatais <zatais@student.1337.ma>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 21:38:25 by zatais            #+#    #+#             */
-/*   Updated: 2026/05/12 21:38:25 by zatais           ###   ########.fr       */
+/*   Updated: 2026/05/15 23:36:40 by zatais           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../include/Server.hpp"
+#include "../include/WebServ.hpp"
 
 int main(int argc, char** argv)
 {
@@ -25,7 +25,7 @@ int main(int argc, char** argv)
       Server server(config);
       server.run();
     }
-    catch (const std::exception& e) {
+    catch (std::exception& e) {
         std::cerr << e.what() << std::endl;
         return 1;
     }
