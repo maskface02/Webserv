@@ -6,7 +6,7 @@
 /*   By: zatais <zatais@student.1337.ma>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 21:39:15 by zatais            #+#    #+#             */
-/*   Updated: 2026/05/17 05:38:57 by zatais           ###   ########.fr       */
+/*   Updated: 2026/05/18 04:09:05 by zatais           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,8 +16,14 @@
 
 #include "WebServ.hpp"
 
+#define BACKLOG 128
+#define POLL_TIMEOUT 5000
+#define CLIENT_TIMEOUT 60
+
 struct Client {
     int         fd;
+    std::string ip;
+    int         port;
     std::string read_buffer;
     std::string write_buffer;
     int         state;
@@ -37,17 +43,20 @@ struct Client {
 
 class Server {
   private:
-    static const int            BACKLOG = 128;
-
     Logger                      _logger;
     Config                      _config;
-    std::vector<int>            _listen_fds;
+    std::vector<int>            _listen_fds;// close in the disctructor
     std::vector<struct pollfd>  _poll_fds;
-    std::map<int, Client*>      _clients;
+    std::map<int, Client*>      _clients;// new used here need to be deallocated using distructor and close fds too!!
     std::map<int, int>          _fd_to_server_idx;
 
     void    createSockets();
+    void    checkTimeouts();
+    void    closeClient(int fd);
     void    setNonBlocking(int fd);
+    void    acceptConnection(int listen_fd);
+    void    addToPoll(int fd, short events);
+    Client* initClient(int client_fd, int listen_fd, const std::string& client_ip, int client_port);
 
     Server();
     Server(const Server&);

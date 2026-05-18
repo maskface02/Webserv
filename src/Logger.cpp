@@ -40,6 +40,12 @@ void Logger::info(const std::string& message) {
     _logFile << "[" << getCurrentTimestamp() << "] " << "[INFO] " << message << std::endl;
 }
 
+void Logger::warn(const std::string& message) {
+  std::cout << "[" << getCurrentTimestamp() << "] " << "[" << YELLOW "WARN" RESET "] " << message << std::endl;
+  if (_useFile && _logFile.is_open())
+    _logFile << "[" << getCurrentTimestamp() << "] " << "[WARN] " << message << std::endl;
+}
+
 void Logger::error(const std::string& message) {
   if (_useFile && _logFile.is_open())
     _logFile << "[" << getCurrentTimestamp() << "] " << "[ERROR] " << message << std::endl;
