@@ -10,6 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 #include "../include/WebServ.hpp"
+#include <cstdlib>
 
 Server::Server(){}
 
@@ -85,6 +86,79 @@ void Server::acceptConnection(int listen_fd) {
   addToPoll(client_fd, POLLIN);
 
   _logger.logConnection(client_ip, client_port, true);
+}
+
+void Server::handleClientRead(int client_fd) {
+  std::map<int, Client*>::iterator it = _clients.find(client_fd);
+  if (it == _clients.end())
+    return;
+
+  Client* client = it->second;
+
+  while (true) {
+    char buffer[4096];
+    ssize_t bytes = recv(client_fd, buffer, sizeof(buffer), 0);
+
+    if (bytes > 0) {
+      client->read_buffer.append(buffer, bytes);
+      client->last_activity = time(NULL);
+    }
+    else if (bytes == 0) {
+      closeClient(client_fd);
+      return;
+    }
+    else {
+      if (errno == EAGAIN)
+        break;
+      closeClient(client_fd);
+      return;
+    }
+  }
+
+  while (true) {
+    size_t request_size = getRequestSize(client->read_buffer);
+    if (request_size == std::string::npos)
+      break;
+
+    std::string request_data = client->read_buffer.substr(0, request_size);
+    client->read_buffer.erase(0, request_size);
+
+    // parseing start here(request_data) !!
+  }
+}
+
+size_t getRequestSize(std::string& buffer) {
+  size_t header_end = buffer.find("\r\n\r\n");
+  if (header_end == std::string::npos)
+    return std::string::npos;
+
+  size_t body_start = header_end + 4;
+  size_t content_length = 0;
+  bool has_cl = false;
+
+  size_t cl_pos = buffer.find("Content-Length:");
+  if (cl_pos != std::string::npos && cl_pos < header_end) {
+    size_t val_start = cl_pos + 15;
+    while (val_start < header_end && buffer[val_start] == ' ')
+      ++val_start;
+    size_t line_end = buffer.find("\r\n", val_start);
+    if (line_end == std::string::npos)
+      return std::string::npos;
+    std::string value = buffer.substr(val_start, line_end - val_start);
+
+    char* endptr = NULL;
+    long num = strtol(value.c_str(), &endptr, 10);
+
+    if (endptr == value.c_str() || *endptr != '\0' || num < 0)
+      num = 0;
+    content_length = static_cast<size_t>(num);
+    has_cl = true;
+  }
+  if (!has_cl)
+    return body_start;
+
+  size_t total = body_start + content_length;
+  return (buffer.length() >= total) ? total : std::string::npos;
 }
 
 Client* Server::initClient(int client_fd, int listen_fd, const std::string& client_ip, int client_port) {
@@ -184,9 +258,7 @@ void Server::run() {
         if (_fd_to_server_idx.find(fd) != _fd_to_server_idx.end())
           acceptConnection(fd);
         else
-        {
-          // read the data from the client socket
-        }
+          handleClientRead(fd);
       }
     }
   }

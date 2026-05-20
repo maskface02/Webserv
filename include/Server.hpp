@@ -6,7 +6,7 @@
 /*   By: zatais <zatais@student.1337.ma>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 21:39:15 by zatais            #+#    #+#             */
-/*   Updated: 2026/05/18 04:09:05 by zatais           ###   ########.fr       */
+/*   Updated: 2026/05/20 04:16:04 by zatais           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,6 +55,8 @@ class Server {
     void    closeClient(int fd);
     void    setNonBlocking(int fd);
     void    acceptConnection(int listen_fd);
+    void    handleClientRead(int client_fd);
+    size_t  getRequestSize(std::string& buffer);
     void    addToPoll(int fd, short events);
     Client* initClient(int client_fd, int listen_fd, const std::string& client_ip, int client_port);
 
