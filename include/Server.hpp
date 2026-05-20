@@ -56,8 +56,8 @@ class Server {
     void    setNonBlocking(int fd);
     void    acceptConnection(int listen_fd);
     void    handleClientRead(int client_fd);
-    size_t  getRequestSize(std::string& buffer);
     void    addToPoll(int fd, short events);
+    size_t  getRequestSize(std::string& buffer);
     Client* initClient(int client_fd, int listen_fd, const std::string& client_ip, int client_port);
 
     Server();

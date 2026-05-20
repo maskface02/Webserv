@@ -10,7 +10,6 @@
 /*                                                                            */
 /* ************************************************************************** */
 #include "../include/WebServ.hpp"
-#include <cstdlib>
 
 Server::Server(){}
 
@@ -103,20 +102,14 @@ void Server::handleClientRead(int client_fd) {
       client->read_buffer.append(buffer, bytes);
       client->last_activity = time(NULL);
     }
-    else if (bytes == 0) {
-      closeClient(client_fd);
-      return;
-    }
-    else {
-      if (errno == EAGAIN)
-        break;
+    else if (bytes <= 0) {
       closeClient(client_fd);
       return;
     }
   }
 
   while (true) {
-    size_t request_size = getRequestSize(client->read_buffer);
+    size_t request_size = Server::getRequestSize(client->read_buffer);
     if (request_size == std::string::npos)
       break;
 
@@ -126,8 +119,7 @@ void Server::handleClientRead(int client_fd) {
     // parseing start here(request_data) !!
   }
 }
-
-size_t getRequestSize(std::string& buffer) {
+size_t Server::getRequestSize(std::string& buffer) {
   size_t header_end = buffer.find("\r\n\r\n");
   if (header_end == std::string::npos)
     return std::string::npos;
