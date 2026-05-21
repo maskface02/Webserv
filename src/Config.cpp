@@ -19,7 +19,6 @@ Config::~Config() {}
 Config::Config(const Config& conf){
   servers = conf.servers;
 }
-
 /******************************************************************************/
 bool Config::isWhitespaceOnly(std::string& s) {
   for (size_t i = 0; i < s.size(); ++i)
@@ -82,10 +81,10 @@ bool Config::isDigits(const std::string& s) {
 int Config::toInt(std::string& s, const std::string& context, int min_value, int max_value) {
   if (!isDigits(s))
     throw std::runtime_error("config: invalid number '" + s + "' for " + context);
-  long value = atol(s.c_str());
+  int value = atoi(s.c_str());
   if (value > max_value || value < min_value)
       throw std::runtime_error("config: number out of range '" + s + "' for " + context);
-  return static_cast<int>(value);
+  return value;
 }
 
 size_t Config::toSize(std::string& s, std::string& context) {
@@ -98,7 +97,7 @@ size_t Config::toSize(std::string& s, std::string& context) {
       throw std::runtime_error("config: size suffix not found in '" + s + "' for " + context);
 
   std::string num = s.substr(0, i);
-  long value = strtol(num.c_str(), NULL, 0);
+  long value = strtol(num.c_str(), NULL, 10);
   if (errno == ERANGE || value > 5000)
       throw std::runtime_error("config: size value too large for " + context);
   if (i < s.size()) {
@@ -114,7 +113,7 @@ size_t Config::toSize(std::string& s, std::string& context) {
     if (i + 1 != s.size())
       throw std::runtime_error("config: invalid size value '" + s + "' for " + context);
   }
-  return static_cast<size_t>(value);
+  return value;
 }
 
 bool Config::toBool(std::string& s, std::string& context) {
@@ -155,7 +154,7 @@ bool Config::isValidIp(std::string& ip) {
   if (parts.size() != 4)
     return false;
   for (size_t j = 0; j < 4; ++j) {
-    long val = atol(parts[j].c_str());
+    int val = atoi(parts[j].c_str());
     if (val < 0 || val > 255)
       return false;
   }
@@ -166,8 +165,8 @@ void Config::parseListen(ServerConfig& server, std::vector<std::string>& values)
   size_t i = 0;
   while (i < values.size()) {
     ListenConfig listen;
-    listen.host = "0.0.0.0";
-    listen.port = 80;
+    // listen.host = "0.0.0.0";
+    // listen.port = 80;
 
     std::string token = values[i];
     std::string host;
@@ -179,9 +178,9 @@ void Config::parseListen(ServerConfig& server, std::vector<std::string>& values)
         ++i;
       }
       else {
-        if (token != "localhost")
-          throw std::runtime_error("config: invalid host name '" + token + "'");
-        host = "127.0.0.1";
+        // if (token != "localhost")
+        //   throw std::runtime_error("config: invalid host name '" + token + "'");
+        // host = "127.0.0.1";
         if (i + 1 < values.size() && isDigits(values[i + 1])) {
           port_str = values[i + 1];
           i += 2;
@@ -198,8 +197,8 @@ void Config::parseListen(ServerConfig& server, std::vector<std::string>& values)
         throw std::runtime_error("config: listen has empty host or port");
     }
 
-    if (host == "localhost")
-        host = "127.0.0.1";
+    // if (host == "localhost")
+    //     host = "127.0.0.1";
     if (!host.empty()) {
       if (!isValidIp(host))
         throw std::runtime_error("config: listen has invalid IP '" + host + "'");
@@ -224,13 +223,13 @@ void Config::assignServerDirective(ServerConfig& server, std::vector<std::string
     std::vector<std::string> values = collectValues(tokens, idx, key);
     parseListen(server, values);
   }
-  else if (key == "error_page") {
+  else if (key == "error_page") { // test
     std::vector<std::string> values = collectValues(tokens, idx, key);
     if (values.size() < 2)
       throw std::runtime_error("config: error_page requires code and path");
     std::string path = values[values.size() - 1];
     for (size_t i = 0; i + 1 < values.size(); ++i) {
-      int code = toInt(values[i], "error_page", 100, 999);
+      int code = toInt(values[i], "error_page", 400, 599);
       server.error_pages[code] = path;
     }
   }
@@ -345,6 +344,10 @@ ServerConfig Config::parseServerBlock(std::vector<std::string>& tokens, size_t& 
   if (server.locations.empty() && !hasDirective)
       throw std::runtime_error("config: empty server block");
   ++idx;
+
+  if (!server.client_max_body_size)
+    server.client_max_body_size = 1024;
+
   return server;
 }
 
@@ -379,15 +382,6 @@ void Config::load(std::string &path) {
   }
   if (servers.empty())
     throw std::runtime_error("config: no server blocks found");
-
-  for (size_t i = 0; i < servers.size(); ++i) {
-    if (servers[i].listens.empty()) {
-       ListenConfig listen;
-       listen.host = "0.0.0.0";
-       listen.port = 80;
-       servers[i].listens.push_back(listen);
-    }
-  }
 }
 
 std::vector<ServerConfig> Config::getServers() const {

@@ -9,7 +9,9 @@
 /*   Updated: 2026/05/17 22:25:32 by zatais           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
 #include "../include/WebServ.hpp"
+#include <cstddef>
 
 Server::Server(){}
 
@@ -119,6 +121,31 @@ void Server::handleClientRead(int client_fd) {
     // parseing start here(request_data) !!
   }
 }
+
+bool chunkedRequest(std::string& chunked, size_t& chunkSize, size_t header_end) {
+  size_t te_pos = chunked.find("Transfer-Encoding:");
+  if (te_pos == std::string::npos || te_pos > header_end)
+    return false; 
+
+  size_t val_start = te_pos + 18;
+  while (val_start < header_end && chunked[val_start] == ' ')
+    val_start++;
+  size_t line_end = chunked.find("\r\n", val_start);
+  if (line_end == std::string::npos)
+    return false;
+  std::string value = chunked.substr(val_start, line_end - val_start);
+  if (value == "chunked")
+  {
+    size_t bodyStart = header_end + 4;
+    size_t bodyEnd = chunked.find("0\r\n\r\n");
+    if (bodyEnd == std::string::npos)
+      return false;
+    chunkSize = bodyEnd - bodyStart;
+    return true;
+  }
+  return false;
+}
+
 size_t Server::getRequestSize(std::string& buffer) {
   size_t header_end = buffer.find("\r\n\r\n");
   if (header_end == std::string::npos)
@@ -126,30 +153,29 @@ size_t Server::getRequestSize(std::string& buffer) {
 
   size_t body_start = header_end + 4;
   size_t content_length = 0;
-  bool has_cl = false;
 
-  size_t cl_pos = buffer.find("Content-Length:");
-  if (cl_pos != std::string::npos && cl_pos < header_end) {
-    size_t val_start = cl_pos + 15;
-    while (val_start < header_end && buffer[val_start] == ' ')
-      ++val_start;
-    size_t line_end = buffer.find("\r\n", val_start);
-    if (line_end == std::string::npos)
-      return std::string::npos;
-    std::string value = buffer.substr(val_start, line_end - val_start);
+  size_t c_size = 0;
+  if (!chunkedRequest(buffer, c_size, header_end)) {
+    size_t cl_pos = buffer.find("Content-Length:");
+    if (cl_pos != std::string::npos && cl_pos < header_end) {
+      size_t val_start = cl_pos + 15;
+      while (val_start < header_end && buffer[val_start] == ' ')
+        ++val_start;
+      size_t line_end = buffer.find("\r\n", val_start);
+      if (line_end == std::string::npos)
+        return std::string::npos;
+      std::string value = buffer.substr(val_start, line_end - val_start);
 
-    char* endptr = NULL;
-    long num = strtol(value.c_str(), &endptr, 10);
+      char* endptr;
+      long num = strtol(value.c_str(), &endptr, 10);
 
-    if (endptr == value.c_str() || *endptr != '\0' || num < 0)
-      num = 0;
-    content_length = static_cast<size_t>(num);
-    has_cl = true;
-  }
-  if (!has_cl)
-    return body_start;
+      if (endptr == value.c_str() || *endptr != '\0' || num < 0)
+        num = 0;
+      content_length = num;
+    }
+   }
 
-  size_t total = body_start + content_length;
+  size_t total = body_start + content_length + c_size;
   return (buffer.length() >= total) ? total : std::string::npos;
 }
 
@@ -160,7 +186,7 @@ Client* Server::initClient(int client_fd, int listen_fd, const std::string& clie
   client->port = client_port;
   client->read_buffer = "";
   client->write_buffer = "";
-  client->state = 0;
+  client->state = 0;//
   client->keep_alive = true;
   client->server_idx = _fd_to_server_idx[listen_fd];
   client->last_activity = time(NULL);
@@ -227,8 +253,8 @@ void Server::createSockets() {
 }
 
 void Server::run() {
-  createSockets();
 
+  createSockets();
   std::ostringstream oss;
   oss << "Server started, listening on " << _listen_fds.size() << " port(s)";
   _logger.info(oss.str());

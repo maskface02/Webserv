@@ -49,7 +49,7 @@ void Logger::warn(const std::string& message) {
 void Logger::error(const std::string& message) {
   if (_useFile && _logFile.is_open())
     _logFile << "[" << getCurrentTimestamp() << "] " << "[ERROR] " << message << std::endl;
-  throw std::runtime_error("[" + getCurrentTimestamp() + "]" + "[" GREEN "ERROR" RESET "] " + message);
+  throw std::runtime_error("[" + getCurrentTimestamp() + "]" + " [" RED "ERROR" RESET "] " + message);
 }
 
 void Logger::setLogFile(const std::string& filename) {
@@ -67,7 +67,7 @@ void Logger::logRequest(const std::string& client_ip, const std::string& method,
 void Logger::logConnection(const std::string& client_ip, int port, bool connected) {
   std::ostringstream logMsg;
   if (connected)
-    logMsg << "Client connected: " << client_ip << ":" << port;
+    logMsg << "Client connected: " << client_ip << ":" << port; // add on which listening server
   else
     logMsg << "Client disconnected: " << client_ip << ":" << port;
   info(logMsg.str());

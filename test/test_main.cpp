@@ -59,7 +59,7 @@ void printConfig(const Config& cfg) {
 }
 
 int main(int argc, char** argv) {
-  std::string configPath = "test/test.conf";
+  std::string configPath = "../conf/default.conf";
     
     if (argc > 1)
         configPath = argv[1];
