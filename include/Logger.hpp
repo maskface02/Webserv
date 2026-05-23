@@ -17,26 +17,22 @@
 
 class Logger {
 private:
-    std::ofstream  _logFile;
-    bool           _useFile;
-
-    Logger(const Logger&);
-    Logger& operator=(const Logger&);
-    std::string getCurrentTimestamp();
+  Logger(const Logger &);
+  Logger &operator=(const Logger &);
+  std::string getCurrentTimestamp();
 
 public:
-    Logger();
-    ~Logger();
-    void setLogFile(const std::string& filename);
+  Logger();
+  ~Logger();
 
-    void info(const std::string& message);
-    void warn(const std::string& message);
-    void error(const std::string& message);
+  void info(const std::string &message);
+  void warn(const std::string &message);
+  void error(const std::string &message);
 
-
-    void logConnection(const std::string& client_ip, int port, bool connected);
-    void logRequest(const std::string& client_ip, const std::string& method, const std::string& path, const std::string& protocol, int status, size_t response_size);
-
+  void logConnection(const std::string &client_ip, int port, bool connected);
+  void logRequest(const std::string &client_ip, const std::string &method,
+                  const std::string &path, const std::string &protocol,
+                  int status, size_t response_size);
 };
 
 #endif // !LOGGER_HPP

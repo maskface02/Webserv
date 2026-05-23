@@ -12,12 +12,9 @@
 
 #include "../include/WebServ.hpp"
 
-Logger::Logger() : _useFile(false) {}
+Logger::Logger(){}
 
-Logger::~Logger() {
-    if (_logFile.is_open())
-        _logFile.close();
-}
+Logger::~Logger() {}
 
 std::string Logger::getCurrentTimestamp() {
   time_t now = time(NULL);
@@ -34,29 +31,11 @@ std::string Logger::getCurrentTimestamp() {
   return fullTime.str();
 }
 
-void Logger::info(const std::string& message) {
-  std::cout << "[" << getCurrentTimestamp() << "] " << "[" << GREEN "INFO" RESET "] " << message << std::endl;
-  if (_useFile && _logFile.is_open())
-    _logFile << "[" << getCurrentTimestamp() << "] " << "[INFO] " << message << std::endl;
-}
+void Logger::info(const std::string& message) {std::cout << "[" << getCurrentTimestamp() << "] " << "[" << GREEN "INFO" RESET "] " << message << std::endl;}
 
-void Logger::warn(const std::string& message) {
-  std::cout << "[" << getCurrentTimestamp() << "] " << "[" << YELLOW "WARN" RESET "] " << message << std::endl;
-  if (_useFile && _logFile.is_open())
-    _logFile << "[" << getCurrentTimestamp() << "] " << "[WARN] " << message << std::endl;
-}
+void Logger::warn(const std::string& message) {std::cout << "[" << getCurrentTimestamp() << "] " << "[" << YELLOW "WARN" RESET "] " << message << std::endl;}
 
-void Logger::error(const std::string& message) {
-  if (_useFile && _logFile.is_open())
-    _logFile << "[" << getCurrentTimestamp() << "] " << "[ERROR] " << message << std::endl;
-  throw std::runtime_error("[" + getCurrentTimestamp() + "]" + " [" RED "ERROR" RESET "] " + message);
-}
-
-void Logger::setLogFile(const std::string& filename) {
-  _logFile.open(filename.c_str(), std::ios::app);
-  if (_logFile.is_open())
-    _useFile = true;
-}
+void Logger::error(const std::string& message) {throw std::runtime_error("[" + getCurrentTimestamp() + "]" + " [" RED "ERROR" RESET "] " + message);}
 
 void Logger::logRequest(const std::string& client_ip, const std::string& method, const std::string& path, const std::string& protocol, int status, size_t response_size) {
   std::ostringstream logMsg;

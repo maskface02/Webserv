@@ -19,7 +19,9 @@ Config::~Config() {}
 Config::Config(const Config& conf){
   servers = conf.servers;
 }
+
 /******************************************************************************/
+
 bool Config::isWhitespaceOnly(std::string& s) {
   for (size_t i = 0; i < s.size(); ++i)
     if (!isspace(s[i]))
@@ -165,48 +167,24 @@ void Config::parseListen(ServerConfig& server, std::vector<std::string>& values)
   size_t i = 0;
   while (i < values.size()) {
     ListenConfig listen;
-    // listen.host = "0.0.0.0";
-    // listen.port = 80;
 
     std::string token = values[i];
     std::string host;
     std::string port_str;
     size_t colon = token.find(':');
-    if (colon == std::string::npos) {
-      if (isDigits(token)) {
-        port_str = token;
-        ++i;
-      }
-      else {
-        // if (token != "localhost")
-        //   throw std::runtime_error("config: invalid host name '" + token + "'");
-        // host = "127.0.0.1";
-        if (i + 1 < values.size() && isDigits(values[i + 1])) {
-          port_str = values[i + 1];
-          i += 2;
-        }
-        else
-            ++i;
-      }
-    }
-    else {
+    if (colon != std::string::npos) {
       host = token.substr(0, colon);
       port_str = token.substr(colon + 1);
       ++i;
       if (host.empty() || port_str.empty())
         throw std::runtime_error("config: listen has empty host or port");
-    }
-
-    // if (host == "localhost")
-    //     host = "127.0.0.1";
-    if (!host.empty()) {
       if (!isValidIp(host))
         throw std::runtime_error("config: listen has invalid IP '" + host + "'");
       listen.host = host;
-    }
-    if (!port_str.empty())
       listen.port = toInt(port_str, "listen", 1, 65535);
-
+    }
+    else
+      throw std::runtime_error("config: listen should have interface:port pair");
     for (size_t j = 0; j < server.listens.size(); ++j)
       if (server.listens[j].host == listen.host && server.listens[j].port == listen.port)
         throw std::runtime_error("config: listen duplicate host:port " + listen.host + ":" + port_str);
@@ -223,7 +201,7 @@ void Config::assignServerDirective(ServerConfig& server, std::vector<std::string
     std::vector<std::string> values = collectValues(tokens, idx, key);
     parseListen(server, values);
   }
-  else if (key == "error_page") { // test
+  else if (key == "error_page") {
     std::vector<std::string> values = collectValues(tokens, idx, key);
     if (values.size() < 2)
       throw std::runtime_error("config: error_page requires code and path");
@@ -384,8 +362,6 @@ void Config::load(std::string &path) {
     throw std::runtime_error("config: no server blocks found");
 }
 
-std::vector<ServerConfig> Config::getServers() const {
-    return servers;
-}
+std::vector<ServerConfig> Config::getServers() const {return servers;}
 
 bool Config::isValidMethod(std::string& method) {return method == "GET" || method == "POST" || method == "DELETE";}

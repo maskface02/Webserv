@@ -140,7 +140,7 @@ bool chunkedRequest(std::string& chunked, size_t& chunkSize, size_t header_end) 
     size_t bodyEnd = chunked.find("0\r\n\r\n");
     if (bodyEnd == std::string::npos)
       return false;
-    chunkSize = bodyEnd - bodyStart;
+    chunkSize = bodyEnd - bodyStart + 5;
     return true;
   }
   return false;
