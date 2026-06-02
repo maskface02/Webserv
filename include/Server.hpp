@@ -58,6 +58,9 @@ class Server {
     void    handleClientRead(int client_fd);
     void    addToPoll(int fd, short events);
     size_t  getRequestSize(std::string& buffer);
+    bool    iequal(std::string& a, const std::string& b);
+    size_t  findHeaderValue(std::string& buffer, const std::string& name, size_t headerEnd);
+    size_t  parseChunkedBody(std::string& buffer, size_t bodyStart);
     Client* initClient(int client_fd, int listen_fd, const std::string& client_ip, int client_port);
 
     Server();

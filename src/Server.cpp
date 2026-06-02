@@ -12,6 +12,7 @@
 
 #include "../include/WebServ.hpp"
 #include <cstddef>
+#include <cctype>
 
 Server::Server(){}
 
@@ -104,14 +105,16 @@ void Server::handleClientRead(int client_fd) {
       client->read_buffer.append(buffer, bytes);
       client->last_activity = time(NULL);
     }
-    else if (bytes <= 0) {
+    else if (!bytes) {
       closeClient(client_fd);
       return;
     }
+    else 
+      break;
   }
 
   while (true) {
-    size_t request_size = Server::getRequestSize(client->read_buffer);
+    size_t request_size = getRequestSize(client->read_buffer);
     if (request_size == std::string::npos)
       break;
 
@@ -122,28 +125,41 @@ void Server::handleClientRead(int client_fd) {
   }
 }
 
-bool chunkedRequest(std::string& chunked, size_t& chunkSize, size_t header_end) {
-  size_t te_pos = chunked.find("Transfer-Encoding:");
-  if (te_pos == std::string::npos || te_pos > header_end)
-    return false; 
-
-  size_t val_start = te_pos + 18;
-  while (val_start < header_end && chunked[val_start] == ' ')
-    val_start++;
-  size_t line_end = chunked.find("\r\n", val_start);
-  if (line_end == std::string::npos)
+bool Server::iequal(std::string& a, const std::string& b) {
+  if (a.size() != b.size())
     return false;
-  std::string value = chunked.substr(val_start, line_end - val_start);
-  if (value == "chunked")
-  {
-    size_t bodyStart = header_end + 4;
-    size_t bodyEnd = chunked.find("0\r\n\r\n");
-    if (bodyEnd == std::string::npos)
+  for (size_t i = 0; i < a.size(); ++i)
+    if (tolower(a[i]) != tolower(b[i]))
       return false;
-    chunkSize = bodyEnd - bodyStart + 5;
-    return true;
+  return true;
+}
+
+size_t Server::findHeaderValue(std::string& buffer, const std::string& name, size_t headerEnd) {
+  size_t pos = 0;
+  while (pos < headerEnd) {
+    size_t lineEnd = buffer.find("\r\n", pos);
+    if (lineEnd == std::string::npos)
+      break;
+    size_t colon = buffer.find(':', pos);
+    if (colon != std::string::npos && colon < lineEnd) {
+      std::string hdrName(buffer, pos, colon - pos);
+      if (iequal(hdrName, name)) {
+        size_t val = colon + 1;
+        while (val < lineEnd && isspace(buffer[val]))
+          ++val;
+        return val;
+      }
+    }
+    pos = lineEnd + 2;
   }
-  return false;
+  return std::string::npos;
+}
+
+size_t Server::parseChunkedBody(std::string& buffer, size_t bodyStart) {
+  size_t bodyEnd = buffer.find("0\r\n\r\n", bodyStart);
+  if (bodyEnd == std::string::npos)
+    return std::string::npos;
+  return bodyEnd - bodyStart + 5;
 }
 
 size_t Server::getRequestSize(std::string& buffer) {
@@ -152,31 +168,47 @@ size_t Server::getRequestSize(std::string& buffer) {
     return std::string::npos;
 
   size_t body_start = header_end + 4;
-  size_t content_length = 0;
 
-  size_t c_size = 0;
-  if (!chunkedRequest(buffer, c_size, header_end)) {
-    size_t cl_pos = buffer.find("Content-Length:");
-    if (cl_pos != std::string::npos && cl_pos < header_end) {
-      size_t val_start = cl_pos + 15;
-      while (val_start < header_end && buffer[val_start] == ' ')
-        ++val_start;
-      size_t line_end = buffer.find("\r\n", val_start);
-      if (line_end == std::string::npos)
-        return std::string::npos;
-      std::string value = buffer.substr(val_start, line_end - val_start);
-
-      char* endptr;
-      long num = strtol(value.c_str(), &endptr, 10);
-
-      if (endptr == value.c_str() || *endptr != '\0' || num < 0)
-        num = 0;
-      content_length = num;
+  size_t te_pos = findHeaderValue(buffer, "Transfer-Encoding", header_end);
+  if (te_pos != std::string::npos) {
+    size_t lineEnd = buffer.find("\r\n", te_pos);
+    if (lineEnd != std::string::npos) {
+      std::string value(buffer, te_pos, lineEnd - te_pos);
+      size_t last = value.find_last_not_of(" \t");
+      if (last != std::string::npos)
+        value = value.substr(0, last + 1);
+      if (iequal(value, "chunked")) {
+          size_t bodySize = parseChunkedBody(buffer, body_start);
+          if (bodySize == std::string::npos)
+            return std::string::npos;
+          size_t total = body_start + bodySize;
+          return (buffer.size() >= total) ? total : std::string::npos;
+        }
     }
-   }
+  }
 
-  size_t total = body_start + content_length + c_size;
-  return (buffer.length() >= total) ? total : std::string::npos;
+  size_t content_length = 0;
+  size_t cl_pos = findHeaderValue(buffer, "Content-Length", header_end);
+  if (cl_pos != std::string::npos) {
+    size_t lineEnd = buffer.find("\r\n", cl_pos);
+    if (lineEnd == std::string::npos)
+      return std::string::npos;
+    std::string value(buffer, cl_pos, lineEnd - cl_pos);
+    size_t lastNonSpace = value.find_last_not_of(" \t");
+    if (lastNonSpace != std::string::npos)
+      value = value.substr(0, lastNonSpace + 1);
+    else
+      value.clear();
+
+    char* endptr;
+    long num = std::strtol(value.c_str(), &endptr, 10);
+    if (endptr == value.c_str() || *endptr != '\0' || num < 0)
+      num = 0;
+    content_length = static_cast<size_t>(num);
+  }
+
+  size_t total = body_start + content_length;
+  return (buffer.size() >= total) ? total : std::string::npos;
 }
 
 Client* Server::initClient(int client_fd, int listen_fd, const std::string& client_ip, int client_port) {

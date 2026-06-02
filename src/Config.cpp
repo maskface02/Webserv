@@ -6,7 +6,7 @@
 /*   By: zatais <zatais@student.1337.ma>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/08 21:52:23 by zatais            #+#    #+#             */
-/*   Updated: 2026/05/13 02:05:16 by zatais           ###   ########.fr       */
+/*   Updated: 2026/06/02 17:42:12 by zatais           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -293,6 +293,12 @@ Location Config::parseLocationBlock(std::vector<std::string>& tokens, size_t& id
 
   while (idx < tokens.size() && tokens[idx] != "}")
     assignLocationDirective(loc, tokens, idx);
+
+  if (loc.root.empty() && !loc.redirect.enabled)
+    throw std::runtime_error("config: location '" + loc.path + "' missing 'root' directive");
+  if (!loc.autoindex && loc.index.empty() && !loc.redirect.enabled)
+    throw std::runtime_error("config: location '" + loc.path + "' missing 'index' directive");
+
   if (idx == tokens.size() || tokens[idx] != "}")
     throw std::runtime_error("config: missing '}' after location block");
   ++idx;

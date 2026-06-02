@@ -30,4 +30,7 @@ clean:
 
 re: fclean all
 
+# test_request_size:
+# 	$(CXX) $(CXXFLAGS) test/test_request_size.cpp -o test/test_request_size && ./test/test_request_size
+
 .PHONY: all clean re
