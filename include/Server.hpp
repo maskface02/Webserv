@@ -19,49 +19,65 @@
 #define BACKLOG 128
 #define POLL_TIMEOUT 5000
 #define CLIENT_TIMEOUT 60
+#define CGI_TIMEOUT 60
+
+enum ClientState {
+    STATE_READING,
+    STATE_CGI_RUNNING,
+    STATE_WRITING_RESPONSE,
+    STATE_CGI_ERROR,
+    STATE_SENDING
+};
 
 struct Client {
-    int         fd;
-    std::string ip;
-    int         port;
-    std::string read_buffer;
-    std::string write_buffer;
-    int         state;
-    bool        keep_alive;
-    int         server_idx;
-    time_t      last_activity;
+    int             fd;
+    std::string     ip;
+    int             port;
+    std::string     read_buffer;
+    std::string     write_buffer;
+    ClientState     state;
+    bool            keep_alive;
+    int             server_idx;
+    time_t          last_activity;
 
-    int         cgi_pid;
-    int         cgi_stdin_fd;
-    int         cgi_stdout_fd;
-    std::string cgi_input_buffer;
-    std::string cgi_output_buffer;
-
-    void*       request_obj;
-    void*       response_obj;
+    int             cgi_pid;
+    int             cgi_stdin_fd;
+    int             cgi_stdout_fd;
+    std::string     cgi_input_buffer;
+    std::string     cgi_output_buffer;
+    time_t          cgi_start_time;
+    void*           request_obj;
+    void*           response_obj;
 };
+
+class Cgi;
 
 class Server {
   private:
     Logger                      _logger;
     Config                      _config;
-    std::vector<int>            _listen_fds;// close in the disctructor
+    std::vector<int>            _listen_fds;
     std::vector<struct pollfd>  _poll_fds;
-    std::map<int, Client*>      _clients;// new used here need to be deallocated using distructor and close fds too!!
+    std::map<int, Client*>      _clients;
     std::map<int, int>          _fd_to_server_idx;
+    std::map<int, int>          _pipe_to_client_fd;
+    Cgi*                        _cgi;
 
     void    createSockets();
     void    checkTimeouts();
     void    closeClient(int fd);
-    void    setNonBlocking(int fd);
     void    acceptConnection(int listen_fd);
     void    handleClientRead(int client_fd);
-    void    addToPoll(int fd, short events);
     size_t  getRequestSize(std::string& buffer);
     bool    iequal(std::string& a, const std::string& b);
     size_t  findHeaderValue(std::string& buffer, const std::string& name, size_t headerEnd);
     size_t  parseChunkedBody(std::string& buffer, size_t bodyStart);
     Client* initClient(int client_fd, int listen_fd, const std::string& client_ip, int client_port);
+    void    generateResponse(Client* client);
+    void    sendResponse(int client_fd);
+    void    handlePollIn();
+    void    handleCgiPipeRead();
+    void    handlePollOut();
 
     Server();
     Server(const Server&);
@@ -72,6 +88,9 @@ class Server {
     ~Server();
 
     void run();
+
+    static void setNonBlocking(int fd);
+    static void addToPoll(int fd, short events, std::vector<struct pollfd>& poll_fds);
 };
 
 #endif // !SERVER_HPP

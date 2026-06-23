@@ -9,10 +9,15 @@ INCLUDES = include
 SOURCES = $(SRC_DIR)/main.cpp \
           $(SRC_DIR)/Config.cpp \
           $(SRC_DIR)/Server.cpp \
-          $(SRC_DIR)/Logger.cpp
+          $(SRC_DIR)/Logger.cpp \
+          $(SRC_DIR)/Cgi.cpp
 
 OBJECTS = $(SOURCES:.cpp=.o)
-HEADERS = $(INCLUDES)/WebServ.hpp
+HEADERS = $(INCLUDES)/WebServ.hpp \
+          $(INCLUDES)/Server.hpp \
+          $(INCLUDES)/Cgi.hpp \
+          $(INCLUDES)/Config.hpp \
+          $(INCLUDES)/Logger.hpp
 
 all: $(NAME)
 

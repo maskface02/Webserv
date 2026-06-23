@@ -14,6 +14,7 @@
 
 int main(int argc, char** argv)
 {
+    signal(SIGPIPE, SIG_IGN);
     std::string configPath = "conf/default.conf";
     if (argc > 1)
         configPath = argv[1];

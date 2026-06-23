@@ -30,6 +30,8 @@
 #include <cstring>
 #include <fcntl.h>
 #include <unistd.h>
+#include <signal.h>
+#include <sys/wait.h>
 
 #include <sys/time.h>
 #include <arpa/inet.h>
@@ -44,5 +46,6 @@
 #include "Config.hpp"
 #include "Logger.hpp"
 #include "Server.hpp"
+#include "Cgi.hpp"
 
 #endif // !WEBSERV_HPP
