@@ -269,6 +269,40 @@ Client* Server::initClient(int client_fd, int listen_fd, const std::string& clie
   return client;
 }
 
+void Server::sendResponse(int client_fd) {
+  std::map<int, Client*>::iterator it = _clients.find(client_fd);
+  if (it == _clients.end())
+    return;
+
+  Client* client = it->second;
+  if (client->write_buffer.empty())
+    return;
+
+  ssize_t bytes = send(client_fd, client->write_buffer.c_str(), client->write_buffer.size(), 0);
+
+  if (bytes > 0) {
+    client->write_buffer.erase(0, bytes);
+    client->last_activity = time(NULL);
+  }
+  else if (bytes < 0) {
+    closeClient(client_fd);
+    return;
+  }
+
+  if (client->write_buffer.empty()) {
+    for (size_t i = 0; i < _poll_fds.size(); ++i) {
+      if (_poll_fds[i].fd == client_fd) {
+        _poll_fds[i].events &= ~POLLOUT;//
+        break;
+      }
+    }
+    if (client->keep_alive)
+      client->state = STATE_READING;
+    else
+      closeClient(client_fd);
+  }
+}
+
 void Server::createSockets() {
   std::vector<ServerConfig> servers = _config.getServers();
 
