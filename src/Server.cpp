@@ -78,6 +78,16 @@ void Server::checkTimeouts() {
         oss << "CGI timeout: " << it->second->ip << ":" << it->second->port;
         _logger.warn(oss.str());
         _cgi->killCgi(it->second, SIGKILL);
+        it->second->write_buffer = "HTTP/1.1 504 Gateway Timeout\r\n"
+                                    "Content-Length: 0\r\n"
+                                    "\r\n";
+        it->second->state = STATE_SENDING;
+        for (size_t j = 0; j < _poll_fds.size(); ++j) {
+          if (_poll_fds[j].fd == it->first) {
+            _poll_fds[j].events |= POLLOUT;
+            break;
+          }
+        }
       }
     }
     else if (difftime(now, it->second->last_activity) > CLIENT_TIMEOUT) {
@@ -284,10 +294,8 @@ void Server::sendResponse(int client_fd) {
     client->write_buffer.erase(0, bytes);
     client->last_activity = time(NULL);
   }
-  else if (bytes < 0) {
-    closeClient(client_fd);
+  else if (bytes < 0)
     return;
-  }
 
   if (client->write_buffer.empty()) {
     for (size_t i = 0; i < _poll_fds.size(); ++i) {
@@ -373,6 +381,7 @@ void Server::run() {
     if (!_clients.empty())
       checkTimeouts();
 
+    handlePollErrors();
     handlePollIn();
     handleCgiPipeRead();
     handlePollOut();
@@ -433,6 +442,61 @@ void Server::handlePollOut() {
     int fd = ready_write_fds[i];
     std::map<int, Client*>::iterator client_it = _clients.find(fd);
     if (client_it != _clients.end())
-     ; // sendResponse(fd);
+      sendResponse(fd);
+  }
+}
+
+void Server::handlePollErrors() {
+  std::vector<int> error_fds;
+  for (size_t i = 0; i < _poll_fds.size(); ++i)
+    if (_poll_fds[i].revents & (POLLERR | POLLHUP))
+      error_fds.push_back(_poll_fds[i].fd);
+
+  for (size_t i = 0; i < error_fds.size(); ++i) {
+    int fd = error_fds[i];
+
+    if (_clients.count(fd)) {
+      closeClient(fd);
+      continue;
+    }
+
+    if (_pipe_to_client_fd.count(fd)) {
+      int client_fd = _pipe_to_client_fd[fd];
+      std::map<int, Client*>::iterator it = _clients.find(client_fd);
+      if (it != _clients.end()) {
+        Client* client = it->second;
+        if (client->cgi_pid != -1)
+          _cgi->killCgi(client, SIGKILL);
+        client->state = STATE_CGI_ERROR;
+      }
+      continue;
+    }
+
+    if (_fd_to_server_idx.count(fd)) {
+      struct sockaddr_in addr;
+      socklen_t len = sizeof(addr);
+      std::ostringstream oss;
+      if (getsockname(fd, (struct sockaddr*)&addr, &len) >= 0) {
+        char ip[16];
+        inet_ntop(AF_INET, &addr.sin_addr, ip, sizeof(ip));
+        int port = ntohs(addr.sin_port);
+       oss << "listen socket error" << " on " << ip << ":" << port;
+      }
+      _logger.warn(oss.str());
+      for (size_t j = 0; j < _poll_fds.size(); ++j) {
+        if (_poll_fds[j].fd == fd) {
+          _poll_fds.erase(_poll_fds.begin() + j);
+          break;
+        }
+      }
+      for (size_t j = 0; j < _listen_fds.size(); ++j) {
+        if (_listen_fds[j] == fd) {
+          _listen_fds.erase(_listen_fds.begin() + j);
+          break;
+        }
+      }
+      _fd_to_server_idx.erase(fd);
+      close(fd);
+    }
   }
 }

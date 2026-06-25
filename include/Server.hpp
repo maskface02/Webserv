@@ -78,6 +78,7 @@ class Server {
     void    handlePollIn();
     void    handleCgiPipeRead();
     void    handlePollOut();
+    void    handlePollErrors();
 
     Server();
     Server(const Server&);
