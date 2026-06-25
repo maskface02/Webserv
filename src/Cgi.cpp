@@ -84,7 +84,7 @@ void Cgi::startCgi(Client* client, std::string& interpreter, std::string& script
     size_t total = client->cgi_input_buffer.size();
     size_t written = 0;
 
-    while (written < total) {
+    while (written < total) { // how to fix the write blocking issue in case of big input data
       ssize_t bytes = write(pipe_to_cgi[1], data + written, total - written);
       if (bytes <= 0) {
         _logger.warn("write to CGI stdin failed");
@@ -112,14 +112,17 @@ void Cgi::handleCgiRead(std::map<int, int>::iterator pipe_it, std::map<int, Clie
 
   Client* client = client_it->second;
   int pipe_fd = pipe_it->first;
+  size_t max_per_cycle = 64 * 1024;
+  size_t read_this_cycle = 0;
 
-  while (true) {
+  while (read_this_cycle < max_per_cycle) {
     char buffer[4096];
     ssize_t bytes = read(pipe_fd, buffer, sizeof(buffer));
 
     if (bytes > 0) {
       client->cgi_output_buffer.append(buffer, bytes);
       client->last_activity = time(NULL);
+      read_this_cycle += bytes;
     }
     else {
       int status;

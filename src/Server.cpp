@@ -78,7 +78,7 @@ void Server::checkTimeouts() {
         oss << "CGI timeout: " << it->second->ip << ":" << it->second->port;
         _logger.warn(oss.str());
         _cgi->killCgi(it->second, SIGKILL);
-        it->second->write_buffer = "HTTP/1.1 504 Gateway Timeout\r\n"
+        it->second->write_buffer = "HTTP/1.1 504 Gateway Timeout\r\n" //TODO 
                                     "Content-Length: 0\r\n"
                                     "\r\n";
         it->second->state = STATE_SENDING;
