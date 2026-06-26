@@ -46,7 +46,7 @@ void Logger::logRequest(const std::string& client_ip, const std::string& method,
 void Logger::logConnection(const std::string& client_ip, int port, bool connected) {
   std::ostringstream logMsg;
   if (connected)
-    logMsg << "Client connected: " << client_ip << ":" << port; // add on which listening server
+    logMsg << "Client connected: " << client_ip << ":" << port; //TODO add on which listening server
   else
     logMsg << "Client disconnected: " << client_ip << ":" << port;
   info(logMsg.str());
