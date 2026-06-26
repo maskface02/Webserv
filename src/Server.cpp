@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: zatais <zatais@student.1337.ma>            +#+  +:+       +#+        */
+/*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 21:51:55 by zatais            #+#    #+#             */
-/*   Updated: 2026/05/17 22:25:32 by zatais           ###   ########.fr       */
+/*   Updated: 2026/06/26 13:25:25 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -151,6 +151,7 @@ void Server::handleClientRead(int client_fd) {
     std::string request_data = client->read_buffer.substr(0, request_size);
     client->read_buffer.erase(0, request_size);
 
+    //TODO test
     // parse request_data -> sets client->request_obj, req->isCgi
 
     // if (!req->isCgi) {
