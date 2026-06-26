@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 11:59:47 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/06/25 21:44:34 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/06/26 21:39:28 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,7 @@ int main()
     {
       Config config;
       config.load(configPath);   
-        std::cout <<config.getServers()[0].locations[0].redirect.code <<"\n";
+        // std::cout <<config.getServers()[0].locations[0].redirect.code <<"\n";
     //   printf("im here \n");
     //   std::cout<<config.getServers()[0].error_pages[404]<<std::endl;
       Request R(req);

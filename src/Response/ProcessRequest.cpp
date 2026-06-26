@@ -6,14 +6,13 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/16 12:06:38 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/06/26 11:54:53 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/06/26 21:58:50 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 
 #include "../../include/WebServ.hpp"
 
-// done for basics check
 ProcessRequest::ProcessRequest(Request& req,  ServerConfig& _srv)
 :request(&req),srv(&_srv),status_code(0),is_CgiRq(0),is_dir(0),is_RedirecRq(0)
 {
@@ -25,7 +24,7 @@ ProcessRequest::ProcessRequest(Request& req,  ServerConfig& _srv)
         status_code = 404; std::cout <<"1"<<std::endl;
         return;
     } 
-    // home 
+
     if (check_redirction())
         return;
     if (!check_allowed_method())
@@ -33,8 +32,7 @@ ProcessRequest::ProcessRequest(Request& req,  ServerConfig& _srv)
     define_type();
     if(status_code)
         return;
-    // if is a dir i need always to check indx file for all method caz of cgi
-    //if not cgi i will need it for grt method
+   
     extract_file_extension();// if is dir look for index and get it extension
    
     check_Cgi();
@@ -61,11 +59,13 @@ bool ProcessRequest::match_location(ServerConfig& server)
     std::vector<std::string> prefix ;
     prefix.push_back("/");
     pos = request->getPath().find("/",1);
+
     while(pos != std::string::npos)
     {
         prefix.push_back(request->getPath().substr(0,pos));
         pos = request->getPath().find("/",pos + 1);
     }
+  
     std::vector<std::string> ::iterator vec_it = prefix.begin();
     while(it != server.locations.end())
     {
@@ -75,6 +75,7 @@ bool ProcessRequest::match_location(ServerConfig& server)
             found = true;
             break;
         }
+         vec_it = prefix.begin();
         while (vec_it != prefix.end())
         {
             if (*vec_it == it->path)
@@ -83,21 +84,23 @@ bool ProcessRequest::match_location(ServerConfig& server)
         }
         it++;
     }
-    if (!location.empty() && !found)
+    if ( !found)
+    {
+        if (location.empty()) 
+        {
+            status_code = 404;
+            return(false);
+        }
         target_location = location.rbegin()->second; 
-     // 
+    }
     if (target_location.root.rfind("/") == target_location.root.length() - 1)
-            resource_path = target_location.root + request->getPath().erase(0,1);
+           resource_path = target_location.root + request->getPath().substr(1);
     else
         resource_path = target_location.root + request->getPath();   
-    if (location.empty() && !found)
-    {
-         
-    status_code = 404;
-     return(false);
-    }
-      
-  return (true);
+   
+    //   std::cout<<"Target location == "<<target_location.path<<std::endl;
+    //     std::cout<<"Resource path == "<<resource_path<<std::endl;
+    return (true);
 }
 
 bool ProcessRequest::check_allowed_method()
@@ -113,14 +116,11 @@ bool ProcessRequest::check_allowed_method()
     status_code = 405;
     return(false);
 }
-// /if (request->getRequestLine().Method == "GET")
-                        // check_index_file()/;
 
 void ProcessRequest::define_type()
 {
    struct stat pathStat;
-    
-//define resource path here
+
    
     if (!stat(resource_path.c_str(),&pathStat))
     {
@@ -137,27 +137,21 @@ void ProcessRequest::define_type()
                 size_t pos = resource_path.rfind("/");
                
                 if (pos != resource_path.length() - 1)
-                {
+                {                     std::cout <<"ERnoooo\n";
                     if(request->getRequestLine().Method == "GET")
                     {
                         status_code = 301;
                         redirect_url = "http:/" + request->getPath() + "/";
                     }
                 }
-                // else (!check_index_file())
-                // {
-                    
-                // }
-                    
+                check_index_file();
             }
         }
         else if(S_ISREG(pathStat.st_mode))
             is_file = true;
-
     }
-    
     else 
-    {//case () => 
+    {
         if (errno == EACCES)
            status_code = 403;
         else
@@ -240,7 +234,7 @@ bool ProcessRequest::check_redirction()
 
 void ProcessRequest::check_Cgi()
 {
-    // if (!extension.empty())
+
         if (check_location_extention())
             is_CgiRq = true;
 }

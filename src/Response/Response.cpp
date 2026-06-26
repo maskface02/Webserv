@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/21 18:30:42 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/06/25 19:16:48 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/06/26 21:57:01 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,26 +16,12 @@
 Response::Response(ProcessRequest& ProcessReq, ServeStaticRq& _staticRq, Request& req)
     :Static(&_staticRq),ProcessRq(&ProcessReq),request(&req)
 {
-    //for static response
-        // => Headers
-        // => serve error page
-        // => simple error page if not existe
-    // for cgi 
-        // => Modify the first line of the out put to much Http protocol
-    // build response
-    // if (ProcessRq->is_CgiRq)
-    //     CgiResponse();// check if it valid and corect the first line
-   
-        ResponseLine();
-        MIME_Types();
-        StaticRespHeaders();
-        _Response();
+    ResponseLine();
+    MIME_Types();
+    StaticRespHeaders();
+    _Response();
 }
 
-// void    Response:: CgiResponse()
-// {
-    
-// }
 
 void Response::ResponseLine()
 {

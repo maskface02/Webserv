@@ -61,18 +61,3 @@ void ProcessCgi::EnvArray()
     }
     env[i] = NULL;
 }
-
-
-
-// void ProcessCgi::DefInterp(std::string extension)
-// {
-//     std::map<std::string,std::string>::iterator it = Interp_Map.find(extension.c_str());
-//     if (it != Interp_Map.end())
-//         Interp = it->second;
-// }
-// void ProcessCgi::InterpMap()
-// {
-//     Interp_Map[".py"] = "python3";//exmpl
-//     Interp_Map[".cpp"] = "c++";//exmpl
-//     ////
-// }

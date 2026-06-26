@@ -48,12 +48,15 @@ void    ServeStaticRq::ServeGetRequest(std::string resource_path)
     if (ProcessRq->is_dir)
     {
         if ((path_indexFile = ProcessRq->getIndexFile()) != "")
-        {
+        { 
             path_indexFile = resource_path + path_indexFile ;
             servFile(path_indexFile);
         }
         else
+        {
             check_AutoIndex();
+        }
+            
     }
     else
         servFile(resource_path);
@@ -86,8 +89,6 @@ void ServeStaticRq::check_AutoIndex()
         html_list_dir();
     else
         ServeError(403);
-
-    // ProcessRq->setStatusCode(403);
 }
 
 void ServeStaticRq::html_list_dir()
@@ -98,10 +99,7 @@ void ServeStaticRq::html_list_dir()
 
     op_dir = opendir(ProcessRq->getResourcePath().c_str());
     if (!op_dir)
-    {
         ServeError(403);
-      
-    }
     str << "<!DOCTYPE html>";
     str<< "<html>\n";
     str << "<body>\n";
@@ -130,7 +128,6 @@ void ServeStaticRq::ServeDeleteRq()
         std::string dir_path = ProcessRq->getResourcePath().substr(0,pos);
         if (access(dir_path.c_str(), F_OK))
         {
-            // ProcessRq->setStatusCode(403);
             ServeError(403);
             return;
         }
@@ -156,11 +153,9 @@ void    ServeStaticRq::ServePostRq()
             file << request->getBody();
         }
         file.close();
-        // ProcessRq->setStatusCode(200);
          ServeError(200);
     }
     else  ServeError(403);
-        // ProcessRq->setStatusCode(403);
 }
 
 void ServeStaticRq::ServeError(int status_code)
@@ -174,7 +169,7 @@ void ServeStaticRq::ServeError(int status_code)
         servFile(it->second);
         return;
     }
-    html_Error_page(status_code);
+    resp_body = html_Error_page(status_code, Status);
 }
 
 
@@ -186,17 +181,18 @@ void ServeStaticRq::ServeError(int status_code)
 // </body>
 // </html>
 
-void  ServeStaticRq::  html_Error_page(int& status_code)
+std::string  ServeStaticRq::  html_Error_page(int status_code, std::string stat)
 {
     
     std::stringstream body;
     body << "<html>\n";
-    body << "<head><title>" << status_code << " " << Status << "</title></head>\n";
+    body << "<head><title>" << status_code << " " << stat << "</title></head>\n";
     body << "<body>\n";
     body <<"<hr><center>" << "WebServer/1.1"<< "</center>\n";
     body<<"</body>\n";
     body<<"</html>\n";
-  resp_body = body.str();
+
+  return body.str();
 }
 
 void ServeStaticRq::status()
