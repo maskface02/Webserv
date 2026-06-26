@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   WebServ.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: zatais <zatais@student.1337.ma>            +#+  +:+       +#+        */
+/*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/17 05:30:09 by zatais            #+#    #+#             */
-/*   Updated: 2026/05/17 05:30:09 by zatais           ###   ########.fr       */
+/*   Updated: 2026/06/26 13:09:12 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,5 +44,14 @@
 #include "Config.hpp"
 #include "Logger.hpp"
 #include "Server.hpp"
+
+
+
+
+#include "Request.hpp"
+#include "ProcessRequest.hpp"
+#include "ProcessCgi.hpp"
+#include "ServeStaticRq.hpp"
+#include "Response.hpp"
 
 #endif // !WEBSERV_HPP

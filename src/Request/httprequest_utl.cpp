@@ -6,11 +6,11 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 19:54:39 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/05/24 23:47:43 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/06/26 12:54:29 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../../include/httprequest.hpp"
+#include "../../include/WebServ.hpp"
 
 ////////////////////////////////////////////////////////           Request line         ///////////////////////////////
 
@@ -20,29 +20,31 @@ void Request::check_valid_nbr_space(std::string  &Rqline, size_t EndLine)
     size_t         i = 0;
     size_t         countSpace = 0;
     std::string    line = Rqline.substr(0,EndLine);
+    
     while (i < EndLine)
     {
         
         if ((line[i] >= 0 && line[i] <= 31) || line[i] == 127)
-            throw(Request::HttpError(400,"Bad Request"));
+            throw(HttpError(400));
         if (countSpace > 2)
-            throw(Request::HttpError(400,"Bad Request"));
+            throw(HttpError(400));
         if (line[i] == ' ')
         {
             if ((i + 1) < EndLine && line[i + 1] == ' ')
-                throw(Request::HttpError(400,"Bad Request"));
+                throw(HttpError(400));
             countSpace++;
         }
         i++;
     }
     if (countSpace != 2)
-       throw(Request::HttpError(400,"Bad Request"));
+       throw(HttpError(400));
+
 }
 
 void Request::check_valid_line()
 {
     check_valid_Method();
-    // check_valid_URL();//Not implemented yet
+    // check_valid_URL();//Not implemented yet 
     check_valid_HttpV();
 }
 
@@ -51,10 +53,10 @@ void Request::check_valid_Method()
     if (RequestLine.Method == "OPTIONS" || RequestLine.Method == "HEAD" || RequestLine.Method == "PUT" 
             || RequestLine.Method == "TRACE"  ||  RequestLine.Method == "CONNECT" )
     {
-          throw(Request::HttpError(501,"Not Implemented"));
+          throw(HttpError(501));
     }
     if (RequestLine.Method != "GET" && RequestLine.Method != "POST" && RequestLine.Method != "DELETE")
-        throw(Request::HttpError(400,"Invalid Method"));
+        throw(HttpError(400));
 }
 
 // void Request::check_valid_URL()
@@ -63,9 +65,9 @@ void Request::check_valid_Method()
 // }
 
 void Request::check_valid_HttpV()
-{
+{ 
     if (RequestLine.HttpVers != "HTTP/1.1" && RequestLine.HttpVers !=  "HTTP/1.0")
-        throw(Request::HttpError(505,"HTTP Version Not Supported"));
+        throw(HttpError(505));
 }
 
 void Request::store_path_query()
@@ -78,6 +80,8 @@ void Request::store_path_query()
         RequestLine.Query = RequestLine.URI.substr(sp + 1);
         pars_query();
     }
+    else
+        RequestLine.Path =  RequestLine.URI;
       
 }
 ////////////////////////////////////////////////////      Headers        ////////////////////
@@ -97,7 +101,7 @@ void Request::check_duplic(std::string& key)
     {
         std::map<std::string, std::string>::iterator it = HeaderMap.find(key.c_str());
         if (it != HeaderMap.end())
-            throw Request::HttpError(400,"Bad Request");
+            throw HttpError(400);
     }
    
 }
@@ -108,18 +112,18 @@ void Request::check_existe(std::string key)
     {
         std::map<std::string, std::string>::iterator it = HeaderMap.find(key.c_str());
         if (it == HeaderMap.end())
-            throw Request::HttpError(400,"Bad Request");
+            throw HttpError(400);
     }
    
 }
 
 void Request::store_variable(std::string& key, std::string& value)
-{
-    if (key == "Connection")
-        connection = value;
+{// lower case
+    if (key == "Connection" && value == "keep-alive")
+        connection = true;
     if (key == "Content-Length")
         store_cont_lenght(value);
-    if (key == "Transfer-Encoding" )
+    if (key == "Transfer-Encoding" &&  value == "chunked" )
         isChunked = true;
     if (key == "Host")
         store_host_port(value);
@@ -130,10 +134,10 @@ void Request::store_variable(std::string& key, std::string& value)
 void Request::store_cont_lenght(const std::string &lenght)
 {   
     if (lenght.empty() || !strIsDigits(lenght))
-        throw(Request::HttpError(400," Bad Request"));
+        throw(HttpError(400));
     content_lenght = std::atoi(lenght.c_str());
-    if (content_lenght > MAX_BODY_SIZE)
-        throw(Request::HttpError(413,"Request Entity Too Large"));
+    // if (content_lenght > MAX_BODY_SIZE)
+    //     throw(HttpError(413,"Request Entity Too Large")); => check in in process
 }
 
 void Request::store_host_port(std::string &str)
@@ -149,9 +153,10 @@ void Request::store_host_port(std::string &str)
         if (!strNbr.empty() && strIsDigits(strNbr))
             port = std::atoi(strNbr.c_str());
         else
-            throw Request::HttpError(400,("Bad Request"));
+            throw HttpError(400);
     }
-    else    Host = str;
+    // else    throw HttpError(400);
+    Host = str;
 }
 
 void Request::check_Post()
@@ -160,18 +165,18 @@ void Request::check_Post()
     std::map<std::string, std::string>::iterator it2 = HeaderMap.find("Content-Type");
     std::map<std::string, std::string>::iterator it3 = HeaderMap.find("Transfer-Encoding");
     if (it1 != HeaderMap.end() && it3 != HeaderMap.end())
-        throw Request::HttpError(400,"Bad Request");
+        throw HttpError(400);
     if ( it1 == HeaderMap.end() &&  it3 == HeaderMap.end())
-        throw Request::HttpError(400,"Bad Request");
+        throw HttpError(400);
     if (it2 ==  HeaderMap.end())
-        throw Request::HttpError(400,"Bad Request");
+        throw HttpError(400);
 }
 
 int Request::strIsDigits(const std::string& str)
 {
     size_t  i = 0;
 
-    while(i < str.size())
+    while (i < str.size())
     {
         if (!std::isdigit(str[i]))
             return (0);
@@ -179,40 +184,16 @@ int Request::strIsDigits(const std::string& str)
     }
     return(1);
 }
-//////////////////////////////   body   ///////////////////////////////
-
-
-int Request::HexStr_to_Int(const char c)
-{
-    int nbr;
-    size_t i = 0;
-    std::string Hex1 = "0123456789abcdef";
-    std::string Hex2 = "0123456789ABCDEF";
-    
-    while (i < Hex1.length())
-    {
-        if (c == Hex1[i] || c == Hex2[i])
-            return (i);
-        i++; 
-    }
-    return (-1);   
-}
 
 /// exception
 
-Request::HttpError::HttpError(int ErrorCode, const char * str)
-: code(ErrorCode),reason(str){}
+HttpError::HttpError(int ErrorCode): code(ErrorCode){}
 
-
-const char * Request::HttpError::what() const throw()
+int HttpError::getErrorCode() const
 {
-        return(reason);    
+    return(code);
 }
 
-int Request::HttpError::getErrorCode() const
-{
-    return (code);
-}
 
 /////// Get
 
@@ -236,7 +217,7 @@ std::string    Request::getBody() const
 {
     return(body);
 }
-std::string   Request::getConnection() const
+bool   Request::getConnection() const
 {
     return (connection);
 }
@@ -255,4 +236,14 @@ bool  Request::getIsChunked() const
 std::map<std::string , std::vector<std::string> >   Request::getQuery() const
 {
     return (Query);
+}
+
+int  Request::getStatusCode() const 
+{
+    return (status_code) ;
+}
+
+std::string Request::getPath() const 
+{
+    return(RequestLine.Path);
 }

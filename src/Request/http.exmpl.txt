@@ -1,0 +1,15 @@
+POST /submit-form HTTP/1.1
+Host: example.com
+Content-Type: multipart/form-data; boundary=X-BORDER-12345
+
+--X-BORDER-12345
+Content-Disposition: form-data; name="resume"; filename="my_resume.pdf"
+Content-Type: application/pdf
+
+[Raw PDF Data]
+--X-BORDER-12345
+Content-Disposition: form-data; name="cover_letter"; filename="letter.docx"
+Content-Type: application/msword
+
+[Raw Word Doc Data]
+--X-BORDER-12345--

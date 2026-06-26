@@ -6,11 +6,11 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 19:54:58 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/05/24 23:47:58 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/06/23 03:22:53 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../../include/httprequest.hpp"
+#include "../../include/WebServ.hpp"
 
 
 
@@ -22,8 +22,9 @@ std::string req = "POST /stream HTTP/1.1\r\nHost: example.com\r\nContent-Type: t
     try
     {
         Request R(req);
+        
     }
-    catch(const Request::HttpError& e)
+    catch(const HttpError& e)
     {
         std::cerr <<e.getErrorCode()<<" "<<e.what()<<std::endl;
         //clear
