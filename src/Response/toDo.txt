@@ -1,0 +1,21 @@
+process req 
+    is it cgi 
+        yes => prepare info
+        NO => 
+        No => Process Method => body ready + Error status + status code
+
+
+
+        1 => build CGI  requerment 
+        2 => re orgnayz code struct => see deffren exampls and take a little time to think about urs
+
+
+
+
+pars request
+process request => define if it cgi or static file
+hanlCGI if true 
+hanlStaticFile if true
+build response =>
+        =>build chunked body if no content lenth in cgi output
+        =>
