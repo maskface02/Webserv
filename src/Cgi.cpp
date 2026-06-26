@@ -79,29 +79,20 @@ void Cgi::startCgi(Client* client, std::string& interpreter, std::string& script
   close(pipe_to_cgi[0]);
   close(pipe_from_cgi[1]);
 
-  if (!client->cgi_input_buffer.empty()) {
-    const char* data = client->cgi_input_buffer.c_str();
-    size_t total = client->cgi_input_buffer.size();
-    size_t written = 0;
-
-    while (written < total) { // how to fix the write blocking issue in case of big input data
-      ssize_t bytes = write(pipe_to_cgi[1], data + written, total - written);
-      if (bytes <= 0) {
-        _logger.warn("write to CGI stdin failed");
-        break;
-      }
-      written += bytes;
-    }
-    client->cgi_input_buffer.clear();
-  }
-  close(pipe_to_cgi[1]);
-
   Server::setNonBlocking(pipe_from_cgi[0]);
-
   initCgiClient(client, pid, pipe_from_cgi[0]);
 
   Server::addToPoll(pipe_from_cgi[0], POLLIN, _poll_fds);
   _pipe_to_client_fd[pipe_from_cgi[0]] = client->fd;
+
+  if (!client->cgi_input_buffer.empty()) {
+    Server::setNonBlocking(pipe_to_cgi[1]);
+    Server::addToPoll(pipe_to_cgi[1], POLLOUT, _poll_fds);
+    _pipe_to_client_fd[pipe_to_cgi[1]] = client->fd;
+    client->cgi_stdin_fd = pipe_to_cgi[1];
+  }
+  else 
+    close(pipe_to_cgi[1]);
 }
 
 void Cgi::handleCgiRead(std::map<int, int>::iterator pipe_it, std::map<int, Client*>& clients) {
@@ -137,6 +128,18 @@ void Cgi::handleCgiRead(std::map<int, int>::iterator pipe_it, std::map<int, Clie
 }
 
 void Cgi::cleanupCgi(Client* client, int exit_status) {
+  if (client->cgi_stdin_fd != -1) {
+    close(client->cgi_stdin_fd);
+    for (size_t i = 0; i < _poll_fds.size(); ++i) {
+      if (_poll_fds[i].fd == client->cgi_stdin_fd) {
+        _poll_fds.erase(_poll_fds.begin() + i);
+        break;
+      }
+    }
+    _pipe_to_client_fd.erase(client->cgi_stdin_fd);
+    client->cgi_stdin_fd = -1;
+  }
+
   if (client->cgi_stdout_fd != -1) {
     close(client->cgi_stdout_fd);
     for (size_t i = 0; i < _poll_fds.size(); ++i) {

@@ -20,6 +20,7 @@
 #define POLL_TIMEOUT 5000
 #define CLIENT_TIMEOUT 60
 #define CGI_TIMEOUT 60
+#define CGI_CHUNK_SIZE 65536
 
 enum ClientState {
     STATE_READING,
@@ -79,6 +80,7 @@ class Server {
     void    handleCgiPipeRead();
     void    handlePollOut();
     void    handlePollErrors();
+    void    handleCgiStdinWrite();
 
     Server();
     Server(const Server&);

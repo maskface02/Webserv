@@ -11,8 +11,6 @@
 /* ************************************************************************** */
 
 #include "../include/WebServ.hpp"
-#include <cstddef>
-#include <cctype>
 
 Server::Server(){}
 
@@ -384,6 +382,7 @@ void Server::run() {
     handlePollErrors();
     handlePollIn();
     handleCgiPipeRead();
+    handleCgiStdinWrite();
     handlePollOut();
   }
 }
@@ -431,6 +430,40 @@ void Server::handleCgiPipeRead() {
     }
   }
 }
+// need to check well 
+// void Server::handleCgiStdinWrite() {
+//   std::vector<int> ready_pipe_fds;
+//   for (size_t i = 0; i < _poll_fds.size(); ++i)
+//     if (_poll_fds[i].revents & POLLOUT && _pipe_to_client_fd.count(_poll_fds[i].fd))
+//       ready_pipe_fds.push_back(_poll_fds[i].fd);
+//
+//   for (size_t i = 0; i < ready_pipe_fds.size(); ++i) {
+//     int pipe_fd = ready_pipe_fds[i];
+//     int client_fd = _pipe_to_client_fd[pipe_fd];
+//     std::map<int, Client*>::iterator it = _clients.find(client_fd);
+//     if (it == _clients.end())
+//       continue;
+//
+//     Client* client = it->second;
+//     if (client->cgi_input_buffer.empty()) {
+//       close(pipe_fd);
+//       for (size_t j = 0; j < _poll_fds.size(); ++j) {
+//         if (_poll_fds[j].fd == pipe_fd) {
+//           _poll_fds.erase(_poll_fds.begin() + j);
+//           break;
+//         }
+//       }
+//       _pipe_to_client_fd.erase(pipe_fd);
+//       client->cgi_stdin_fd = -1;
+//       continue;
+//     }
+//
+//     size_t to_write = std::min(client->cgi_input_buffer.size(), (size_t)CGI_CHUNK_SIZE);
+//     ssize_t bytes = write(pipe_fd, client->cgi_input_buffer.c_str(), to_write);
+//     if (bytes > 0)
+//       client->cgi_input_buffer.erase(0, bytes);
+//   }
+// }
 
 void Server::handlePollOut() {
   std::vector<int> ready_write_fds;
