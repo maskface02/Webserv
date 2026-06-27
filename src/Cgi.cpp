@@ -115,13 +115,16 @@ void Cgi::handleCgiRead(std::map<int, int>::iterator pipe_it, std::map<int, Clie
       client->last_activity = time(NULL);
       read_this_cycle += bytes;
     }
-    else {
+    else if (bytes == 0) {
       int status;
       pid_t result = waitpid(client->cgi_pid, &status, 0);
       if (result > 0)
         cleanupCgi(client, status);
       else
         cleanupCgi(client, -1);
+      return;
+    }
+    else {
       return;
     }
   }
@@ -153,6 +156,11 @@ void Cgi::cleanupCgi(Client* client, int exit_status) {
   }
 
   client->cgi_pid = -1;
+
+  if (exit_status == -1) {
+    client->state = STATE_CGI_ERROR;
+    return;
+  }
 
   if (WIFEXITED(exit_status) && WEXITSTATUS(exit_status) == 0)
     client->state = STATE_WRITING_RESPONSE;

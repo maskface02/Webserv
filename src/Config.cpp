@@ -127,12 +127,21 @@ bool Config::toBool(std::string& s, std::string& context) {
 }
 
 std::vector<std::string> Config::collectValues(std::vector<std::string>& tokens, size_t& idx, const std::string& key) {
-    std::vector<std::string> values;
-    while (idx < tokens.size() && tokens[idx] != ";")
-        values.push_back(tokens[idx++]);
-    if (values.empty())
-        throw std::runtime_error("config: missing value for directive '" + key + "'");
-    return values;
+  std::vector<std::string> values;
+  std::string directives[] = {
+    "listen", "error_page", "client_max_body_size",
+    "root", "index", "autoindex", "allow_methods",
+    "upload_store", "cgi", "return", "location", "server"
+  };
+  while (idx < tokens.size() && tokens[idx] != ";") {
+    for (size_t i = 0; i < 12; ++i)
+      if (tokens[idx] == directives[i])
+        throw std::runtime_error("config: missing ';' before directive '" + tokens[idx] + "'");
+    values.push_back(tokens[idx++]);
+  }
+  if (values.empty())
+    throw std::runtime_error("config: missing value for directive '" + key + "'");
+  return values;
 }
 
 bool Config::isValidIp(std::string& ip) {
