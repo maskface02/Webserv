@@ -53,10 +53,7 @@ void    ServeStaticRq::ServeGetRequest(std::string resource_path)
             servFile(path_indexFile);
         }
         else
-        {
             check_AutoIndex();
-        }
-            
     }
     else
         servFile(resource_path);
@@ -153,7 +150,6 @@ void    ServeStaticRq::ServePostRq()
             file << request->getBody();
         }
         file.close();
-         ServeError(200);
     }
     else  ServeError(403);
 }
@@ -161,7 +157,7 @@ void    ServeStaticRq::ServePostRq()
 void ServeStaticRq::ServeError(int status_code)
 {
     status(); 
-    ProcessRq->setExtension(".html");// for http response content type header
+    ProcessRq->setExtension(".html");
     std::map<int, std::string>::iterator it;
     it = serv.error_pages.find(status_code);
     if (it !=  serv.error_pages.end())
@@ -233,6 +229,9 @@ void ServeStaticRq::status()
             break;
         case 505:
             Status = "HTTP Version Not Supported";
+            break;
+        case 502:
+            Status = "Bad Gateway";
             break;
         default:
             Status = "OK";

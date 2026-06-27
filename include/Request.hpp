@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 19:54:51 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/06/26 12:52:04 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/06/26 22:48:46 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,34 +51,31 @@ class Request
         reqLine                                             RequestLine;
         int                                                 port;
         std::string                                         Host;
-        size_t                                                 content_lenght;
+        size_t                                              content_lenght;
         std::string                                         body;
-        bool                                         connection;
+        std::string                                         connection;
         bool                                                isChunked;
         std::string                                         content_type;
         int                                                 status_code;
-        // std::string                                         reason;
         // Request();
     public:
-        Request(std::string& header);
+        Request(Client* client, std::string& header);
         // Request(Request& other);
         // Request& operator=(Request& other);
         // ~Request(); 
     //geters
     
-    // add getPath
         std::map<std::string , std::string>                 getHeaderMap() const ;
         reqLine                                             getRequestLine() const;
         int                                                 getPort() const;
         std::string                                         getHost() const;
         std::string                                         getBody() const;
-        bool                                                getConnection() const;
+        std::string                                         getConnection() const;
         std::string                                         getContentType()const;
         int                                                 getContentLenght() const;
         bool                                                getIsChunked() const;
         std::map<std::string , std::vector<std::string> >   getQuery() const;
         int                                                 getStatusCode() const;
-        std::string                                         getStatusReason() const;
         std::string                                         getPath() const;
     //pars
         size_t                                              pars_lineRequest(std::string  &header, size_t LineEnd);

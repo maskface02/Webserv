@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 19:54:39 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/06/26 12:54:29 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/06/26 22:48:06 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -119,8 +119,8 @@ void Request::check_existe(std::string key)
 
 void Request::store_variable(std::string& key, std::string& value)
 {// lower case
-    if (key == "Connection" && value == "keep-alive")
-        connection = true;
+    if (key == "Connection")
+        connection = value;
     if (key == "Content-Length")
         store_cont_lenght(value);
     if (key == "Transfer-Encoding" &&  value == "chunked" )
@@ -217,7 +217,7 @@ std::string    Request::getBody() const
 {
     return(body);
 }
-bool   Request::getConnection() const
+std::string   Request::getConnection() const
 {
     return (connection);
 }

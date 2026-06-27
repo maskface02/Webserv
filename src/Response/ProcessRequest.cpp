@@ -6,14 +6,14 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/16 12:06:38 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/06/26 21:58:50 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/06/27 01:50:32 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 
 #include "../../include/WebServ.hpp"
 
-ProcessRequest::ProcessRequest(Request& req,  ServerConfig& _srv)
+ProcessRequest::ProcessRequest( Request& req,  ServerConfig& _srv)
 :request(&req),srv(&_srv),status_code(0),is_CgiRq(0),is_dir(0),is_RedirecRq(0)
 {
 
@@ -27,19 +27,18 @@ ProcessRequest::ProcessRequest(Request& req,  ServerConfig& _srv)
 
     if (check_redirction())
         return;
+    //check_max_body_size /TODO    
     if (!check_allowed_method())
         return; 
     define_type();
     if(status_code)
         return;
    
-    extract_file_extension();// if is dir look for index and get it extension
+    extract_file_extension();
    
     check_Cgi();
     if (!is_CgiRq)
         is_Static = true;
-    // std::cout<<"is cgi :"<< is_CgiRq<<std::endl;
-    // std::cout<<"resource path "<<resource_path<<std::endl;
 }
 
 bool ProcessRequest::check_status()

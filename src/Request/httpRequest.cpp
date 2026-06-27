@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/22 10:02:50 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/06/26 12:43:12 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/06/26 22:47:02 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,7 @@
 // store conectionne value in the client
 
 
-Request::Request(std::string& Rq)
+Request::Request(Client* client, std::string& Rq)
 :port(8080),content_lenght(0),connection("close"), isChunked(false), status_code(0)
 {
     size_t          LineEnd = 0;
@@ -31,6 +31,8 @@ Request::Request(std::string& Rq)
             if (header_end !=  std::string::npos)
                 pars_headerMap(Rq, LineEnd + 2,header_end + 2);
             else    throw HttpError(400);
+            if (connection == "keep-alive")
+                client->keep_alive = true;
             if ((header_end + 4) <  Rq.length() &&  RequestLine.Method == "POST")
             {
                 check_Post();
@@ -129,12 +131,12 @@ void  Request::pars_headerMap(std::string& Rq, size_t HeadersSrart ,size_t Heade
 
 void Request::pars_headerBody(std::string& RqBody, size_t bodyStart)
 {
-    size_t pos;
+    // size_t pos;
     std::string Text_body = RqBody.substr(bodyStart);
     if (isChunked == false && Text_body.size() < content_lenght)
         throw(HttpError(400));
-    if((pos = content_type.rfind("boundry")) != std::string::npos)
-        pars_boundry(pos);
+    // if((pos = content_type.rfind("boundry")) != std::string::npos)
+    //     pars_boundry(pos);
     if (isChunked)
         store_chunked_body(Text_body);
     else
