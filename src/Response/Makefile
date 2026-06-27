@@ -5,7 +5,7 @@ CXX = c++ -g
 CFLAGS = -Wall -Wextra -Werror -std=c++98
 
 SRC = main.cpp ../Config.cpp ../Request/httprequest_utl.cpp ../Request/httpRequest.cpp \
-		ProcessRequest.cpp ServeStaticRq.cpp Response.cpp
+		ProcessRequest.cpp ServeStaticRq.cpp Response.cpp ProcessCgi.cpp
 
 OBJ = $(SRC:.cpp=.o)
 

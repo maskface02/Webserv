@@ -14,13 +14,17 @@
 
 ProcessCgi::ProcessCgi(Client *client,ProcessRequest &ProcessRq, Request& request):cgi_path(ProcessRq.getCgiPath())
 {
+
     if (request.getRequestLine().Method == "Post")
         client->cgi_input_buffer = request.getBody();
     EnvMap(request,client->ip);
     if (Interp.empty())
         ProcessRq.setStatusCode(404);// not sur about this error handling 
     cgi_output = client->cgi_output_buffer;
-    client->_ProcessCgi = this;
+    connection = request.getConnection();
+    //WHY NOT WORKING
+    // client->_ProcessCgi = this;
+
 }
 void ProcessCgi::EnvMap(Request& request,std::string ClientIp)
 {
@@ -36,7 +40,7 @@ void ProcessCgi::EnvMap(Request& request,std::string ClientIp)
     env_map["REQUEST_METHOD"] = (request.getRequestLine().Method);
     env_map["SCRIPT_NAME"] = cgi_path;// =>path of cgi 
     env_map["SCRIPT_FILENAME"] = cgi_path;// => path of cgi 
-     env_map["PATH_INFO"] = request.getPath();//=>request path
+    env_map["PATH_INFO"] = request.getPath();//=>request path
     env_map["REQUEST_URI"] = request.getRequestLine().URI; //=>  req URI
     env_map["SERVER_NAME"] = request.getHost();
     env_map["SERVER_PORT"] = request.getPort();
@@ -86,6 +90,8 @@ void ProcessCgi::EnvArray()
 // <center><h1>403 Forbidden</h1></center>
 // </body>
 // </html>
+
+//TO TEST
  void ProcessCgi::GeneretCgiResponse()
 {
     std::string body;
@@ -97,18 +103,16 @@ void ProcessCgi::EnvArray()
     ErrorHead << "Server: Webserver/1.1\r\n";
     ErrorHead <<"Content-Type: text/html\r\n";
     // ErrorHead << "Date: "
-    //ErrorHead << "Connection: "
-
+    ErrorHead << "Connection: "<<connection<<"\r\n";
     size_t p_body = 0;
     if ((p_body = cgi_output.find("\r\n\r\n")) == std::string::npos)
     {
-
         Cgi_resp = ServeStaticRq::html_Error_page(502, "Bad Gateway");
         ErrorHead << "Content-Length: " << Cgi_resp.size() << "\r\n";
         Cgi_resp = ErrorHead.str() + "\r\n "+Cgi_resp;
         return;
     }
-    addHeader =  cgi_output.substr(0, p_body);
+    addHeader =  cgi_output.substr(0, p_body) + "\r\n";
     addLine = "HTTP/1.1 200 OK\r\n";
     size_t p_stat =  cgi_output.find("Status:");
     if (p_stat != std::string::npos)
@@ -119,6 +123,7 @@ void ProcessCgi::EnvArray()
             size_t pos_value = 0;
             if ((pos_value =  cgi_output.find(":", p_stat)) != std::string::npos)
             {
+                pos_value++;
                 while (pos_value < lineEnd && cgi_output[pos_value] == ' ')
                     pos_value++;
                 std::string status_value = cgi_output.substr(pos_value , lineEnd - (pos_value));
@@ -141,11 +146,10 @@ void ProcessCgi::EnvArray()
             str << "Content-Length: " << body.size() << "\r\n"; 
             addHeader += str.str();
         }
-    }    
+    }
    Cgi_resp = addLine + addHeader + "\r\n" ;
    if (!body.empty())
         Cgi_resp +=body;
-    std::cout<<Cgi_resp<<std::endl;
 }
 
 char**   ProcessCgi::getEnv() const

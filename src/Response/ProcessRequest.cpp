@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/16 12:06:38 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/06/27 01:50:32 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/06/28 00:15:40 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,11 +23,11 @@ ProcessRequest::ProcessRequest( Request& req,  ServerConfig& _srv)
     {
         status_code = 404; std::cout <<"1"<<std::endl;
         return;
-    } 
-
+    }
     if (check_redirction())
         return;
-    //check_max_body_size /TODO    
+    if (!check_max_body_size())
+        return;    
     if (!check_allowed_method())
         return; 
     define_type();
@@ -50,21 +50,20 @@ bool ProcessRequest::check_status()
 
 bool ProcessRequest::match_location(ServerConfig& server)
 {
+    normlize_location_path(server);
     std::vector<Location> ::iterator it = server.locations.begin();
     std::map<size_t,Location> location ;
     bool found = false; 
-    
     size_t pos = 0;
     std::vector<std::string> prefix ;
     prefix.push_back("/");
     pos = request->getPath().find("/",1);
-
+    
     while(pos != std::string::npos)
     {
         prefix.push_back(request->getPath().substr(0,pos));
         pos = request->getPath().find("/",pos + 1);
     }
-  
     std::vector<std::string> ::iterator vec_it = prefix.begin();
     while(it != server.locations.end())
     {
@@ -97,9 +96,46 @@ bool ProcessRequest::match_location(ServerConfig& server)
     else
         resource_path = target_location.root + request->getPath();   
    
-    //   std::cout<<"Target location == "<<target_location.path<<std::endl;
-    //     std::cout<<"Resource path == "<<resource_path<<std::endl;
+      std::cout<<"Target location == "<<target_location.path<<std::endl;
+        std::cout<<"Resource path == "<<resource_path<<std::endl;
     return (true);
+}
+// normalize
+//* we remove the slash at the end of the location 
+//* to make the prefix match the location even if there is a slash at the end 
+//* exmple 
+// config has:   /api/
+// prefix list:  /  ,  /api  ,  /api/v1
+//  "/api" == "/api"  ?  YES 
+// "/api/" == "/api"  ?  NO  → missed without normalization
+//TO TEST
+void ProcessRequest::normlize_location_path(ServerConfig& server)
+{
+    std::vector<Location> ::iterator it = server.locations.begin();
+    while (it != server.locations.end())
+    {
+        size_t pos = 0;
+        if (it->path.length() > 1 
+            &&( pos = it->path.find("/",it->path.length() - 1)) != std::string::npos)
+            it->path.erase(pos, 1);
+        it++;
+    }
+}
+
+bool    ProcessRequest::check_max_body_size()
+{
+    if(!request->getBody().empty())
+    {
+        size_t max_size =  target_location.client_max_body_size;
+        if (!max_size)
+            max_size = srv->client_max_body_size;
+        if (request->getBody().size() > max_size)
+        {
+            status_code = 413;
+            return(false);
+        }
+    }
+    return(true);
 }
 
 bool ProcessRequest::check_allowed_method()
