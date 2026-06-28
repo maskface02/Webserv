@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/16 12:06:38 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/06/28 00:15:40 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/06/28 01:34:31 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,19 +21,19 @@ ProcessRequest::ProcessRequest( Request& req,  ServerConfig& _srv)
         return;
     if (!match_location(_srv))
     {
-        status_code = 404; std::cout <<"1"<<std::endl;
+        status_code = 404;
         return;
-    }
+    } 
     if (check_redirction())
         return;
     if (!check_max_body_size())
         return;    
     if (!check_allowed_method())
         return; 
-    define_type();
+    define_type();  std::cout <<"1\n"<<std::endl;
     if(status_code)
         return;
-   
+ 
     extract_file_extension();
    
     check_Cgi();
@@ -156,7 +156,7 @@ void ProcessRequest::define_type()
 {
    struct stat pathStat;
 
-   
+   std::cout<<resource_path<< "====== resource path\n";
     if (!stat(resource_path.c_str(),&pathStat))
     {
         if (S_ISDIR(pathStat.st_mode))
@@ -187,6 +187,7 @@ void ProcessRequest::define_type()
     }
     else 
     {
+        std::cout<<"heeeeeeeeeeeeeeeeeeer\n";
         if (errno == EACCES)
            status_code = 403;
         else

@@ -128,15 +128,17 @@ void ServeStaticRq::ServeDeleteRq()
 // TEST
 
 void    ServeStaticRq::ServePostRq()
-{
+{std::cout<<file_path<<" ===== file"<<std::endl;
     if (ProcessRq->getLocation().upload_enabled)
-    {   size_t pos = 0;
+    {   
+        size_t pos = 0;
         file_path = ProcessRq->getLocation().upload_store;
         if ((pos = file_path.rfind("/")) == file_path.length() - 1)
             file_path = file_path.substr(0, pos); 
-        file_path += request->getPath();;
+        
+        file_path += request->getPath();;std::cout<<file_path<<" ===== dir"<<std::endl;
         if (ProcessRq->is_dir)
-        {
+        { 
             if (request->is_boundry)
                 upload_files();
         }
@@ -161,7 +163,8 @@ void ServeStaticRq::upload_files()
     it = boundry.begin();
     while(it != boundry.end())
     {
-        file_path += it->first; 
+      
+        file_path += it->first;   std::cout<<file_path<<std::endl;
         std:: ofstream file (file_path.c_str());
         if (file.is_open())
         {
