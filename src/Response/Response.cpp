@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/21 18:30:42 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/06/26 21:57:01 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/06/27 23:20:10 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -90,7 +90,7 @@ void Response::MIME_Types()
     MIME[".txt"] = "text/plain"; 
     MIME["default"] = "text/plain"; 
     
-    //=> default 
+    //=> default ?
     // in case excutable or bin file =>  application/octet-stream 
 }
 

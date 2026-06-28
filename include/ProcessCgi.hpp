@@ -8,21 +8,24 @@ class ProcessCgi
     std::string                                 Interp;
     char**                                      env; //new used here !!
     std::string                                 cgi_path;
-    
 
+
+
+     std::string                                 cgi_output;
+     std::string                                 Cgi_resp;
+     std::string                                  connection;
 
 
 
     public:
-        ProcessCgi(Client& client,ProcessRequest &ProcessRq, Request& request);
+        ProcessCgi(Client *client,ProcessRequest &ProcessRq, Request& request);
         void                EnvMap(Request& request, std::string ClientIp);
         void                EnvArray();
-        void                InterpMap();
-        void                DefInterp(std::string extension);
         // void                ParsCgiOutput();
-        
-
-        std::string         CgiResponse(Client *client);
+         std::string         CgiResponse(Client *client);
+        char**              getEnv() const;
+        std::string&         getCgiPath() ;
+       void                 GeneretCgiResponse();           
 };
 
 

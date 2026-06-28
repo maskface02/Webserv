@@ -28,8 +28,8 @@ ServeStaticRq::ServeStaticRq(Request& rqst, ProcessRequest& PRq,ServerConfig& sr
     }
     else  if(request->getRequestLine().Method == "DELETE")
         ServeDeleteRq();
-    // else if (request.getRequestLine().Method == "POST")
-    //     ProcessPost();
+    else if (request->getRequestLine().Method == "POST")
+        ServePostRq();
     if (ProcessRq->getStatusCode() != 0)
     {
         if (ProcessRq->getStatusCode() != 201)
@@ -53,19 +53,14 @@ void    ServeStaticRq::ServeGetRequest(std::string resource_path)
             servFile(path_indexFile);
         }
         else
-        {
             check_AutoIndex();
-        }
-            
     }
     else
         servFile(resource_path);
-
 }
 
 void ServeStaticRq::servFile(std::string& path)
 {
-     std::cout <<path<<std::endl;
     std::string line;
     std::ifstream local_file (path.c_str());
     if (local_file.is_open())
@@ -73,14 +68,11 @@ void ServeStaticRq::servFile(std::string& path)
         while(getline(local_file,line))
         {
              resp_body+= line;
-            
         }
-           
         local_file.close();
     }
     else
         ProcessRq->setStatusCode(403);
-   
 }
 
 void ServeStaticRq::check_AutoIndex()
@@ -111,11 +103,8 @@ void ServeStaticRq::html_list_dir()
     str << "</ul>\n"  
            "</body>\n"
            "</html>\n";
-    resp_body = str.str(); 
-    
+    resp_body = str.str();
     closedir(op_dir);
-  
-    //-add time and size
 }
 
 void ServeStaticRq::ServeDeleteRq()
@@ -139,29 +128,62 @@ void ServeStaticRq::ServeDeleteRq()
 void    ServeStaticRq::ServePostRq()
 {
     if (ProcessRq->getLocation().upload_enabled)
-    {
-        std::string file_path;
-        // if (ProcessRq->is_dir)// pars in request
-        // {
-            // file_name = ProcessRq->getLocation().upload_store + "/" 
-                // request->getPath()+ request->getFileName();
-        // }
-        file_path = ProcessRq->getLocation().upload_store + request->getPath();// is_ file
-        std:: ofstream file (file_path.c_str());
-        if (file.is_open())
-        {
-            file << request->getBody();
+    {   
+        size_t pos = 0;
+        file_path = ProcessRq->getLocation().upload_store;
+        if ((pos = file_path.rfind("/")) == file_path.length() - 1)
+            file_path = file_path.substr(0, pos); 
+        
+        file_path += request->getPath();
+        if (ProcessRq->is_dir)
+        { 
+            if (request->is_boundry)
+                upload_files();
         }
-        file.close();
-         ServeError(200);
+        else
+        {
+            std:: ofstream file (file_path.c_str());
+            if (file.is_open())
+            {
+                file << request->getBody();
+            }
+            file.close();
+            ProcessRq->setStatusCode(201);
+        }
     }
     else  ServeError(403);
 }
 
+void ServeStaticRq::upload_files()
+{
+    std::map<std::string, std::string> boundry = request->getBoundryMap();
+    std::map<std::string, std::string>::iterator it;
+    std::string path = file_path;
+    it = boundry.begin();
+    while(it != boundry.end())
+    {
+        path += it->first;   
+        std:: ofstream file (path.c_str());
+        if (file.is_open())
+        {
+            file << it->second;
+        }
+        else
+        {
+            ServeError(403);
+            return;
+        }
+        file.close();
+        path.clear();
+        path = file_path;
+        it++;
+    } 
+    ProcessRq->setStatusCode(201);
+}
 void ServeStaticRq::ServeError(int status_code)
 {
     status(); 
-    ProcessRq->setExtension(".html");// for http response content type header
+    ProcessRq->setExtension(".html");
     std::map<int, std::string>::iterator it;
     it = serv.error_pages.find(status_code);
     if (it !=  serv.error_pages.end())
@@ -222,6 +244,9 @@ void ServeStaticRq::status()
         case 411:
             Status = "Length Required";
             break;
+        case 413:
+            Status = "Content Too Large";
+            break;
         case 414:
             Status = "URI Too Long";
             break;
@@ -233,6 +258,9 @@ void ServeStaticRq::status()
             break;
         case 505:
             Status = "HTTP Version Not Supported";
+            break;
+        case 502:
+            Status = "Bad Gateway";
             break;
         default:
             Status = "OK";

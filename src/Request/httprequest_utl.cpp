@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 19:54:39 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/06/26 12:54:29 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/06/28 18:54:47 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,7 +61,11 @@ void Request::check_valid_Method()
 
 // void Request::check_valid_URL()
 // {
-    
+//      * Checks if character is allowed to be in a URI
+//  * Characters allowed as specifed in RFC:
+//    Alphanumeric: A-Z a-z 0-9
+//    Unreserved: - _ . ~
+//    Reserved:  * ' ( ) ; : @ & = + $ , / ? % # [ ]
 // }
 
 void Request::check_valid_HttpV()
@@ -102,6 +106,7 @@ void Request::check_duplic(std::string& key)
         std::map<std::string, std::string>::iterator it = HeaderMap.find(key.c_str());
         if (it != HeaderMap.end())
             throw HttpError(400);
+       
     }
    
 }
@@ -119,8 +124,8 @@ void Request::check_existe(std::string key)
 
 void Request::store_variable(std::string& key, std::string& value)
 {// lower case
-    if (key == "Connection" && value == "keep-alive")
-        connection = true;
+    if (key == "Connection")
+        connection = value;
     if (key == "Content-Length")
         store_cont_lenght(value);
     if (key == "Transfer-Encoding" &&  value == "chunked" )
@@ -136,8 +141,7 @@ void Request::store_cont_lenght(const std::string &lenght)
     if (lenght.empty() || !strIsDigits(lenght))
         throw(HttpError(400));
     content_lenght = std::atoi(lenght.c_str());
-    // if (content_lenght > MAX_BODY_SIZE)
-    //     throw(HttpError(413,"Request Entity Too Large")); => check in in process
+  
 }
 
 void Request::store_host_port(std::string &str)
@@ -155,8 +159,8 @@ void Request::store_host_port(std::string &str)
         else
             throw HttpError(400);
     }
-    // else    throw HttpError(400);
-    Host = str;
+    else    throw HttpError(400);
+    // Host = str;
 }
 
 void Request::check_Post()
@@ -217,7 +221,7 @@ std::string    Request::getBody() const
 {
     return(body);
 }
-bool   Request::getConnection() const
+std::string   Request::getConnection() const
 {
     return (connection);
 }
@@ -247,3 +251,8 @@ std::string Request::getPath() const
 {
     return(RequestLine.Path);
 }
+
+ std::map<std::string, std::string>&       Request::getBoundryMap() 
+ {
+    return(boundry_map);
+ }

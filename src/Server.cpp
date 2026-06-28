@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 21:51:55 by zatais            #+#    #+#             */
-/*   Updated: 2026/06/26 13:25:25 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/06/27 04:28:07 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,9 +75,11 @@ void Server::checkTimeouts() {
         oss << "CGI timeout: " << it->second->ip << ":" << it->second->port;
         _logger.warn(oss.str());
         _cgi->killCgi(it->second, SIGKILL);
-        it->second->write_buffer = "HTTP/1.1 504 Gateway Timeout\r\n" //TODO 
-                                    "Content-Length: 0\r\n"
-                                    "\r\n";
+        std::string body = ServeStaticRq::html_Error_page(504, "Gateway Timeout");
+        std::ostringstream res;
+        res << "HTTP/1.1 504 Gateway Timeout\r\n"<< "Content-Length: "<< body.size() << "\r\n\r\n" << body; /// still needs the date to be added
+        it->second->write_buffer = res.str(); 
+                                    
         it->second->state = STATE_SENDING;
         for (size_t j = 0; j < _poll_fds.size(); ++j) {
           if (_poll_fds[j].fd == it->first) {
@@ -152,6 +154,31 @@ void Server::handleClientRead(int client_fd) {
     client->read_buffer.erase(0, request_size);
 
     //TODO test
+
+    Request request(client ,request_data);
+    client->request_obj = &request;
+    ProcessRequest ProcessRq(request, _config.getServers()[client->server_idx]);
+    if (!ProcessRq.is_CgiRq)
+    {
+      ServeStaticRq StaticRq(request, ProcessRq, _config.getServers()[client->server_idx]);
+      Response StaticResponse (ProcessRq, StaticRq, request);
+      client->response_obj = &StaticResponse;
+      client->state = STATE_SENDING;
+       for (size_t i = 0; i < _poll_fds.size(); ++i) {
+            if (_poll_fds[i].fd == client_fd) {
+                _poll_fds[i].events |= POLLOUT;
+                break;
+            }
+        }
+    }
+    else 
+    {
+      ProcessCgi ProcessCGI(client, ProcessRq, request);
+      // _cgi->startCgi(client, interpreter, ProcessCGI.getCgiPath(), ProcessCGI.getEnv());
+    }
+      //interpreter will be define by Zakaria
+
+      
     // parse request_data -> sets client->request_obj, req->isCgi
 
     // if (!req->isCgi) {
@@ -418,7 +445,10 @@ void Server::handleCgiPipeRead() {
       if (client_it != _clients.end() &&
           (client_it->second->state == STATE_WRITING_RESPONSE ||
            client_it->second->state == STATE_CGI_ERROR)) {
-        // generate Response
+            
+      //  client->second->_ProcessCgi->GeneretCgiResponse();
+
+      
         client_it->second->state = STATE_SENDING;
         for (size_t j = 0; j < _poll_fds.size(); ++j) {
           if (_poll_fds[j].fd == client_fd) {

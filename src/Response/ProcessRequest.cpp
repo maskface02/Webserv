@@ -6,14 +6,14 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/16 12:06:38 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/06/26 21:58:50 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/06/28 18:49:57 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 
 #include "../../include/WebServ.hpp"
 
-ProcessRequest::ProcessRequest(Request& req,  ServerConfig& _srv)
+ProcessRequest::ProcessRequest( Request& req,  ServerConfig& _srv)
 :request(&req),srv(&_srv),status_code(0),is_CgiRq(0),is_dir(0),is_RedirecRq(0)
 {
 
@@ -21,25 +21,22 @@ ProcessRequest::ProcessRequest(Request& req,  ServerConfig& _srv)
         return;
     if (!match_location(_srv))
     {
-        status_code = 404; std::cout <<"1"<<std::endl;
+        status_code = 404;
         return;
     } 
-
     if (check_redirction())
         return;
+    if (!check_max_body_size())
+        return;    
     if (!check_allowed_method())
         return; 
-    define_type();
+    define_type();  
     if(status_code)
         return;
-   
-    extract_file_extension();// if is dir look for index and get it extension
-   
+    extract_file_extension();
     check_Cgi();
     if (!is_CgiRq)
         is_Static = true;
-    // std::cout<<"is cgi :"<< is_CgiRq<<std::endl;
-    // std::cout<<"resource path "<<resource_path<<std::endl;
 }
 
 bool ProcessRequest::check_status()
@@ -51,21 +48,20 @@ bool ProcessRequest::check_status()
 
 bool ProcessRequest::match_location(ServerConfig& server)
 {
+    normlize_location_path(server);
     std::vector<Location> ::iterator it = server.locations.begin();
     std::map<size_t,Location> location ;
     bool found = false; 
-    
     size_t pos = 0;
     std::vector<std::string> prefix ;
     prefix.push_back("/");
     pos = request->getPath().find("/",1);
-
+    
     while(pos != std::string::npos)
     {
         prefix.push_back(request->getPath().substr(0,pos));
         pos = request->getPath().find("/",pos + 1);
     }
-  
     std::vector<std::string> ::iterator vec_it = prefix.begin();
     while(it != server.locations.end())
     {
@@ -102,6 +98,43 @@ bool ProcessRequest::match_location(ServerConfig& server)
     //     std::cout<<"Resource path == "<<resource_path<<std::endl;
     return (true);
 }
+// normalize
+//* we remove the slash at the end of the location 
+//* to make the prefix match the location even if there is a slash at the end 
+//* exmple 
+// config has:   /api/
+// prefix list:  /  ,  /api  ,  /api/v1
+//  "/api" == "/api"  ?  YES 
+// "/api/" == "/api"  ?  NO  → missed without normalization
+//TO TEST
+void ProcessRequest::normlize_location_path(ServerConfig& server)
+{
+    std::vector<Location> ::iterator it = server.locations.begin();
+    while (it != server.locations.end())
+    {
+        size_t pos = 0;
+        if (it->path.length() > 1 
+            &&( pos = it->path.find("/",it->path.length() - 1)) != std::string::npos)
+            it->path.erase(pos, 1);
+        it++;
+    }
+}
+
+bool    ProcessRequest::check_max_body_size()
+{
+    if(!request->getBody().empty())
+    {
+        size_t max_size =  target_location.client_max_body_size;
+        if (!max_size)
+            max_size = srv->client_max_body_size;
+        if (request->getBody().size() > max_size)
+        {
+            status_code = 413;
+            return(false);
+        }
+    }
+    return(true);
+}
 
 bool ProcessRequest::check_allowed_method()
 {
@@ -121,7 +154,6 @@ void ProcessRequest::define_type()
 {
    struct stat pathStat;
 
-   
     if (!stat(resource_path.c_str(),&pathStat))
     {
         if (S_ISDIR(pathStat.st_mode))
@@ -137,14 +169,14 @@ void ProcessRequest::define_type()
                 size_t pos = resource_path.rfind("/");
                
                 if (pos != resource_path.length() - 1)
-                {                     std::cout <<"ERnoooo\n";
+                {                    
                     if(request->getRequestLine().Method == "GET")
                     {
                         status_code = 301;
                         redirect_url = "http:/" + request->getPath() + "/";
                     }
                 }
-                check_index_file();
+                check_index_file();// also for post in case of  CGI
             }
         }
         else if(S_ISREG(pathStat.st_mode))
@@ -157,8 +189,6 @@ void ProcessRequest::define_type()
         else
             status_code = 404;
     }
-
-    
 }
 
 //*******index****
@@ -234,9 +264,8 @@ bool ProcessRequest::check_redirction()
 
 void ProcessRequest::check_Cgi()
 {
-
-        if (check_location_extention())
-            is_CgiRq = true;
+    if (check_location_extention())
+        is_CgiRq = true;
 }
 
 bool ProcessRequest::check_location_extention()
@@ -279,11 +308,6 @@ Location  ProcessRequest::getLocation() const
     return(target_location);
 }
 
-// ServerConfig   ProcessRequest::getServer() const
-// {
-//     std::cout<<srv->error_pages[404];
-//     return(*srv);
-// }
 std::string     ProcessRequest::getRedirectUrl() const 
 {
     return(redirect_url);

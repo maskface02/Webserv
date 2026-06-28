@@ -36,7 +36,8 @@ void                        extract_file_extension();
 bool                        check_redirction();
 void                        check_Cgi();
 bool                        check_location_extention();
-
+bool                        check_max_body_size();
+void                        normlize_location_path(ServerConfig& server);
 //Getter
 
 std::string                 getExtension()const;
