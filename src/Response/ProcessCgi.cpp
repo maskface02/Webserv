@@ -19,11 +19,9 @@ ProcessCgi::ProcessCgi(Client *client,ProcessRequest &ProcessRq, Request& reques
         client->cgi_input_buffer = request.getBody();
     EnvMap(request,client->ip);
     EnvArray();
-
     cgi_output = client->cgi_output_buffer;
     connection = request.getConnection();
-    //WHY NOT WORKING
-    // client->_ProcessCgi = this;
+    client->_ProcessCgi = this;
 
 }
 void ProcessCgi::EnvMap(Request& request,std::string ClientIp)
@@ -45,7 +43,7 @@ void ProcessCgi::EnvMap(Request& request,std::string ClientIp)
     env_map["SERVER_PORT"] = request.getPort();
     env_map["SERVER_PROTOCOL"] = request.getRequestLine().HttpVers;
     env_map["SERVER_SOFTWARE"] = "Webserver/1.1";
-    //cookies header
+    //cookies env
 }
 void ProcessCgi::EnvArray()
 {

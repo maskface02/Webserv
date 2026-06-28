@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/22 10:02:50 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/06/28 18:46:58 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/06/28 18:52:11 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,7 @@ Request::Request(Client* client, std::string& Rq)
 {
     size_t          LineEnd = 0;
     size_t          header_end = std::string::npos;   
-    (void)client;
+    // (void)client;
     try
     {
         LineEnd = Rq.find("\r\n");
@@ -31,8 +31,8 @@ Request::Request(Client* client, std::string& Rq)
             if (header_end !=  std::string::npos)
                 pars_Headers(Rq, LineEnd + 2,header_end + 2);
             else    throw HttpError(400);
-            // if (connection == "keep-alive")
-            //     client->keep_alive = true;
+            if (connection == "keep-alive")
+                client->keep_alive = true;
             if ((header_end + 4) <  Rq.length() &&  RequestLine.Method == "POST")
             {
                 check_Post();
@@ -102,7 +102,7 @@ void  Request::pars_Headers(std::string& Rq, size_t HeadersSrart ,size_t Headers
     std::string Value;
     std::string Headers = Rq.substr(HeadersSrart,HeadersEnd - HeadersSrart);
    
-    // Headers = lowercase(Rq,HeadersSrart,HeadersEnd);//
+    // Headers = lowercase(Rq,HeadersSrart,HeadersEnd);//TO DO
     while ((lineEnd = Headers.find("\r\n", lineStart)) != std::string::npos)
     { 
         line = Headers.substr(lineStart, lineEnd - lineStart);

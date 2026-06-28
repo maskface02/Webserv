@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 21:39:15 by zatais            #+#    #+#             */
-/*   Updated: 2026/06/27 23:33:18 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/06/28 18:57:15 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,9 @@
 #define CGI_TIMEOUT 60
 #define CGI_CHUNK_SIZE 65536
 
+class Request;
+class Response;
+class ProcessCgi;
 enum ClientState {
     STATE_READING,
     STATE_CGI_RUNNING,
@@ -47,9 +50,9 @@ struct Client {
     std::string     cgi_input_buffer;
     std::string     cgi_output_buffer;
     time_t          cgi_start_time;
-    // Request*           request_obj;
-    // Response*           response_obj;
-    // ProcessCgi*         _ProcessCgi;
+    Request*           request_obj; 
+    Response*           response_obj;
+    ProcessCgi*         _ProcessCgi;
 };
 
 class Cgi;

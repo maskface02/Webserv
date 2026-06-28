@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 19:54:39 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/06/28 03:34:38 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/06/28 18:54:47 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -141,8 +141,7 @@ void Request::store_cont_lenght(const std::string &lenght)
     if (lenght.empty() || !strIsDigits(lenght))
         throw(HttpError(400));
     content_lenght = std::atoi(lenght.c_str());
-    // if (content_lenght > MAX_BODY_SIZE)
-    //     throw(HttpError(413,"Request Entity Too Large")); => check in in process
+  
 }
 
 void Request::store_host_port(std::string &str)
@@ -160,8 +159,8 @@ void Request::store_host_port(std::string &str)
         else
             throw HttpError(400);
     }
-    // else    throw HttpError(400);
-    Host = str;
+    else    throw HttpError(400);
+    // Host = str;
 }
 
 void Request::check_Post()
