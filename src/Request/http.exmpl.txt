@@ -1,5 +1,5 @@
-POST /submit-form HTTP/1.1
-Host: example.com
+POST /html2/ HTTP/1.1
+Host: 127.0.0.1:8080
 Content-Type: multipart/form-data; boundary=X-BORDER-12345
 
 --X-BORDER-12345

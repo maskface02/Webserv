@@ -18,8 +18,8 @@ ProcessCgi::ProcessCgi(Client *client,ProcessRequest &ProcessRq, Request& reques
     if (request.getRequestLine().Method == "Post")
         client->cgi_input_buffer = request.getBody();
     EnvMap(request,client->ip);
-    if (Interp.empty())
-        ProcessRq.setStatusCode(404);// not sur about this error handling 
+    EnvArray();
+
     cgi_output = client->cgi_output_buffer;
     connection = request.getConnection();
     //WHY NOT WORKING
@@ -33,7 +33,6 @@ void ProcessCgi::EnvMap(Request& request,std::string ClientIp)
         env_map["CONTENT_LENGTH"] = (request.getContentLenght());
         env_map["CONTENT_TYPE"] = (request.getContentType());
     }
-    
     env_map["GATEWAY_INTERFACE"] = ("CGI/1.1");
     env_map["QUERY_STRING"] = request.getRequestLine().Query;
     env_map["REMOTE_ADDR"] = ClientIp;
@@ -46,6 +45,7 @@ void ProcessCgi::EnvMap(Request& request,std::string ClientIp)
     env_map["SERVER_PORT"] = request.getPort();
     env_map["SERVER_PROTOCOL"] = request.getRequestLine().HttpVers;
     env_map["SERVER_SOFTWARE"] = "Webserver/1.1";
+    //cookies header
 }
 void ProcessCgi::EnvArray()
 {
@@ -91,7 +91,7 @@ void ProcessCgi::EnvArray()
 // </body>
 // </html>
 
-//TO TEST
+
  void ProcessCgi::GeneretCgiResponse()
 {
     std::string body;

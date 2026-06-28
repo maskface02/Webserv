@@ -125,10 +125,8 @@ void ServeStaticRq::ServeDeleteRq()
     std::system(cmd.c_str());
 }
 
-// TEST
-
 void    ServeStaticRq::ServePostRq()
-{std::cout<<file_path<<" ===== file"<<std::endl;
+{
     if (ProcessRq->getLocation().upload_enabled)
     {   
         size_t pos = 0;
@@ -136,7 +134,7 @@ void    ServeStaticRq::ServePostRq()
         if ((pos = file_path.rfind("/")) == file_path.length() - 1)
             file_path = file_path.substr(0, pos); 
         
-        file_path += request->getPath();;std::cout<<file_path<<" ===== dir"<<std::endl;
+        file_path += request->getPath();
         if (ProcessRq->is_dir)
         { 
             if (request->is_boundry)
@@ -160,12 +158,12 @@ void ServeStaticRq::upload_files()
 {
     std::map<std::string, std::string> boundry = request->getBoundryMap();
     std::map<std::string, std::string>::iterator it;
+    std::string path = file_path;
     it = boundry.begin();
     while(it != boundry.end())
     {
-      
-        file_path += it->first;   std::cout<<file_path<<std::endl;
-        std:: ofstream file (file_path.c_str());
+        path += it->first;   
+        std:: ofstream file (path.c_str());
         if (file.is_open())
         {
             file << it->second;
@@ -176,8 +174,11 @@ void ServeStaticRq::upload_files()
             return;
         }
         file.close();
-        ProcessRq->setStatusCode(201);
-    }
+        path.clear();
+        path = file_path;
+        it++;
+    } 
+    ProcessRq->setStatusCode(201);
 }
 void ServeStaticRq::ServeError(int status_code)
 {

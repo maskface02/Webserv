@@ -11,20 +11,21 @@ class ServeStaticRq
     std::string                         Status;
     std::string                         resp_body;
     ServerConfig&                       serv;
+    std::string                         file_path;
     public:
     ServeStaticRq(Request& request, ProcessRequest& PrsRq,ServerConfig& srv);
 
-    void                servFile(std::string& path);
-    void                ServeGetRequest(std::string resource_path);
-    void                check_AutoIndex();
-    void                html_list_dir();
-    void                redirect_path();
-    void                ServeDeleteRq();
-    void                ServePostRq();
-    void                ServeError(int status_code);
-    void                status();
-    static std::string                html_Error_page(int status_code, std::string stat);
-
+    void                               servFile(std::string& path);
+    void                               ServeGetRequest(std::string resource_path);
+    void                               check_AutoIndex();
+    void                               html_list_dir();
+    void                               redirect_path();
+    void                               ServeDeleteRq();
+    void                               ServePostRq();
+    void                               ServeError(int status_code);
+    void                               status();
+    static std::string                 html_Error_page(int status_code, std::string stat);
+    void                               upload_files();
     ///geters
 
     std::string         getRespBody() const;

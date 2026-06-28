@@ -13,6 +13,7 @@ class ProcessCgi
 
      std::string                                 cgi_output;
      std::string                                 Cgi_resp;
+     std::string                                  connection;
 
 
 

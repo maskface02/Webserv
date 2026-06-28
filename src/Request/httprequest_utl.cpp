@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 19:54:39 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/06/26 22:48:06 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/06/28 03:34:38 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,7 +61,11 @@ void Request::check_valid_Method()
 
 // void Request::check_valid_URL()
 // {
-    
+//      * Checks if character is allowed to be in a URI
+//  * Characters allowed as specifed in RFC:
+//    Alphanumeric: A-Z a-z 0-9
+//    Unreserved: - _ . ~
+//    Reserved:  * ' ( ) ; : @ & = + $ , / ? % # [ ]
 // }
 
 void Request::check_valid_HttpV()
@@ -102,6 +106,7 @@ void Request::check_duplic(std::string& key)
         std::map<std::string, std::string>::iterator it = HeaderMap.find(key.c_str());
         if (it != HeaderMap.end())
             throw HttpError(400);
+       
     }
    
 }
@@ -247,3 +252,8 @@ std::string Request::getPath() const
 {
     return(RequestLine.Path);
 }
+
+ std::map<std::string, std::string>&       Request::getBoundryMap() 
+ {
+    return(boundry_map);
+ }

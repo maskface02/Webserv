@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/16 12:06:38 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/06/28 01:34:31 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/06/28 18:49:57 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,12 +30,10 @@ ProcessRequest::ProcessRequest( Request& req,  ServerConfig& _srv)
         return;    
     if (!check_allowed_method())
         return; 
-    define_type();  std::cout <<"1\n"<<std::endl;
+    define_type();  
     if(status_code)
         return;
- 
     extract_file_extension();
-   
     check_Cgi();
     if (!is_CgiRq)
         is_Static = true;
@@ -96,8 +94,8 @@ bool ProcessRequest::match_location(ServerConfig& server)
     else
         resource_path = target_location.root + request->getPath();   
    
-      std::cout<<"Target location == "<<target_location.path<<std::endl;
-        std::cout<<"Resource path == "<<resource_path<<std::endl;
+    //   std::cout<<"Target location == "<<target_location.path<<std::endl;
+    //     std::cout<<"Resource path == "<<resource_path<<std::endl;
     return (true);
 }
 // normalize
@@ -156,7 +154,6 @@ void ProcessRequest::define_type()
 {
    struct stat pathStat;
 
-   std::cout<<resource_path<< "====== resource path\n";
     if (!stat(resource_path.c_str(),&pathStat))
     {
         if (S_ISDIR(pathStat.st_mode))
@@ -172,14 +169,14 @@ void ProcessRequest::define_type()
                 size_t pos = resource_path.rfind("/");
                
                 if (pos != resource_path.length() - 1)
-                {                     std::cout <<"ERnoooo\n";
+                {                    
                     if(request->getRequestLine().Method == "GET")
                     {
                         status_code = 301;
                         redirect_url = "http:/" + request->getPath() + "/";
                     }
                 }
-                check_index_file();
+                check_index_file();// also for post in case of  CGI
             }
         }
         else if(S_ISREG(pathStat.st_mode))
@@ -187,14 +184,11 @@ void ProcessRequest::define_type()
     }
     else 
     {
-        std::cout<<"heeeeeeeeeeeeeeeeeeer\n";
         if (errno == EACCES)
            status_code = 403;
         else
             status_code = 404;
     }
-
-    
 }
 
 //*******index****
@@ -270,9 +264,8 @@ bool ProcessRequest::check_redirction()
 
 void ProcessRequest::check_Cgi()
 {
-
-        if (check_location_extention())
-            is_CgiRq = true;
+    if (check_location_extention())
+        is_CgiRq = true;
 }
 
 bool ProcessRequest::check_location_extention()
@@ -315,11 +308,6 @@ Location  ProcessRequest::getLocation() const
     return(target_location);
 }
 
-// ServerConfig   ProcessRequest::getServer() const
-// {
-//     std::cout<<srv->error_pages[404];
-//     return(*srv);
-// }
 std::string     ProcessRequest::getRedirectUrl() const 
 {
     return(redirect_url);

@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 19:54:51 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/06/26 22:48:46 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/06/28 18:37:20 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,8 +57,10 @@ class Request
         bool                                                isChunked;
         std::string                                         content_type;
         int                                                 status_code;
+        std::map<std::string, std::string>                  boundry_map;
         // Request();
     public:
+        bool                                                is_boundry;
         Request(Client* client, std::string& header);
         // Request(Request& other);
         // Request& operator=(Request& other);
@@ -77,14 +79,19 @@ class Request
         std::map<std::string , std::vector<std::string> >   getQuery() const;
         int                                                 getStatusCode() const;
         std::string                                         getPath() const;
+        std::map<std::string, std::string>&                 getBoundryMap() ;
     //pars
         size_t                                              pars_lineRequest(std::string  &header, size_t LineEnd);
-        void                                                pars_headerMap(std::string  &Map, size_t HeadersSrart,size_t HeadersEnd);
-        void                                                pars_headerBody(std::string &body, size_t HeaderStart);
+        void                                                pars_Headers(std::string  &Map, size_t HeadersSrart,size_t HeadersEnd);
+        void                                                pars_Body(std::string &body, size_t HeaderStart);
         void                                                pars_query();
         void                                                pars_boundry(size_t& pos);
-    //stor varible
-        void                                                store_chunked_body(std::string& chunck_body);
+        void                                                pars_chunked_body(std::string& chunck_body);
+       std::vector<std::string>                             split_boundary_part(std::string& boundary);
+        std::string                                         find_file_name(std::string& part);
+        std::string                                         find_boundry_body(std::string& part);
+        //stor varible
+       
         void                                                store_path_query();
         void                                                store_variable(std::string& key, std::string& value);
         void                                                store_cont_lenght(const std::string& lenght);
@@ -97,7 +104,7 @@ class Request
         void                                                check_duplic(std::string& key);
         void                                                check_existe(std::string key);
         void                                                check_Post();
-        // void                                                check_valid_URL();
+        // void                                                check_valid_URL();//TO DO
     // util
         std::string                                         remove_white_space( std::string str);
         int                                                 strIsDigits(const std::string& str);
