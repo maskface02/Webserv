@@ -160,7 +160,7 @@ void ProcessRequest::define_type()
         {
             if (access(resource_path.c_str(), F_OK | R_OK | X_OK)) 
             {
-                status_code = 403;
+                status_code = 404;
                 return;
             }
             else
@@ -184,9 +184,9 @@ void ProcessRequest::define_type()
     }
     else 
     {
-        if (errno == EACCES)
-           status_code = 403;
-        else
+        // if (errno == EACCES)
+        //    status_code = 403;
+        // else
             status_code = 404;
     }
 }
@@ -209,7 +209,7 @@ void ProcessRequest::check_index_file()
     op_dir = opendir(resource_path.c_str());
     if (!op_dir)
     {
-        status_code = 403;
+        status_code = 404;
         return;
     }
     while ((read_dir = readdir(op_dir)) != NULL)
@@ -282,6 +282,7 @@ std::string ProcessRequest::getExtension() const
 {
     return(extension);
 }
+< HTTP/1.1 403 Not Found
 
 int       ProcessRequest::getStatusCode() const
 {

@@ -5,7 +5,7 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-
+#include "WebServ.hpp"
 class ProcessRequest
 {
     Request*            request;

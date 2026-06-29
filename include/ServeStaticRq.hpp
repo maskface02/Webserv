@@ -1,5 +1,5 @@
 
-#ifndef SERVESTATIQRQ_HPP
+#ifndef SERVESTATICRQ_HPP
 #define SERVESTATICRQ_HPP
 
 #include "WebServ.hpp"

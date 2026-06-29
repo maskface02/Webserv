@@ -156,13 +156,15 @@ void Server::handleClientRead(int client_fd) {
     //TODO test
 
     Request request(client ,request_data);
-    client->request_obj = &request;
+    // client->request_obj = &request;
     ProcessRequest ProcessRq(request, _config.getServers()[client->server_idx]);
     if (!ProcessRq.is_CgiRq)
     {
       ServeStaticRq StaticRq(request, ProcessRq, _config.getServers()[client->server_idx]);
       Response StaticResponse (ProcessRq, StaticRq, request);
-      client->response_obj = &StaticResponse;
+      // client->response_obj = &StaticResponse;
+      client->write_buffer = StaticResponse.getHttpResponse();
+      _logger.logRequest(client->ip, request.getRequestLine().Method, request.getRequestLine().URI, request.getRequestLine().HttpVers, ProcessRq.getStatusCode(), sizeof(client->write_buffer));
       client->state = STATE_SENDING;
        for (size_t i = 0; i < _poll_fds.size(); ++i) {
             if (_poll_fds[i].fd == client_fd) {

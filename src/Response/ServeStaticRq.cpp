@@ -72,7 +72,7 @@ void ServeStaticRq::servFile(std::string& path)
         local_file.close();
     }
     else
-        ProcessRq->setStatusCode(403);
+        ProcessRq->setStatusCode(404);
 }
 
 void ServeStaticRq::check_AutoIndex()

@@ -1,6 +1,8 @@
 #ifndef PROCESSCGI_HPP
 #define PROCESSCGI_HPP
 
+#include "WebServ.hpp"
+
 class ProcessCgi
 {
     std::map <std::string,std::string>          env_map;

@@ -35,4 +35,4 @@ public:
                   int status, size_t response_size);
 };
 
-#endif // !LOGGER_HPP
+#endif // 
