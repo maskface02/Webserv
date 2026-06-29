@@ -51,10 +51,10 @@
 
 
 
-// #include "Request.hpp"
-// #include "ProcessRequest.hpp"
-// #include "ProcessCgi.hpp"
-// #include "ServeStaticRq.hpp"
-// #include "Response.hpp"
+#include "Request.hpp"
+#include "ProcessRequest.hpp"
+#include "ProcessCgi.hpp"
+#include "ServeStaticRq.hpp"
+#include "Response.hpp"
 
 #endif // !WEBSERV_HPP

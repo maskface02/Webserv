@@ -5,19 +5,22 @@ CXXFLAGS = -Wall -Wextra -Werror -std=c++98
 
 SRC_DIR = src
 INCLUDES = include
+REQ_DIR = src/Request
+RES_DIR = src/Response
 
-SOURCES = $(SRC_DIR)/main.cpp \
-          $(SRC_DIR)/Config.cpp \
-          $(SRC_DIR)/Server.cpp \
-          $(SRC_DIR)/Logger.cpp \
-          $(SRC_DIR)/Cgi.cpp
+SOURCES = $(SRC_DIR)/main.cpp $(SRC_DIR)/Config.cpp $(SRC_DIR)/Server.cpp $(SRC_DIR)/Logger.cpp $(SRC_DIR)/Cgi.cpp    \
+					$(REQ_DIR)/httpRequest.cpp $(REQ_DIR)/httprequest_utl.cpp  \
+					$(RES_DIR)/ProcessRequest.cpp  $(RES_DIR)/ServeStaticRq.cpp $(RES_DIR)/ProcessCgi.cpp $(RES_DIR)/Response.cpp \
 
 OBJECTS = $(SOURCES:.cpp=.o)
 HEADERS = $(INCLUDES)/WebServ.hpp \
-          $(INCLUDES)/Server.hpp \
-          $(INCLUDES)/Cgi.hpp \
-          $(INCLUDES)/Config.hpp \
-          $(INCLUDES)/Logger.hpp
+					$(INCLUDES)/Server.hpp \
+					$(INCLUDES)/Cgi.hpp \
+					$(INCLUDES)/Config.hpp \
+					$(INCLUDES)/Logger.hpp \
+					$(INCLUDES)/ProcessRequest.hpp  $(INCLUDES)/Response.hpp  $(INCLUDES)/ServeStaticRq.hpp \
+					$(INCLUDES)/ProcessCgi.hpp  $(INCLUDES)/Request.hpp \
+
 
 all: $(NAME)
 

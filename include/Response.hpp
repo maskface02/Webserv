@@ -1,6 +1,7 @@
-#ifndef RESPENSE_HPP
+#ifndef RESPONSE_HPP
 #define RESPONSE_HPP
 
+#include "WebServ.hpp"
 #include <sys/types.h>
 #include <dirent.h>
 #include <sys/stat.h>

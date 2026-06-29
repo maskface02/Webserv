@@ -1,11 +1,11 @@
 #ifndef  PROCESSREQUEST_HPP
-#define PROCESSREQUEST_HPP
+#define  PROCESSREQUEST_HPP
 
 #include <sys/types.h>
 #include <dirent.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-
+#include "WebServ.hpp"
 class ProcessRequest
 {
     Request*            request;

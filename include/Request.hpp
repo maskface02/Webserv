@@ -14,6 +14,7 @@
 #ifndef HTTPREQUEST_HPP
 #define HTTPREQUEST_HPP
 
+#include "WebServ.hpp"
 #include <sstream>
 
 
