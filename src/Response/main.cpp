@@ -22,17 +22,20 @@ int main()
                   "Host: 127.0.0.1:8080\r\n"
                   "Content-Type: multipart/form-data; boundary=X-BORDER-12345\r\n"
                   "Content-Length: 312\r\n\r\n" 
-                  "--X-BORDER-12345\r\n"//=>start1
-                  "Content-Disposition: form-data; name=\"resume\"; filename=\"my_resume.pdf\"\r\n"
-                  "Content-Type: application/pdf\r\n\r\n"
-                  "[Raw PDF Data]\r\n"
-                  //end 1
-                  "--X-BORDER-12345\r\n"//start2
-                  "Content-Disposition: form-data; name=\"cover_letter\"; filename=\"letter.docx\"\r\n"
-                  "Content-Type: application/msword\r\n\r\n"
-                  "[Raw Word Doc Data]\r\n"
-                  //end 2
-                  "--X-BORDER-12345--\r\n";
+
+
+
+                  // "--X-BORDER-12345\r\n"//=>start1
+                  // "Content-Disposition: form-data; name=\"resume\"; filename=\"my_resume.pdf\"\r\n"
+                  // "Content-Type: application/pdf\r\n\r\n"
+                  // "[Raw PDF Data]\r\n"
+                  // //end 1
+                  // "--X-BORDER-12345\r\n"//start2
+                  // "Content-Disposition: form-data; name=\"cover_letter\"; filename=\"letter.docx\"\r\n"
+                  // "Content-Type: application/msword\r\n\r\n"
+                  // "[Raw Word Doc Data]\r\n"
+                  // //end 2
+                  // "--X-BORDER-12345--\r\n";
     try 
     {
       Config config;

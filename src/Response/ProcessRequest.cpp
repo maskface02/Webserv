@@ -94,8 +94,8 @@ bool ProcessRequest::match_location(ServerConfig& server)
     else
         resource_path = target_location.root + request->getPath();   
    
-    //   std::cout<<"Target location == "<<target_location.path<<std::endl;
-    //     std::cout<<"Resource path == "<<resource_path<<std::endl;
+      std::cout<<"Target location == "<<target_location.path<<std::endl;
+        std::cout<<"Resource path == "<<resource_path<<std::endl;
     return (true);
 }
 // normalize
@@ -160,11 +160,11 @@ void ProcessRequest::define_type()
         {
             if (access(resource_path.c_str(), F_OK | R_OK | X_OK)) 
             {
-                status_code = 404;
+                status_code = 403;
                 return;
             }
             else
-            { 
+            {
                 is_dir = true;
                 size_t pos = resource_path.rfind("/");
                
@@ -184,9 +184,9 @@ void ProcessRequest::define_type()
     }
     else 
     {
-        // if (errno == EACCES)
-        //    status_code = 403;
-        // else
+        if (errno == EACCES)
+           status_code = 403;
+        else
             status_code = 404;
     }
 }
@@ -209,7 +209,7 @@ void ProcessRequest::check_index_file()
     op_dir = opendir(resource_path.c_str());
     if (!op_dir)
     {
-        status_code = 404;
+        status_code = 403;
         return;
     }
     while ((read_dir = readdir(op_dir)) != NULL)

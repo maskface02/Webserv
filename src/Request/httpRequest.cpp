@@ -37,7 +37,9 @@ Request::Request(Client* client, std::string& Rq)
             {
                 check_Post();
                 pars_Body(Rq, header_end + 4); 
-            }  
+            }
+            if (RequestLine.Method == "POST" && body.empty())
+                throw(HttpError(400));
         }
         else   throw(HttpError(400));
     }
@@ -144,6 +146,7 @@ void Request::pars_Body(std::string& RqBody, size_t bodyStart)
      pars_boundry(pos);
      is_boundry = true; 
    }
+   std::cout<<body;
    
 }
 
@@ -220,9 +223,9 @@ std::string Request::find_file_name(std::string& part)
     size_t pos_file = part.find("filename");
     size_t pos_name =  part.find("=",pos_file);
     size_t endLine = part.find("\r\n",pos_name) - 1;//for the last quote
-     if ((pos_file == std::string::npos || pos_name == std::string::npos
-        || endLine == std::string::npos))
-        throw(HttpError(400));
+    //  if ((pos_file == std::string::npos || pos_name == std::string::npos 
+    //     || endLine == std::string::npos))
+    //     throw(HttpError(400));
     return (part.substr(pos_name + 2,endLine - (pos_name + 2)));// + 2 for the = and quote
 }
 

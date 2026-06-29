@@ -85,6 +85,7 @@ void ServeStaticRq::check_AutoIndex()
 
 void ServeStaticRq::html_list_dir()
 {
+    //if folder list the files // javascript
     DIR* op_dir;
     struct dirent* read_dir;
     std::stringstream str(resp_body);
@@ -92,7 +93,7 @@ void ServeStaticRq::html_list_dir()
     op_dir = opendir(ProcessRq->getResourcePath().c_str());
     if (!op_dir)
         ServeError(403);
-    str << "<!DOCTYPE html>";
+    str << "<!DOCTYPE html>\n";
     str<< "<html>\n";
     str << "<body>\n";
     str << "<h2>List fils</h2>\n";
@@ -104,7 +105,9 @@ void ServeStaticRq::html_list_dir()
            "</body>\n"
            "</html>\n";
     resp_body = str.str();
-    closedir(op_dir);
+    ProcessRq->setExtension(".html");
+    closedir(op_dir);// check 
+
 }
 
 void ServeStaticRq::ServeDeleteRq()
@@ -112,16 +115,19 @@ void ServeStaticRq::ServeDeleteRq()
     if (ProcessRq->is_dir)
     {
         size_t pos = ProcessRq->getResourcePath().rfind("/");
-        pos = ProcessRq->getResourcePath().rfind("/",pos - 1);
+        if (pos == std::string::npos)
+             ServeError(403);
 
-        std::string dir_path = ProcessRq->getResourcePath().substr(0,pos);
+        // pos = ProcessRq->getResourcePath().rfind("/",pos - 1);
+
+        std::string dir_path = ProcessRq->getResourcePath() ;//.substr(0,pos);
         if (access(dir_path.c_str(), F_OK))
         {
             ServeError(403);
             return;
         }
     }
-    std::string cmd = "rm -rf " + ProcessRq->getResourcePath();
+    std::string cmd = "rm -rf " + ProcessRq->getResourcePath();/// if no premis
     std::system(cmd.c_str());
 }
 
@@ -139,17 +145,18 @@ void    ServeStaticRq::ServePostRq()
         { 
             if (request->is_boundry)
                 upload_files();
+            else ProcessRq->setStatusCode(405);
         }
-        else
-        {
-            std:: ofstream file (file_path.c_str());
-            if (file.is_open())
-            {
-                file << request->getBody();
-            }
-            file.close();
-            ProcessRq->setStatusCode(201);
-        }
+        else  ProcessRq->setStatusCode(405);
+        // {
+        //     std:: ofstream file (file_path.c_str());
+        //     if (file.is_open())
+        //     {
+        //         file << request->getBody();
+        //     }
+        //     file.close();
+        //     ProcessRq->setStatusCode(201);
+        // }
     }
     else  ServeError(403);
 }
