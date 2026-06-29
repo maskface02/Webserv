@@ -106,9 +106,7 @@ void Request::check_duplic(std::string& key)
         std::map<std::string, std::string>::iterator it = HeaderMap.find(key.c_str());
         if (it != HeaderMap.end())
             throw HttpError(400);
-       
     }
-   
 }
 
 void Request::check_existe(std::string key)
@@ -119,7 +117,6 @@ void Request::check_existe(std::string key)
         if (it == HeaderMap.end())
             throw HttpError(400);
     }
-   
 }
 
 void Request::store_variable(std::string& key, std::string& value)
