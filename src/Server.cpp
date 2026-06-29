@@ -83,7 +83,7 @@ void Server::checkTimeouts() {
         it->second->state = STATE_SENDING;
         for (size_t j = 0; j < _poll_fds.size(); ++j) {
           if (_poll_fds[j].fd == it->first) {
-            _poll_fds[j].events |= POLLOUT;
+            _poll_fds[j].events = POLLOUT;
             break;
           }
         }
@@ -102,6 +102,11 @@ void Server::checkTimeouts() {
 }
 
 void Server::acceptConnection(int listen_fd) {
+  if (_clients.size() + 1 > MAX_CLIENTS) {
+    _logger.warn("max clients reached");
+    return;
+  }
+
   struct sockaddr_in client_addr;
   socklen_t client_len = sizeof(client_addr);
   int client_fd = accept(listen_fd, (struct sockaddr*)&client_addr, &client_len);
@@ -132,6 +137,9 @@ void Server::handleClientRead(int client_fd) {
   if (client->state != STATE_READING)
     return;
 
+  std::vector<ServerConfig> servers = _config.getServers();
+  size_t max_size = servers[client->server_idx].client_max_body_size;
+
   while (true) {
     char buffer[4096];
     ssize_t bytes = recv(client_fd, buffer, sizeof(buffer), 0);
@@ -146,6 +154,22 @@ void Server::handleClientRead(int client_fd) {
     }
     else
       break;
+  }
+
+  if (client->read_buffer.size() > max_size) {
+    client->write_buffer = "HTTP/1.1 413 Payload Too Large\r\n"
+                            "Content-Length: 0\r\n"
+                            "Connection: close\r\n"
+                            "\r\n";
+    client->keep_alive = false;
+    client->state = STATE_SENDING;
+    for (size_t i = 0; i < _poll_fds.size(); ++i) {
+      if (_poll_fds[i].fd == client_fd) {
+        _poll_fds[i].events = POLLOUT;
+        break;
+      }
+    }
+    return;
   }
 
   size_t request_size = getRequestSize(client->read_buffer);
@@ -166,7 +190,7 @@ void Server::handleClientRead(int client_fd) {
       client->state = STATE_SENDING;
        for (size_t i = 0; i < _poll_fds.size(); ++i) {
             if (_poll_fds[i].fd == client_fd) {
-                _poll_fds[i].events |= POLLOUT;
+                _poll_fds[i].events = POLLOUT;
                 break;
             }
         }
@@ -186,7 +210,7 @@ void Server::handleClientRead(int client_fd) {
     //     client->state = STATE_SENDING;
     //     for (size_t i = 0; i < _poll_fds.size(); ++i) {
     //         if (_poll_fds[i].fd == client_fd) {
-    //             _poll_fds[i].events |= POLLOUT;
+    //             _poll_fds[i].events = POLLOUT;
     //             break;
     //         }
     //     }
@@ -452,7 +476,7 @@ void Server::handleCgiPipeRead() {
         client_it->second->state = STATE_SENDING;
         for (size_t j = 0; j < _poll_fds.size(); ++j) {
           if (_poll_fds[j].fd == client_fd) {
-            _poll_fds[j].events |= POLLOUT;
+            _poll_fds[j].events = POLLOUT;
             break;
           }
         }

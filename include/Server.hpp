@@ -21,6 +21,7 @@
 #define CLIENT_TIMEOUT 60
 #define CGI_TIMEOUT 60
 #define CGI_CHUNK_SIZE 65536
+#define MAX_CLIENTS 1024
 
 class Request;
 class Response;
