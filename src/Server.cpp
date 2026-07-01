@@ -21,6 +21,7 @@ Server::~Server() {
     if (it->second->state == STATE_CGI_RUNNING && it->second->cgi_pid != -1)
       _cgi->killCgi(it->second, SIGKILL);
     close(it->second->fd);
+    delete it->second->processCgi;
     delete it->second;
   }
 
@@ -177,8 +178,6 @@ void Server::handleClientRead(int client_fd) {
     std::string request_data = client->read_buffer.substr(0, request_size);
     client->read_buffer.erase(0, request_size);
 
-    //TODO test
-
     Request request(client ,request_data);
     // client->request_obj = &request;
     ProcessRequest ProcessRq(request, _config.getServers()[client->server_idx]);
@@ -199,11 +198,9 @@ void Server::handleClientRead(int client_fd) {
     }
     else 
     {
-      ProcessCgi* ProCgi = new ProcessCgi(client, ProcessRq, request);
-      client->_ProcessCgi = ProCgi;
-      std::string interpreter = ProCgi->getCgiPath();
+      ProcessCgi* procCgi = new ProcessCgi(client, ProcessRq, request);
       std::string script = ProcessRq.getResourcePath();
-      _cgi->startCgi(client, interpreter, script, ProCgi->getEnv());
+      _cgi->startCgi(client, procCgi->getCgiPath(), script, procCgi->getEnv());
     }
   }
 }
@@ -311,9 +308,9 @@ Client* Server::initClient(int client_fd, int listen_fd, const std::string& clie
   client->cgi_input_buffer = "";
   client->cgi_output_buffer = "";
   client->cgi_start_time = 0;
-  client->request_obj = NULL;
+  client->request_obj = NULL;//need to be deleted
   client->response_obj = NULL;
-  client->_ProcessCgi = NULL;
+  client->processCgi = NULL;
   return client;
 }
 
@@ -459,7 +456,7 @@ void Server::handleCgiPipeRead() {
           (client_it->second->state == STATE_WRITING_RESPONSE ||
            client_it->second->state == STATE_CGI_ERROR)) {
             
-      //  client->second->_ProcessCgi->GeneretCgiResponse();
+      //  client->second->_processCgi->GeneretCgiResponse();
 
       
         client_it->second->state = STATE_SENDING;

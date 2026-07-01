@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   ProcessCgi.cpp                                            :+:      :+:    :+:   */
+/*   processCgi.cpp                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
@@ -14,18 +14,16 @@
 
 ProcessCgi::ProcessCgi(Client *client,ProcessRequest &ProcessRq, Request& request): env(NULL), cgi_path(ProcessRq.getCgiPath()), script_path(ProcessRq.getResourcePath())
 {
-
     if (request.getRequestLine().Method == "POST")
         client->cgi_input_buffer = request.getBody();
     EnvMap(request,client->ip);
     EnvArray();
     cgi_output = client->cgi_output_buffer;
     connection = request.getConnection();
-    client->_ProcessCgi = this;
-
+    client->processCgi = this;
 }
 
-ProcessCgi::~ProcessCgi()//added
+ProcessCgi::~ProcessCgi()
 {
     if (env != NULL)
     {

@@ -67,7 +67,7 @@ void ServeStaticRq::servFile(std::string& path)
     {
         while(getline(local_file,line))
         {
-             resp_body+= line + "\n";//added
+             resp_body+= line + "\n";
         }
         local_file.close();
     }
