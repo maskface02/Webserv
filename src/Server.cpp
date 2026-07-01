@@ -199,26 +199,12 @@ void Server::handleClientRead(int client_fd) {
     }
     else 
     {
-      ProcessCgi ProcessCGI(client, ProcessRq, request);
-      // _cgi->startCgi(client, interpreter, ProcessCGI.getCgiPath(), ProcessCGI.getEnv());
+      ProcessCgi* ProCgi = new ProcessCgi(client, ProcessRq, request);
+      client->_ProcessCgi = ProCgi;
+      std::string interpreter = ProCgi->getCgiPath();
+      std::string script = ProcessRq.getResourcePath();
+      _cgi->startCgi(client, interpreter, script, ProCgi->getEnv());
     }
-      //interpreter will be define by Zakaria
-
-      
-    // parse request_data -> sets client->request_obj, req->isCgi
-
-    // if (!req->isCgi) {
-    //     generate response
-    //     client->state = STATE_SENDING;
-    //     for (size_t i = 0; i < _poll_fds.size(); ++i) {
-    //         if (_poll_fds[i].fd == client_fd) {
-    //             _poll_fds[i].events = POLLOUT;
-    //             break;
-    //         }
-    //     }
-    // }
-    // else
-    //     _cgi->startCgi(client, interpreter, script_path, req->envp);
   }
 }
 
@@ -327,6 +313,7 @@ Client* Server::initClient(int client_fd, int listen_fd, const std::string& clie
   client->cgi_start_time = 0;
   client->request_obj = NULL;
   client->response_obj = NULL;
+  client->_ProcessCgi = NULL;
   return client;
 }
 

@@ -12,10 +12,10 @@
 
 #include "../../include/WebServ.hpp"
 
-ProcessCgi::ProcessCgi(Client *client,ProcessRequest &ProcessRq, Request& request):cgi_path(ProcessRq.getCgiPath())
+ProcessCgi::ProcessCgi(Client *client,ProcessRequest &ProcessRq, Request& request): env(NULL), cgi_path(ProcessRq.getCgiPath()), script_path(ProcessRq.getResourcePath())
 {
 
-    if (request.getRequestLine().Method == "Post")
+    if (request.getRequestLine().Method == "POST")
         client->cgi_input_buffer = request.getBody();
     EnvMap(request,client->ip);
     EnvArray();
@@ -23,6 +23,16 @@ ProcessCgi::ProcessCgi(Client *client,ProcessRequest &ProcessRq, Request& reques
     connection = request.getConnection();
     client->_ProcessCgi = this;
 
+}
+
+ProcessCgi::~ProcessCgi()//added
+{
+    if (env != NULL)
+    {
+        for (size_t i = 0; env[i] != NULL; ++i)
+            delete[] env[i];
+        delete[] env;
+    }
 }
 void ProcessCgi::EnvMap(Request& request,std::string ClientIp)
 {
@@ -35,8 +45,8 @@ void ProcessCgi::EnvMap(Request& request,std::string ClientIp)
     env_map["QUERY_STRING"] = request.getRequestLine().Query;
     env_map["REMOTE_ADDR"] = ClientIp;
     env_map["REQUEST_METHOD"] = (request.getRequestLine().Method);
-    env_map["SCRIPT_NAME"] = cgi_path;// =>path of cgi 
-    env_map["SCRIPT_FILENAME"] = cgi_path;// => path of cgi 
+    env_map["SCRIPT_NAME"] = request.getPath(); // added
+    env_map["SCRIPT_FILENAME"] = script_path; //added
     env_map["PATH_INFO"] = request.getPath();//=>request path
     env_map["REQUEST_URI"] = request.getRequestLine().URI; //=>  req URI
     env_map["SERVER_NAME"] = request.getHost();

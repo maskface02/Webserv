@@ -173,7 +173,8 @@ void ProcessRequest::define_type()
                     if(request->getRequestLine().Method == "GET")
                     {
                         status_code = 301;
-                        redirect_url = "http:/" + request->getPath() + "/";
+                        //redirect_url = "http:/" + request->getPath() + "/"; //was
+                        redirect_url = "http://" + request->getHost() + request->getPath() + "/";// added
                     }
                 }
                 check_index_file();// also for post in case of  CGI
@@ -253,8 +254,8 @@ bool ProcessRequest::check_redirction()
 {
     if (target_location.redirect.enabled)
     {
+        is_RedirecRq = true; // added 
         status_code = target_location.redirect.code;
-  
         redirect_url = target_location.redirect.url;
 
         return(true);
