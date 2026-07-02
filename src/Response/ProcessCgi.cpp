@@ -148,6 +148,7 @@ void ProcessCgi::EnvArray()
    Cgi_resp = addLine + addHeader + "\r\n" ;
    if (!body.empty())
         Cgi_resp +=body;
+    _client->write_buffer = Cgi_resp;
 }
 
 char**   ProcessCgi::getEnv() const
