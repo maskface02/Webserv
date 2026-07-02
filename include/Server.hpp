@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 21:39:15 by zatais            #+#    #+#             */
-/*   Updated: 2026/06/28 18:57:15 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/02 19:58:46 by m45kf4c3         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,10 @@
 class Request;
 class Response;
 class ProcessCgi;
+class ProcessRequest;
+
+
+
 enum ClientState {
     STATE_READING,
     STATE_CGI_RUNNING,
@@ -51,9 +55,11 @@ struct Client {
     std::string     cgi_input_buffer;
     std::string     cgi_output_buffer;
     time_t          cgi_start_time;
-    Request*           request_obj;// 
-    Response*           response_obj;//
+
+    Request*           request; 
+    Response*           staticResponse;
     ProcessCgi*         processCgi;
+    ProcessRequest*     processRq;
 };
 
 class Cgi;
@@ -68,6 +74,7 @@ class Server {
     std::map<int, int>          _fd_to_server_idx;
     std::map<int, int>          _pipe_to_client_fd;
     Cgi*                        _cgi;
+    static bool                        running;
 
     void    createSockets();
     void    checkTimeouts();
@@ -99,6 +106,15 @@ class Server {
 
     static void setNonBlocking(int fd);
     static void addToPoll(int fd, short events, std::vector<struct pollfd>& poll_fds);
+    // static bool& getServerState(){
+    //   return running;
+    // };
+    // static bool& setServerState(bool state){
+    //   running = state;
+    // };
+    static void signalHandler(int sig){
+      (void)sig;
+      running = false;
+    }
 };
-
 #endif // !SERVER_HPP

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chunked Multipart File Upload</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 650px;
+      margin: 40px auto;
+      padding: 0 20px;
+      line-height: 1.6;
+    }
+    .upload-box {
+      border: 2px dashed #ccc;
+      padding: 20px;
+      border-radius: 8px;
+      background: #fafafa;
+      margin-bottom: 15px;
+    }
+    button {
+      background-color: #28a745;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+    pre {
+      background-color: #222;
+      color: #00ff00;
+      padding: 15px;
+      border-radius: 6px;
+      overflow-x: auto;
+      min-height: 150px;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Chunked Multipart Upload</h1>
+  <p>Streams a file chunk-by-chunk using a manual <code>multipart/form-data</code> boundary layout.</p>
+
+  <div class="upload-box">
+    <input type="file" id="fileInput"><br><br>
+    <button id="uploadBtn">Upload File (Chunked)</button>
+  </div>
+
+  <h3>Streaming Logs:</h3>
+  <pre id="logOutput">Select a file and click Upload...</pre>
+
+  <script>
+    const fileInput = document.getElementById('fileInput');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const logOutput = document.getElementById('logOutput');
+
+    function log(message) {
+      logOutput.textContent += `\n[${new Date().toLocaleTimeString()}] ${message}`;
+    }
+
+    uploadBtn.addEventListener('click', async () => {
+      const file = fileInput.files[0];
+      if (!file) {
+        alert("Please select a file first!");
+        return;
+      }
+
+      uploadBtn.disabled = true;
+      logOutput.textContent = `Initializing stream for: ${file.name} (${file.size} bytes)`;
+
+      // 1. Define a hardcoded boundary string
+      const boundary = "----BrowserChunkedBoundaryXYZ789";
+      const encoder = new TextEncoder();
+
+      // 2. Construct the opening and closing raw multi-part wrappers
+      const headerText = 
+        `\r\n--${boundary}\r\n` +
+        `Content-Disposition: form-data; name="file"; filename="${file.name}"\r\n` +
+        `Content-Type: ${file.type || 'application/octet-stream'}\r\n\r\n`;
+      
+      const footerText = `\r\n--${boundary}--\r\n`;
+
+      // 3. Set up the ReadableStream
+      const stream = new ReadableStream({
+        async start(controller) {
+          // Send the opening boundary header
+          log("Enqueuing multipart opening boundary headers...");
+          controller.enqueue(encoder.encode(headerText));
+
+          // Read the file dynamically in chunks of 64KB
+          const chunkSize = 64 * 1024; 
+          let offset = 0;
+
+          log("Streaming file body data chunks...");
+          while (offset < file.size) {
+            const slice = file.slice(offset, offset + chunkSize);
+            
+            // Turn the blob slice into an ArrayBuffer
+            const buffer = await slice.arrayBuffer();
+            controller.enqueue(new Uint8Array(buffer));
+            
+            offset += chunkSize;
+            log(`Sent chunk: ${Math.min(offset, file.size)} / ${file.size} bytes`);
+            
+            // Artificial delay (optional): slow down the stream so you can watch it process
+            await new Promise(r => setTimeout(r, 100)); 
+          }
+
+          // Send the closing boundary footer
+          log("Enqueuing multipart closing footer boundary...");
+          controller.enqueue(encoder.encode(footerText));
+          
+          controller.close();
+          log("Stream generation complete.");
+        }
+      });
+
+      // 4. Send request using Fetch API
+      try {
+        log("Sending POST Request...");
+        const response = await fetch('http://localhost:8080/upload', {
+          method: 'POST',
+          headers: {
+            // Notice how we manually attach our unique boundary identifier string here
+            'Content-Type': `multipart/form-data; boundary=${boundary}`
+          },
+          body: stream,
+          duplex: 'half' 
+        });
+
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+        const result = await response.text();
+        log(`Success! Server response:\n${result}`);
+
+      } catch (error) {
+        log(`Upload Failed: ${error.message}`);
+      } finally {
+        uploadBtn.disabled = false;
+      }
+    });
+  </script>
+
+</body>
+</html>

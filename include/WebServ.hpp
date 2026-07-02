@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/17 05:30:09 by zatais            #+#    #+#             */
-/*   Updated: 2026/06/26 13:09:12 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/01 08:52:09 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,6 +37,18 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+
+//
+#include <sys/types.h>
+#include <dirent.h>
+#include <sys/stat.h>
+
+#include <cctype>
+#include <cerrno>
+#include <sys/stat.h>
+
+
+
 
 #define RESET   "\033[0m"
 #define RED     "\033[31m"

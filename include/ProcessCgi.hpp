@@ -8,16 +8,14 @@ class ProcessCgi
   private:
     std::map <std::string,std::string>          env_map;
     std::map <std::string,std::string>          Interp_Map;
-    std::string                                 Interp;
+    std::string                                 Interp;//
     char**                                      env; //new used here !!
     std::string                                 cgi_path;
-    std::string                                 script_path;// added
+    std::string                                 script_path;
 
-    std::string                                 cgi_output;
     std::string                                 Cgi_resp;
     std::string                                  connection;
-
-
+    Client *                                    _client;
 
   public:
     ProcessCgi(Client *client, ProcessRequest &ProcessRq, Request& request);

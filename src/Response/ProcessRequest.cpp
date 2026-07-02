@@ -6,47 +6,47 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/16 12:06:38 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/06/28 18:49:57 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/02 15:47:13 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 
 #include "../../include/WebServ.hpp"
 
-ProcessRequest::ProcessRequest( Request& req,  ServerConfig& _srv)
-:request(&req),srv(&_srv),status_code(0),is_CgiRq(0),is_dir(0),is_RedirecRq(0)
+ProcessRequest::ProcessRequest(Client*client,  ServerConfig& _srv):request(client->request)
 {
 
-    if (check_status())
-        return;
-    if (!match_location(_srv))
+    try{
+        init_variable();
+        check_status();
+        match_location(_srv);// if 2 it match the last one !!!!!!
+        check_redirction();
+        check_max_body_size(_srv);
+        check_allowed_method();
+        if (int code = define_type())
+        {
+            if (request->getRequestLine().Method == "POST")
+                return;
+            else throw HttpError(code);
+        }
+        extract_file_extension();
+        check_Cgi();
+        if (!is_CgiRq)
+            is_Static = true;
+    }
+    catch( HttpError& e)
     {
-        status_code = 404;
-        return;
-    } 
-    if (check_redirction())
-        return;
-    if (!check_max_body_size())
-        return;    
-    if (!check_allowed_method())
-        return; 
-    define_type();  
-    if(status_code)
-        return;
-    extract_file_extension();
-    check_Cgi();
-    if (!is_CgiRq)
-        is_Static = true;
+        status_code = e.getErrorCode();
+    }
 }
 
-bool ProcessRequest::check_status()
+void ProcessRequest::check_status()
 {
-    if ((status_code = request->getStatusCode()) != 0)
-        return(true);
-    return (false);
+    if (request->getStatusCode() != 0)
+       throw HttpError(request->getStatusCode());
 }
 
-bool ProcessRequest::match_location(ServerConfig& server)
+void ProcessRequest::match_location(ServerConfig& server)
 {
     normlize_location_path(server);
     std::vector<Location> ::iterator it = server.locations.begin();
@@ -83,12 +83,10 @@ bool ProcessRequest::match_location(ServerConfig& server)
     if ( !found)
     {
         if (location.empty()) 
-        {
-            status_code = 404;
-            return(false);
-        }
+           throw HttpError(404);
         target_location = location.rbegin()->second; 
     }
+   
     if (target_location.root.rfind("/") == target_location.root.length() - 1)
            resource_path = target_location.root + request->getPath().substr(1);
     else
@@ -96,8 +94,9 @@ bool ProcessRequest::match_location(ServerConfig& server)
    
       std::cout<<"Target location == "<<target_location.path<<std::endl;
         std::cout<<"Resource path == "<<resource_path<<std::endl;
-    return (true);
+  
 }
+
 // normalize
 //* we remove the slash at the end of the location 
 //* to make the prefix match the location even if there is a slash at the end 
@@ -106,7 +105,8 @@ bool ProcessRequest::match_location(ServerConfig& server)
 // prefix list:  /  ,  /api  ,  /api/v1
 //  "/api" == "/api"  ?  YES 
 // "/api/" == "/api"  ?  NO  → missed without normalization
-//TO TEST
+
+
 void ProcessRequest::normlize_location_path(ServerConfig& server)
 {
     std::vector<Location> ::iterator it = server.locations.begin();
@@ -120,49 +120,51 @@ void ProcessRequest::normlize_location_path(ServerConfig& server)
     }
 }
 
-bool    ProcessRequest::check_max_body_size()
+void ProcessRequest::check_redirction()
+{
+    if (target_location.redirect.enabled)
+    {
+      is_RedirecRq = true;
+      redirect_url = target_location.redirect.url;
+      throw HttpError(target_location.redirect.code);
+    }
+}
+
+void    ProcessRequest::check_max_body_size(ServerConfig& srv)
 {
     if(!request->getBody().empty())
     {
-        size_t max_size =  target_location.client_max_body_size;
+        size_t& max_size =  target_location.client_max_body_size;
         if (!max_size)
-            max_size = srv->client_max_body_size;
+            max_size = srv.client_max_body_size;
         if (request->getBody().size() > max_size)
-        {
-            status_code = 413;
-            return(false);
-        }
+            throw HttpError(CONTENT_TOO_LARGE );
     }
-    return(true);
 }
 
-bool ProcessRequest::check_allowed_method()
+void ProcessRequest::check_allowed_method()
 {
     size_t i = 0;
 
     while (i < target_location.allow_methods.size())
     { 
         if (request->getRequestLine().Method == target_location.allow_methods[i])
-            return(true);
+            return;
         i++;
     }
-    status_code = 405;
-    return(false);
+   throw HttpError(METHOD_NOT_ALLOWED);
 }
 
-void ProcessRequest::define_type()
+int ProcessRequest::define_type()
 {
    struct stat pathStat;
 
-    if (!stat(resource_path.c_str(),&pathStat))
+    if (!stat(resource_path.c_str(),&pathStat) )
     {
         if (S_ISDIR(pathStat.st_mode))
         {
             if (access(resource_path.c_str(), F_OK | R_OK | X_OK)) 
-            {
-                status_code = 403;
-                return;
-            }
+                 return(FORBIDDEN);
             else
             {
                 is_dir = true;
@@ -172,24 +174,31 @@ void ProcessRequest::define_type()
                 {                    
                     if(request->getRequestLine().Method == "GET")
                     {
-                        status_code = 301;
-                        //redirect_url = "http:/" + request->getPath() + "/"; //was
                         redirect_url = "http://" + request->getHost() + request->getPath() + "/";// added
+                        return(MOVED_PERMANENTLY);
                     }
                 }
                 check_index_file();// also for post in case of  CGI
             }
         }
         else if(S_ISREG(pathStat.st_mode))
-            is_file = true;
+        {
+            // if (access(resource_path.c_str(), F_OK ))
+            // {
+            //     status_code = 404;
+            //     return;
+            // }
+             is_file = true;
+        }
     }
     else 
     {
         if (errno == EACCES)
-           status_code = 403;
+           return(FORBIDDEN);
         else
-            status_code = 404;
+           return(NOT_FOUND);
     }
+    return(0);
 }
 
 //*******index****
@@ -209,10 +218,7 @@ void ProcessRequest::check_index_file()
 
     op_dir = opendir(resource_path.c_str());
     if (!op_dir)
-    {
-        status_code = 403;
-        return;
-    }
+       throw HttpError(FORBIDDEN);
     while ((read_dir = readdir(op_dir)) != NULL)
     {
         files.push_back(read_dir->d_name);
@@ -235,6 +241,7 @@ void ProcessRequest::check_index_file()
 
 void    ProcessRequest::extract_file_extension()
 {
+    //TO DO lower  the extension
     if (is_file)
     {
         size_t pos1 = resource_path.rfind(".");
@@ -248,19 +255,6 @@ void    ProcessRequest::extract_file_extension()
         if (pos != std::string::npos)
             extension = Index_file.substr(pos);
     }
-}
-
-bool ProcessRequest::check_redirction()
-{
-    if (target_location.redirect.enabled)
-    {
-        is_RedirecRq = true; // added 
-        status_code = target_location.redirect.code;
-        redirect_url = target_location.redirect.url;
-
-        return(true);
-    }
-    return(false);
 }
 
 void ProcessRequest::check_Cgi()
@@ -279,12 +273,22 @@ bool ProcessRequest::check_location_extention()
     return(true);
 }
 
+void ProcessRequest::init_variable()
+{
+    is_file = false;
+    is_Static = false;
+    status_code = 0;
+    is_CgiRq = false;
+    is_dir = false;  
+    is_RedirecRq = false;
+}
+
 std::string ProcessRequest::getExtension() const
 {
     return(extension);
 }
 
-int       ProcessRequest::getStatusCode() const
+int       ProcessRequest::getStatusCode() 
 {
      return (status_code) ;
 }
@@ -327,4 +331,9 @@ void        ProcessRequest::setRedirectURL(std::string redrct_url)
 void        ProcessRequest::setExtension(std::string _extension)
 {
     extension = _extension;
+}
+
+void        ProcessRequest::setRedirctUrl(std::string& url)
+{
+    redirect_url = url;
 }

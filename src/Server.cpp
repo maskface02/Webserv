@@ -6,11 +6,13 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 21:51:55 by zatais            #+#    #+#             */
-/*   Updated: 2026/06/27 04:28:07 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/02 16:16:39 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../include/WebServ.hpp"
+
+bool Server::running = true;
 
 Server::Server(){}
 
@@ -53,6 +55,8 @@ void Server::closeClient(int fd) {
       _cgi->killCgi(it->second, SIGKILL);
     _logger.logConnection(it->second->ip, it->second->port, false);
     close(fd);
+    delete it->second->request;
+    delete it->second->processRq;
     delete it->second->processCgi;
     delete it->second;
     _clients.erase(it);
@@ -179,16 +183,16 @@ void Server::handleClientRead(int client_fd) {
     std::string request_data = client->read_buffer.substr(0, request_size);
     client->read_buffer.erase(0, request_size);
 
-    Request request(client ,request_data);
-    // client->request_obj = &request;
-    ProcessRequest ProcessRq(request, servers[client->server_idx]);
-    if (!ProcessRq.is_CgiRq)
+    client->request = new Request(client ,request_data);
+    client->processRq = new  ProcessRequest (client, _config.getServers()[client->server_idx]);
+    if (!client->processRq->is_CgiRq)
     {
-      ServeStaticRq StaticRq(request, ProcessRq, servers[client->server_idx]);
-      Response StaticResponse (ProcessRq, StaticRq, request);
+      ServeStaticRq StaticRq(client, _config.getServers()[client->server_idx]);
+      Response StaticResponse (client , StaticRq,  _config.getServers()[client->server_idx]);
       // client->response_obj = &StaticResponse;
       client->write_buffer = StaticResponse.getHttpResponse();
-      _logger.logRequest(client->ip, request.getRequestLine().Method, request.getRequestLine().URI, request.getRequestLine().HttpVers, ProcessRq.getStatusCode(), client->write_buffer.size());
+      _logger.logRequest(client->ip, client->request->getRequestLine().Method, client->request->getRequestLine().URI, client->request->getRequestLine().HttpVers, client->processRq->getStatusCode(), sizeof(client->write_buffer));
+
       client->state = STATE_SENDING;
        for (size_t i = 0; i < _poll_fds.size(); ++i) {
             if (_poll_fds[i].fd == client_fd) {
@@ -199,8 +203,8 @@ void Server::handleClientRead(int client_fd) {
     }
     else 
     {
-      ProcessCgi* procCgi = new ProcessCgi(client, ProcessRq, request);
-      std::string script = ProcessRq.getResourcePath();
+      ProcessCgi* procCgi = new ProcessCgi(client, *client->processRq, *client->request);
+      std::string script = client->processRq->getResourcePath();
       _cgi->startCgi(client, procCgi->getCgiPath(), script, procCgi->getEnv());
     }
   }
@@ -309,9 +313,8 @@ Client* Server::initClient(int client_fd, int listen_fd, const std::string& clie
   client->cgi_input_buffer = "";
   client->cgi_output_buffer = "";
   client->cgi_start_time = 0;
-  client->request_obj = NULL;//need to be deleted
-  client->response_obj = NULL;
-  client->processCgi = NULL;
+  client->request = NULL;
+  client->staticResponse = NULL;//
   return client;
 }
 
@@ -412,10 +415,14 @@ void Server::run() {
   for (size_t i = 0; i < _listen_fds.size(); ++i)
     addToPoll(_listen_fds[i], POLLIN, _poll_fds);
 
-  while (true) {
+  while (running) {
     int ready = poll(&_poll_fds[0], _poll_fds.size(), POLL_TIMEOUT);
     if (ready < 0)
+    {
+       if (errno == EINTR)
+         continue;
       _logger.error("poll failed");
+    }
 
     if (!_clients.empty())
       checkTimeouts();

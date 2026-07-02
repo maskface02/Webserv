@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chunked POST Request Demo</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 0 20px;
+      line-height: 1.6;
+    }
+    button {
+      background-color: #0076ff;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+    pre {
+      background-color: #f4f4f4;
+      padding: 15px;
+      border-radius: 6px;
+      overflow-x: auto;
+      border: 1px solid #ddd;
+      min-height: 100px;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Chunked POST Demo</h1>
+  <p>This page sends a streaming <code>POST</code> request with a chunked body using a <code>ReadableStream</code>.</p>
+
+  <button id="startBtn">Send Chunked POST</button>
+
+  <h3>Status Log:</h3>
+  <pre id="logOutput">Click the button to start the stream...</pre>
+
+  <script>
+    const startBtn = document.getElementById('startBtn');
+    const logOutput = document.getElementById('logOutput');
+
+    function log(message) {
+      logOutput.textContent += `\n[${new Date().toLocaleTimeString()}] ${message}`;
+    }
+
+    startBtn.addEventListener('click', async () => {
+      startBtn.disabled = true;
+      logOutput.textContent = "Starting stream initialization...";
+
+      // 1. Create the ReadableStream to stream chunks of text
+      const stream = new ReadableStream({
+        async start(controller) {
+          const encoder = new TextEncoder();
+
+          log("Sending Chunk 1...");
+          controller.enqueue(encoder.encode("Chunk #1: Initializing request.\n"));
+
+          // Wait 1.5 seconds before sending the next chunk
+          await new Promise(r => setTimeout(r, 1500));
+          log("Sending Chunk 2...");
+          controller.enqueue(encoder.encode("Chunk #2: Processing ongoing data streams.\n"));
+
+          // Wait another 1.5 seconds
+          await new Promise(r => setTimeout(r, 1500));
+          log("Sending Chunk 3...");
+          controller.enqueue(encoder.encode("Chunk #3: Final payload bits finalized.\n"));
+
+          // Close the stream
+          log("Closing request stream on the client side.");
+          controller.close();
+        }
+      });
+
+      // 2. Execute the fetch request
+      try {
+        log("Executing Fetch API to http://localhost:3000/upload...");
+        
+        const response = await fetch('http://localhost:3000/upload', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'text/plain',
+          },
+          body: stream,
+          duplex: 'half' // Required by Chromium to allow body streaming
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const serverResponseText = await response.text();
+        log(`Success! Server Responded:\n"${serverResponseText}"`);
+
+      } catch (error) {
+        log(`Error: ${error.message}`);
+        console.error("Streaming upload failed:", error);
+      } finally {
+        startBtn.disabled = false;
+      }
+    });
+  </script>
+
+</body>
+</html>
