@@ -326,7 +326,13 @@ ServerConfig Config::parseServerBlock(std::vector<std::string>& tokens, size_t& 
 
   while (idx < tokens.size() && tokens[idx] != "}") {
     if (tokens[idx] == "location")
-      server.locations.push_back(parseLocationBlock(tokens, idx));
+    {
+      Location newLoc = parseLocationBlock(tokens, idx);
+      for (size_t i = 0; i < server.locations.size(); ++i)
+        if (server.locations[i].path == newLoc.path)
+          throw std::runtime_error("config: duplicate location '" + newLoc.path + "'");
+      server.locations.push_back(newLoc);
+    }
     else {
       assignServerDirective(server, tokens, idx);
       hasDirective = true;
@@ -339,7 +345,7 @@ ServerConfig Config::parseServerBlock(std::vector<std::string>& tokens, size_t& 
   ++idx;
 
   if (!server.client_max_body_size)
-    server.client_max_body_size = 1024;
+    server.client_max_body_size = 1024 * 1024;
 
   return server;
 }
@@ -377,6 +383,6 @@ void Config::load(std::string &path) {
     throw std::runtime_error("config: no server blocks found");
 }
 
-std::vector<ServerConfig> Config::getServers() const {return servers;}
+std::vector<ServerConfig>& Config::getServers() {return servers;}
 
 bool Config::isValidMethod(std::string& method) {return method == "GET" || method == "POST" || method == "DELETE";}

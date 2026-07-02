@@ -74,7 +74,7 @@ class Config {
     ~Config();
     Config(const Config&);
     void                        load(std::string &path);
-    std::vector<ServerConfig>   getServers() const;
+    std::vector<ServerConfig>&   getServers();
 };
 
 #endif // !CONFIG

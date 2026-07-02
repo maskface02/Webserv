@@ -53,6 +53,7 @@ void Server::closeClient(int fd) {
       _cgi->killCgi(it->second, SIGKILL);
     _logger.logConnection(it->second->ip, it->second->port, false);
     close(fd);
+    delete it->second->processCgi;
     delete it->second;
     _clients.erase(it);
   }
@@ -138,7 +139,7 @@ void Server::handleClientRead(int client_fd) {
   if (client->state != STATE_READING)
     return;
 
-  std::vector<ServerConfig> servers = _config.getServers();
+  std::vector<ServerConfig>& servers = _config.getServers();
   size_t max_size = servers[client->server_idx].client_max_body_size;
 
   while (true) {
@@ -180,14 +181,14 @@ void Server::handleClientRead(int client_fd) {
 
     Request request(client ,request_data);
     // client->request_obj = &request;
-    ProcessRequest ProcessRq(request, _config.getServers()[client->server_idx]);
+    ProcessRequest ProcessRq(request, servers[client->server_idx]);
     if (!ProcessRq.is_CgiRq)
     {
-      ServeStaticRq StaticRq(request, ProcessRq, _config.getServers()[client->server_idx]);
+      ServeStaticRq StaticRq(request, ProcessRq, servers[client->server_idx]);
       Response StaticResponse (ProcessRq, StaticRq, request);
       // client->response_obj = &StaticResponse;
       client->write_buffer = StaticResponse.getHttpResponse();
-      _logger.logRequest(client->ip, request.getRequestLine().Method, request.getRequestLine().URI, request.getRequestLine().HttpVers, ProcessRq.getStatusCode(), sizeof(client->write_buffer));
+      _logger.logRequest(client->ip, request.getRequestLine().Method, request.getRequestLine().URI, request.getRequestLine().HttpVers, ProcessRq.getStatusCode(), client->write_buffer.size());
       client->state = STATE_SENDING;
        for (size_t i = 0; i < _poll_fds.size(); ++i) {
             if (_poll_fds[i].fd == client_fd) {
@@ -320,6 +321,9 @@ void Server::sendResponse(int client_fd) {
     return;
 
   Client* client = it->second;
+  if (client->state != STATE_SENDING)
+    return;
+
   if (client->write_buffer.empty())
     return;
 
@@ -347,7 +351,7 @@ void Server::sendResponse(int client_fd) {
 }
 
 void Server::createSockets() {
-  std::vector<ServerConfig> servers = _config.getServers();
+  std::vector<ServerConfig>& servers = _config.getServers();
 
   for (size_t srv_idx = 0; srv_idx < servers.size(); ++srv_idx) {
     ServerConfig& server = servers[srv_idx];
@@ -455,10 +459,7 @@ void Server::handleCgiPipeRead() {
       if (client_it != _clients.end() &&
           (client_it->second->state == STATE_WRITING_RESPONSE ||
            client_it->second->state == STATE_CGI_ERROR)) {
-            
-      //  client->second->_processCgi->GeneretCgiResponse();
-
-      
+        client_it->second->processCgi->GeneretCgiResponse();
         client_it->second->state = STATE_SENDING;
         for (size_t j = 0; j < _poll_fds.size(); ++j) {
           if (_poll_fds[j].fd == client_fd) {
