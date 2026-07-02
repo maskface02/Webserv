@@ -12,17 +12,16 @@
 
 #include "../../include/WebServ.hpp"
 
-ProcessCgi::ProcessCgi(Client *client,ProcessRequest &ProcessRq, Request& request):cgi_path(ProcessRq.getCgiPath())
+ProcessCgi::ProcessCgi(Client *client, ProcessRequest &ProcessRq, Request& request)
+:cgi_path(ProcessRq.getCgiPath()),_client(client)
 {
 
-    if (request.getRequestLine().Method == "Post")
+    if (request.getRequestLine().Method == "POST")
         client->cgi_input_buffer = request.getBody();
     EnvMap(request,client->ip);
     EnvArray();
-    cgi_output = client->cgi_output_buffer;
     connection = request.getConnection();
-    client->_ProcessCgi = this;
-
+    client->processCgi = this;
 }
 void ProcessCgi::EnvMap(Request& request,std::string ClientIp)
 {
@@ -97,10 +96,11 @@ void ProcessCgi::EnvArray()
     std::string addLine;
     std::stringstream str;
     std::stringstream ErrorHead;
+    std::string cgi_output = _client->cgi_output_buffer;
     ErrorHead<<"HTTP/1.1 502 Bad Gateway\r\n";
     ErrorHead << "Server: Webserver/1.1\r\n";
     ErrorHead <<"Content-Type: text/html\r\n";
-    // ErrorHead << "Date: "
+    ErrorHead << "Date: " << generateHttpDate();
     ErrorHead << "Connection: "<<connection<<"\r\n";
     size_t p_body = 0;
     if ((p_body = cgi_output.find("\r\n\r\n")) == std::string::npos)

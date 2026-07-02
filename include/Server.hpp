@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 21:39:15 by zatais            #+#    #+#             */
-/*   Updated: 2026/06/28 18:57:15 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/02 06:45:07 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,10 @@
 class Request;
 class Response;
 class ProcessCgi;
+class ProcessRequest;
+
+
+
 enum ClientState {
     STATE_READING,
     STATE_CGI_RUNNING,
@@ -51,9 +55,10 @@ struct Client {
     std::string     cgi_input_buffer;
     std::string     cgi_output_buffer;
     time_t          cgi_start_time;
-    Request*           request_obj; 
-    Response*           response_obj;
-    ProcessCgi*         _ProcessCgi;
+    Request*           request; 
+    Response*           staticResponse;
+    ProcessCgi*         processCgi;
+    ProcessRequest*     processRq;
 };
 
 class Cgi;

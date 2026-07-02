@@ -6,14 +6,12 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/22 10:02:50 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/06/28 18:52:11 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/02 16:58:02 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../include/WebServ.hpp"
 
-
-// store conectionne value in the client
 
 
 Request::Request(Client* client, std::string& Rq)
@@ -21,7 +19,7 @@ Request::Request(Client* client, std::string& Rq)
 {
     size_t          LineEnd = 0;
     size_t          header_end = std::string::npos;   
-    // (void)client;
+  
     try
     {
         LineEnd = Rq.find("\r\n");
@@ -30,27 +28,25 @@ Request::Request(Client* client, std::string& Rq)
             header_end = pars_lineRequest(Rq, LineEnd);
             if (header_end !=  std::string::npos)
                 pars_Headers(Rq, LineEnd + 2,header_end + 2);
-            else    throw HttpError(400);
+            else    throw HttpError(BAD_REQUEST);
             if (connection == "keep-alive")
-                client->keep_alive = true;
+                client->keep_alive = true;//check init
             if ((header_end + 4) <  Rq.length() &&  RequestLine.Method == "POST")
             {
                 check_Post();
-                pars_Body(Rq, header_end + 4); 
+                pars_Body(Rq, header_end + 4);
             }
             if (RequestLine.Method == "POST" && body.empty())
-                throw(HttpError(400));
+                throw(HttpError(BAD_REQUEST));
         }
-        else   throw(HttpError(400));
+        else   throw(HttpError(BAD_REQUEST));  
+       
     }
-    catch(const HttpError& e)
+    catch( HttpError& e)
     {
         status_code = e.getErrorCode();
-        std::cerr<<status_code<<std::endl;
     }
-        
 }
-   
 
 size_t  Request::pars_lineRequest(std::string& Rq, size_t LineEnd)
 {  
@@ -62,35 +58,6 @@ size_t  Request::pars_lineRequest(std::string& Rq, size_t LineEnd)
     return (Rq.find("\r\n\r\n",LineEnd + 2));
 }
 
-void Request::pars_query()
-{
-    size_t                      pos = 0;
-    size_t                      oldpos = 0;
-    size_t                      i = 0;
-    std::string                 key;
-    std::string                 value;
-    std::vector<std::string>    pairs;
-    
-    while ((pos = RequestLine.Query.find("&", oldpos))!= std::string::npos)
-    {
-        pairs.push_back(RequestLine.Query.substr(oldpos, pos - oldpos));
-        oldpos = pos + 1;
-    }
-    pairs.push_back(RequestLine.Query.substr(oldpos, RequestLine.Query.length() - oldpos));
-    while(i < pairs.size())
-    {
-        pos = pairs[i].find("=");// need to handl if empty "key="" ++ if id must convert to nbr
-        if (pos != std::string::npos)
-        {
-            key = pairs[i].substr(0, pos);
-            value = pairs[i].substr(pos + 1);
-            Query[key].push_back(value);
-        }
-        else
-            throw HttpError(400);
-        i++;
-    }
-}
 
 void  Request::pars_Headers(std::string& Rq, size_t HeadersSrart ,size_t HeadersEnd)
 {   
@@ -103,8 +70,8 @@ void  Request::pars_Headers(std::string& Rq, size_t HeadersSrart ,size_t Headers
     std::string Key;
     std::string Value;
     std::string Headers = Rq.substr(HeadersSrart,HeadersEnd - HeadersSrart);
-   
-    // Headers = lowercase(Rq,HeadersSrart,HeadersEnd);//TO DO
+    if (Headers.empty())
+        throw HttpError(BAD_REQUEST);
     while ((lineEnd = Headers.find("\r\n", lineStart)) != std::string::npos)
     { 
         line = Headers.substr(lineStart, lineEnd - lineStart);
@@ -121,11 +88,11 @@ void  Request::pars_Headers(std::string& Rq, size_t HeadersSrart ,size_t Headers
             HeaderMap[Key] = Value;
         }
         else
-            throw HttpError(400);
+            throw HttpError(BAD_REQUEST);
         lineStart = lineEnd + 2;
         countHead++;
         if (countHead > 100)
-            throw HttpError(400);
+            throw HttpError(BAD_REQUEST);
     }
     check_existe("Host");
 }
@@ -134,20 +101,21 @@ void Request::pars_Body(std::string& RqBody, size_t bodyStart)
 {
     size_t pos = 0;  
     std::string Text_body = RqBody.substr(bodyStart);
+    std::cout<<"Before ================\n"<<Text_body<<std::endl;
+
     if (isChunked == false 
         && Text_body.size() < content_lenght)
-        throw(HttpError(400));     
+        throw(HttpError(BAD_REQUEST));     
     if (isChunked)
        pars_chunked_body(Text_body);
     else
         body = RqBody.substr(bodyStart, content_lenght);
+    std::cout<<"after =============== \n"<<body<<std::endl;
    if ((pos = content_type.rfind("boundary")) != std::string::npos)
    {
      pars_boundry(pos);
      is_boundry = true; 
-   }
-   std::cout<<body;
-   
+   }   
 }
 
 void Request::pars_chunked_body(std::string& chnk_body)
@@ -161,19 +129,18 @@ void Request::pars_chunked_body(std::string& chnk_body)
     {
         start = indx;
         Val = 0;
-        while ((indx + 1) < chnk_body.length() 
-            && chnk_body[indx] != '\r' && chnk_body[indx + 1] != '\n')
+        while (indx  < chnk_body.length() && chnk_body[indx] != '\r' )
             indx++;
-        str << chnk_body.substr(start, indx - start );  std::cout<<str.str()<<std::endl;  
-        str >>std::hex>> Val ;//str reach end of file caz we read all its bufff
+        str << chnk_body.substr(start, indx - start ); 
+        str >>std::hex >> Val ;//str reach end of file caz we read all its bufff
         str.str("");//clear buffer
         str.clear();//re sate error flag =>remove error flag
         indx+= 2;
         if (Val == 0 || Val < 0 )
             break;
         i = 0;
-        while (i < Val && (indx + 1) < chnk_body.length() && chnk_body[indx ] != '\r' 
-            && chnk_body[indx + 1] != '\n')
+       while (i < Val && (indx + 1) < chnk_body.length() 
+            && !(chnk_body[indx] == '\r' && chnk_body[indx + 1] == '\n'))
         {
             body = body + chnk_body[indx];
             i++;
@@ -185,7 +152,6 @@ void Request::pars_chunked_body(std::string& chnk_body)
 
 void Request:: pars_boundry(size_t& pos)
 {
-    
     size_t bound_pos = content_type.find("=",pos);
     size_t bound_end = content_type.find("\r\n",bound_pos);
     std::string boundry = "--" + content_type.substr(bound_pos + 1, bound_end - (bound_pos + 1));
@@ -223,9 +189,9 @@ std::string Request::find_file_name(std::string& part)
     size_t pos_file = part.find("filename");
     size_t pos_name =  part.find("=",pos_file);
     size_t endLine = part.find("\r\n",pos_name) - 1;//for the last quote
-    //  if ((pos_file == std::string::npos || pos_name == std::string::npos 
-    //     || endLine == std::string::npos))
-    //     throw(HttpError(400));
+     if ((pos_file == std::string::npos || pos_name == std::string::npos 
+        || endLine == std::string::npos))
+        return("");
     return (part.substr(pos_name + 2,endLine - (pos_name + 2)));// + 2 for the = and quote
 }
 
@@ -233,9 +199,10 @@ std::string Request::find_boundry_body(std::string& part)
 {
     size_t body_start = part.find("\r\n\r\n");
     if (body_start == std::string::npos)
-          throw(HttpError(400));
+          throw(HttpError(BAD_REQUEST));
     return(part.substr(body_start + 4));
 }
+
 /*POST content type
 
 1-- application/x-www-form-urlencoded  e.g., first-name=Frida&last-name=Kahlo

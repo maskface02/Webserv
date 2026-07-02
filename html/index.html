@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Portal: Notes & Uploads</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #f4f6f9;
+            color: #333;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            color: #2c3e50;
+            font-size: 2.5rem;
+        }
+
+        header p {
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        @media (min-width: 768px) {
+            .grid {
+                grid-template-columns: 2fr 1fr;
+            }
+        }
+
+        .card {
+            background: #ffffff;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .card h2 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 8px;
+        }
+
+        /* Form styling */
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #4a5568;
+            font-size: 0.9rem;
+        }
+
+        input[type="text"], textarea, input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 1rem;
+            background-color: #f8fafc;
+        }
+
+        input[type="text"]:focus, textarea:focus {
+            outline: none;
+            border-color: #3498db;
+            background-color: #fff;
+        }
+
+        textarea {
+            resize: vertical;
+            height: 150px;
+        }
+
+        button {
+            background-color: #3498db;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            width: 100%;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        /* File input specialization */
+        input[type="file"] {
+            background: #fff;
+            cursor: pointer;
+            padding: 8px;
+        }
+
+        /* Note display area */
+        .notes-list {
+            margin-top: 20px;
+        }
+
+        .note-item {
+            background: #f8fafc;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            border-radius: 0 6px 6px 0;
+            margin-bottom: 15px;
+        }
+
+        .note-item h3 {
+            font-size: 1.1rem;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .note-item p {
+            font-size: 0.95rem;
+            color: #555;
+            line-height: 1.4;
+        }
+
+        .note-meta {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            margin-top: 8px;
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Student Workspace</h1>
+        <p>Manage your lecture notes and submit assignments</p>
+    </header>
+
+    <div class="grid">
+        <!-- Left Column: Notes Section -->
+        <div class="card">
+            <h2>Add New Lecture Note</h2>
+            <form id="noteForm">
+                <div class="form-group">
+                    <label prejudices="noteTitle">Subject / Title</label>
+                    <input type="text" id="noteTitle" placeholder="e.g., Intro to Computer Science" required>
+                </div>
+                <div class="form-group">
+                    <label for="noteContent">Your Notes</label>
+                    <textarea id="noteContent" placeholder="Start typing your study notes here..." required></textarea>
+                </div>
+                <button type="submit">Save Note</button>
+            </form>
+
+            <div class="notes-list">
+                <h2>Saved Notes</h2>
+                <div id="notesContainer">
+                    <!-- Default placeholder if no notes are saved yet -->
+                    <p style="color: #94a3b8; font-style: italic;" id="noNotes">No notes saved yet. Type above to add one!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: File Upload Section -->
+        <div class="card">
+            <h2>Upload Assignment / Files</h2>
+            
+            <!-- Note: 'action' points to your server endpoint, 'enctype' is mandatory for file uploads -->
+            <form action="/upload-endpoint" method="POST" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="studentId">Student ID / Name</label>
+                    <input type="text" id="studentId" name="studentId" placeholder="e.g., STU12345" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="fileUpload">Choose File (PDF, Docx, Images)</label>
+                    <input type="file" id="fileUpload" name="uploadedFile" required>
+                </div>
+                
+                <button type="submit" style="background-color: #2ecc71;">Upload to Server</button>
+            </form>
+            
+            <p style="font-size: 0.8rem; color: #7f8c8d; margin-top: 15px; text-align: center;">
+                Max file size: 25MB. Ensure files are named correctly.
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Simple frontend logic to let the student save notes locally on their browser screen
+    const noteForm = document.getElementById('noteForm');
+    const notesContainer = document.getElementById('notesContainer');
+    const noNotesText = document.getElementById('noNotes');
+
+    noteForm.addEventListener('submit', function(e) {
+        e.preventDefault(); // Stop page from refreshing
+
+        const title = document.getElementById('noteTitle').value;
+        const content = document.getElementById('noteContent').value;
+        const date = new Date().toLocaleDateString();
+
+        // Remove placeholder if it exists
+        if (noNotesText) noNotesText.remove();
+
+        // Create new note HTML structure
+        const noteItem = document.createElement('div');
+        noteItem.className = 'note-item';
+        noteItem.innerHTML = `
+            <h3>${title}</h3>
+            <p>${content.replace(/\n/g, '<br>')}</p>
+            <div class="note-meta">Saved on: ${date}</div>
+        `;
+
+        // Prepend to display latest note first
+        notesContainer.insertBefore(noteItem, notesContainer.firstChild);
+
+        // Clear the form fields
+        noteForm.reset();
+    });
+</script>
+
+</body>
+</html>

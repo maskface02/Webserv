@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 21:51:55 by zatais            #+#    #+#             */
-/*   Updated: 2026/06/27 04:28:07 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/02 16:16:39 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -179,16 +179,15 @@ void Server::handleClientRead(int client_fd) {
 
     //TODO test
 
-    Request request(client ,request_data);
-    // client->request_obj = &request;
-    ProcessRequest ProcessRq(request, _config.getServers()[client->server_idx]);
-    if (!ProcessRq.is_CgiRq)
+    client->request = new Request(client ,request_data);
+    client->processRq = new  ProcessRequest (client, _config.getServers()[client->server_idx]);
+    if (!client->processRq->is_CgiRq)
     {
-      ServeStaticRq StaticRq(request, ProcessRq, _config.getServers()[client->server_idx]);
-      Response StaticResponse (ProcessRq, StaticRq, request);
+      ServeStaticRq StaticRq(client, _config.getServers()[client->server_idx]);
+      Response StaticResponse (client , StaticRq,  _config.getServers()[client->server_idx]);
       // client->response_obj = &StaticResponse;
       client->write_buffer = StaticResponse.getHttpResponse();
-      _logger.logRequest(client->ip, request.getRequestLine().Method, request.getRequestLine().URI, request.getRequestLine().HttpVers, ProcessRq.getStatusCode(), sizeof(client->write_buffer));
+      _logger.logRequest(client->ip, client->request->getRequestLine().Method, client->request->getRequestLine().URI, client->request->getRequestLine().HttpVers, client->processRq->getStatusCode(), sizeof(client->write_buffer));
       client->state = STATE_SENDING;
        for (size_t i = 0; i < _poll_fds.size(); ++i) {
             if (_poll_fds[i].fd == client_fd) {
@@ -199,26 +198,9 @@ void Server::handleClientRead(int client_fd) {
     }
     else 
     {
-      ProcessCgi ProcessCGI(client, ProcessRq, request);
+      // ProcessCgi ProcessCGI(client, client->processRq, client->request);
       // _cgi->startCgi(client, interpreter, ProcessCGI.getCgiPath(), ProcessCGI.getEnv());
     }
-      //interpreter will be define by Zakaria
-
-      
-    // parse request_data -> sets client->request_obj, req->isCgi
-
-    // if (!req->isCgi) {
-    //     generate response
-    //     client->state = STATE_SENDING;
-    //     for (size_t i = 0; i < _poll_fds.size(); ++i) {
-    //         if (_poll_fds[i].fd == client_fd) {
-    //             _poll_fds[i].events = POLLOUT;
-    //             break;
-    //         }
-    //     }
-    // }
-    // else
-    //     _cgi->startCgi(client, interpreter, script_path, req->envp);
   }
 }
 
@@ -325,8 +307,8 @@ Client* Server::initClient(int client_fd, int listen_fd, const std::string& clie
   client->cgi_input_buffer = "";
   client->cgi_output_buffer = "";
   client->cgi_start_time = 0;
-  client->request_obj = NULL;
-  client->response_obj = NULL;
+  client->request = NULL;
+  client->staticResponse = NULL;
   return client;
 }
 
@@ -472,9 +454,7 @@ void Server::handleCgiPipeRead() {
           (client_it->second->state == STATE_WRITING_RESPONSE ||
            client_it->second->state == STATE_CGI_ERROR)) {
             
-      //  client->second->_ProcessCgi->GeneretCgiResponse();
-
-      
+       client_it->second-> processCgi->GeneretCgiResponse();
         client_it->second->state = STATE_SENDING;
         for (size_t j = 0; j < _poll_fds.size(); ++j) {
           if (_poll_fds[j].fd == client_fd) {
