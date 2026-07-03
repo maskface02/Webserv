@@ -94,7 +94,7 @@ void ServeStaticRq::html_list_dir()
     str << "<ul>\n";
     while ((read_dir = readdir(op_dir)) != NULL)
         if(read_dir->d_name[0] != '.')
-             str <<  " <li><a href=\""<< read_dir->d_name <<  "\">" <<"</a></li>\n";
+             str <<  " <li><a href=\""<< read_dir->d_name <<  "\">" << read_dir->d_name <<"</a></li>\n";
     str << "</ul>\n"  
            "</body>\n"
            "</html>\n";
@@ -187,6 +187,7 @@ std::vector<std::string> ServeStaticRq:: directory_files()
     {
         files.push_back(read_dir->d_name);
     }
+    closedir(op_dir);
     return(files);
 }
 

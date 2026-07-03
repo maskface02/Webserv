@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 21:39:15 by zatais            #+#    #+#             */
-/*   Updated: 2026/07/02 19:58:46 by m45kf4c3         ###   ########.fr       */
+/*   Updated: 2026/07/03 15:08:42 by m45kf4c3         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,7 +57,6 @@ struct Client {
     time_t          cgi_start_time;
 
     Request*           request; 
-    Response*           staticResponse;
     ProcessCgi*         processCgi;
     ProcessRequest*     processRq;
 };
@@ -106,15 +105,6 @@ class Server {
 
     static void setNonBlocking(int fd);
     static void addToPoll(int fd, short events, std::vector<struct pollfd>& poll_fds);
-    // static bool& getServerState(){
-    //   return running;
-    // };
-    // static bool& setServerState(bool state){
-    //   running = state;
-    // };
-    static void signalHandler(int sig){
-      (void)sig;
-      running = false;
-    }
+    static void signalHandler(int sig); 
 };
 #endif // !SERVER_HPP

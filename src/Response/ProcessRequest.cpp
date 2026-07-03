@@ -223,6 +223,7 @@ void ProcessRequest::check_index_file()
     {
         files.push_back(read_dir->d_name);
     }
+    closedir(op_dir);
     while (i < IndexVect.size())
     {
         j = 0;

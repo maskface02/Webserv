@@ -13,7 +13,7 @@
 #include "../../include/WebServ.hpp"
 
 ProcessCgi::ProcessCgi(Client *client, ProcessRequest &ProcessRq, Request& request)
-:cgi_path(ProcessRq.getCgiPath()),_client(client)
+:env(NULL), cgi_path(ProcessRq.getCgiPath()), script_path(ProcessRq.getResourcePath()), _client(client)
 {
 
     if (request.getRequestLine().Method == "POST")
@@ -37,8 +37,10 @@ void ProcessCgi::EnvMap(Request& request,std::string ClientIp)
 {
     if (request.getRequestLine().Method == "POST")
     {
-        env_map["CONTENT_LENGTH"] = (request.getContentLenght());
-        env_map["CONTENT_TYPE"] = (request.getContentType());
+        std::stringstream ss;
+        ss << request.getContentLenght();
+        env_map["CONTENT_LENGTH"] = ss.str();
+        env_map["CONTENT_TYPE"] = request.getContentType();
     }
     env_map["GATEWAY_INTERFACE"] = ("CGI/1.1");
     env_map["QUERY_STRING"] = request.getRequestLine().Query;
@@ -49,7 +51,9 @@ void ProcessCgi::EnvMap(Request& request,std::string ClientIp)
     env_map["PATH_INFO"] = request.getPath();//=>request path
     env_map["REQUEST_URI"] = request.getRequestLine().URI; //=>  req URI
     env_map["SERVER_NAME"] = request.getHost();
-    env_map["SERVER_PORT"] = request.getPort();
+    std::stringstream port;
+    port << request.getPort();
+    env_map["SERVER_PORT"] = port.str();
     env_map["SERVER_PROTOCOL"] = request.getRequestLine().HttpVers;
     env_map["SERVER_SOFTWARE"] = "Webserver/1.1";
     //cookies env

@@ -100,6 +100,8 @@ void Cgi::handleCgiRead(std::map<int, int>::iterator pipe_it, std::map<int, Clie
   std::map<int, Client*>::iterator client_it = clients.find(client_fd);
   if (client_it == clients.end())
     return;
+  if (client_it->second->state != STATE_CGI_RUNNING)
+    return;
 
   Client* client = client_it->second;
   int pipe_fd = pipe_it->first;
@@ -124,9 +126,8 @@ void Cgi::handleCgiRead(std::map<int, int>::iterator pipe_it, std::map<int, Clie
         cleanupCgi(client, -1);
       return;
     }
-    else {
+    else
       return;
-    }
   }
 }
 

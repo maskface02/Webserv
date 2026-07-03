@@ -23,6 +23,8 @@ Server::~Server() {
     if (it->second->state == STATE_CGI_RUNNING && it->second->cgi_pid != -1)
       _cgi->killCgi(it->second, SIGKILL);
     close(it->second->fd);
+    delete it->second->request;
+    delete it->second->processRq;
     delete it->second->processCgi;
     delete it->second;
   }
@@ -34,6 +36,10 @@ Server::~Server() {
 }
 
 /******************************************************************************/
+ void Server::signalHandler(int sig){
+   (void)sig;
+   running = false;
+ }
 
 void Server::setNonBlocking(int fd) {
   int flags = fcntl(fd, F_GETFL, 0);
@@ -189,9 +195,8 @@ void Server::handleClientRead(int client_fd) {
     {
       ServeStaticRq StaticRq(client, _config.getServers()[client->server_idx]);
       Response StaticResponse (client , StaticRq,  _config.getServers()[client->server_idx]);
-      // client->response_obj = &StaticResponse;
       client->write_buffer = StaticResponse.getHttpResponse();
-      _logger.logRequest(client->ip, client->request->getRequestLine().Method, client->request->getRequestLine().URI, client->request->getRequestLine().HttpVers, client->processRq->getStatusCode(), sizeof(client->write_buffer));
+      _logger.logRequest(client->ip, client->request->getRequestLine().Method, client->request->getRequestLine().URI, client->request->getRequestLine().HttpVers, client->processRq->getStatusCode(), client->write_buffer.size());
 
       client->state = STATE_SENDING;
        for (size_t i = 0; i < _poll_fds.size(); ++i) {
@@ -304,7 +309,7 @@ Client* Server::initClient(int client_fd, int listen_fd, const std::string& clie
   client->read_buffer = "";
   client->write_buffer = "";
   client->state = STATE_READING;
-  client->keep_alive = true;
+  client->keep_alive = false;
   client->server_idx = _fd_to_server_idx[listen_fd];
   client->last_activity = time(NULL);
   client->cgi_pid = -1;
@@ -314,7 +319,8 @@ Client* Server::initClient(int client_fd, int listen_fd, const std::string& clie
   client->cgi_output_buffer = "";
   client->cgi_start_time = 0;
   client->request = NULL;
-  client->staticResponse = NULL;//
+  client->processCgi = NULL;
+  client->processRq = NULL;
   return client;
 }
 
@@ -347,7 +353,15 @@ void Server::sendResponse(int client_fd) {
       }
     }
     if (client->keep_alive)
+    {
+      delete client->request;
+      delete client->processRq;
+      delete client->processCgi;
+      client->request = NULL;
+      client->processRq = NULL;
+      client->processCgi = NULL;
       client->state = STATE_READING;
+    }
     else
       closeClient(client_fd);
   }
@@ -493,6 +507,9 @@ void Server::handleCgiStdinWrite() {
       continue;
 
     Client* client = it->second;
+    if (client->state != STATE_CGI_RUNNING)
+      continue;
+
     if (client->cgi_input_buffer.empty()) {
       close(pipe_fd);
       for (size_t j = 0; j < _poll_fds.size(); ++j) {
