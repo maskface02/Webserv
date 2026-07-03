@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/16 12:06:38 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/07/02 15:47:13 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/03 10:58:45 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -163,7 +163,7 @@ int ProcessRequest::define_type()
     {
         if (S_ISDIR(pathStat.st_mode))
         {
-            if (access(resource_path.c_str(), F_OK | R_OK | X_OK)) 
+            if (access(resource_path.c_str(), F_OK | X_OK)) 
                  return(FORBIDDEN);
             else
             {
@@ -183,12 +183,7 @@ int ProcessRequest::define_type()
         }
         else if(S_ISREG(pathStat.st_mode))
         {
-            // if (access(resource_path.c_str(), F_OK ))
-            // {
-            //     status_code = 404;
-            //     return;
-            // }
-             is_file = true;
+            is_file = true;
         }
     }
     else 
@@ -243,6 +238,7 @@ void ProcessRequest::check_index_file()
 void    ProcessRequest::extract_file_extension()
 {
     //TO DO lower  the extension
+    extension = "default";
     if (is_file)
     {
         size_t pos1 = resource_path.rfind(".");

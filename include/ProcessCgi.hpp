@@ -11,12 +11,12 @@ class ProcessCgi
     std::string                                 Interp;//
     char**                                      env; //new used here !!
     std::string                                 cgi_path;
-    std::string                                 script_path;
+ 
 
     std::string                                 Cgi_resp;
     std::string                                  connection;
     Client *                                    _client;
-
+   std::string                                 script_path;
   public:
     ProcessCgi(Client *client, ProcessRequest &ProcessRq, Request& request);
     ~ProcessCgi();

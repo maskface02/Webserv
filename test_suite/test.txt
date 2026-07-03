@@ -1,3 +1,0 @@
-This is a simple test text file.
-It contains multiple lines.
-Used for testing file serving.

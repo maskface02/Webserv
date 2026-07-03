@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/17 05:30:09 by zatais            #+#    #+#             */
-/*   Updated: 2026/07/01 08:52:09 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/03 18:11:08 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,7 +46,6 @@
 #include <cctype>
 #include <cerrno>
 #include <sys/stat.h>
-
 
 
 

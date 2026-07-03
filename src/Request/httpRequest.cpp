@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/22 10:02:50 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/07/02 16:58:02 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/03 14:49:40 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -101,7 +101,6 @@ void Request::pars_Body(std::string& RqBody, size_t bodyStart)
 {
     size_t pos = 0;  
     std::string Text_body = RqBody.substr(bodyStart);
-    std::cout<<"Before ================\n"<<Text_body<<std::endl;
 
     if (isChunked == false 
         && Text_body.size() < content_lenght)
@@ -110,7 +109,7 @@ void Request::pars_Body(std::string& RqBody, size_t bodyStart)
        pars_chunked_body(Text_body);
     else
         body = RqBody.substr(bodyStart, content_lenght);
-    std::cout<<"after =============== \n"<<body<<std::endl;
+    
    if ((pos = content_type.rfind("boundary")) != std::string::npos)
    {
      pars_boundry(pos);
@@ -120,6 +119,7 @@ void Request::pars_Body(std::string& RqBody, size_t bodyStart)
 
 void Request::pars_chunked_body(std::string& chnk_body)
 {
+    // do it using found
     int i = 0;
     size_t indx = 0;
     int Val = 0;
@@ -149,7 +149,7 @@ void Request::pars_chunked_body(std::string& chnk_body)
         indx+= 2;
     }
 }
-
+// check boundary parssing
 void Request:: pars_boundry(size_t& pos)
 {
     size_t bound_pos = content_type.find("=",pos);
@@ -159,10 +159,11 @@ void Request:: pars_boundry(size_t& pos)
     parts = split_boundary_part(boundry);
     size_t i = 0;
     while (i < parts.size())
-    {
+    {std::cout<< "im in boundry ====\n";
         std::string file_name = find_file_name(parts[i]);
         if(!file_name.empty())
         {
+            std::cout << "boundry fils == " << file_name<< "\n";
             std::string boundry_body = find_boundry_body(parts[i]);
             boundry_map[file_name] = boundry_body;
         }
@@ -178,8 +179,10 @@ std::vector<std::string> Request:: split_boundary_part(std::string& boundary)
     size_t end = 0;
     while((end = body.find(boundary,start)) != std::string::npos)
     {
-       split_part.push_back(body.substr(start,end - start));
+        int i = 0;
+       split_part.push_back(body.substr(start,end - start));std::cout << "boundry parts == "<<split_part[i] <<"\n";
         start = end + boundary.length();
+        i++;
     }
     return(split_part);
 }

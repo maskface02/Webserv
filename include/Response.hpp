@@ -22,6 +22,8 @@ enum statusMsg
     BAD_GATEWAY                     = 502,
 };
 
+// status code 409 indicates 
+// a request conflict with the current state of the target resource.
 class Response
 {
     ServeStaticRq*                              serveStaticRq;
