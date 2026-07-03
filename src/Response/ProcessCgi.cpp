@@ -1,19 +1,19 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   processCgi.cpp                                     :+:      :+:    :+:   */
+/*   ProcessCgi.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/17 12:24:10 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/06/22 23:28:12 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/03 20:24:32 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../include/WebServ.hpp"
 
 ProcessCgi::ProcessCgi(Client *client, ProcessRequest &ProcessRq, Request& request)
-:cgi_path(ProcessRq.getCgiPath()),_client(client)
+:cgi_path(ProcessRq.getCgiPath()),_client(client), script_path(ProcessRq.getResourcePath())
 {
 
     if (request.getRequestLine().Method == "POST")
@@ -106,7 +106,7 @@ void ProcessCgi::EnvArray()
     std::string addLine;
     std::stringstream str;
     std::stringstream ErrorHead;
-    std::string cgi_output = _client->cgi_output_buffer;
+    std::string& cgi_output = _client->cgi_output_buffer;
     ErrorHead<<"HTTP/1.1 502 Bad Gateway\r\n";
     ErrorHead << "Server: Webserver/1.1\r\n";
     ErrorHead <<"Content-Type: text/html\r\n";

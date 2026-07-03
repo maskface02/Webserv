@@ -76,62 +76,97 @@ void ServeStaticRq::check_AutoIndex()
        throw HttpError(FORBIDDEN );
 }
 
-//TO FIX
+//TO FIX problem in the file can not be serve it coild be the premssion
 void ServeStaticRq::html_list_dir()
 {
-    //if folder list the files // javascript
-    DIR* op_dir;
-    struct dirent* read_dir;
-    std::stringstream str(resp_body);
-
-    op_dir = opendir(client->processRq->getResourcePath().c_str());
-    if (!op_dir)
-       throw HttpError(FORBIDDEN );
+    std::stringstream str;
+    std::vector<std::string> files;
+    std::string path = client->processRq->getResourcePath();
+   std::string toFile ;
+    files = directory_files(path);
+    struct stat structStat;
     str << "<!DOCTYPE html>\n";
-    str<< "<html>\n";
+    str << "<html>\n";
     str << "<body>\n";
     str << "<h2>List files</h2>\n";
-    str << "<ul>\n";
-    while ((read_dir = readdir(op_dir)) != NULL)
-        if(read_dir->d_name[0] != '.')
-             str <<  " <li><a href=\""<< read_dir->d_name <<  "\">" <<"</a></li>\n";
-    str << "</ul>\n"  
+    str << "<hr><pre><a href=\"../</a>\n";
+    size_t i = 0;
+    while (i < files.size())
+    {   
+        toFile = path + files[i];
+        if (!stat(toFile.c_str(), &structStat) && files[i] != ".")
+        {
+            if (S_ISDIR(structStat.st_mode))
+                files[i] += "/";
+            std::string last_modif = last_modif_time(structStat);
+            size_t file_size = structStat.st_size;
+            str <<  "<a href=\""<< files[i]<<  "\">"<< files[i] <<"</a> ";
+            str << std::setw(50);
+            str << last_modif;
+            str << std::setw(50);
+           if (S_ISDIR(structStat.st_mode))
+                str << "-";
+            else 
+                str << file_size;
+            str<<"\n";
+            toFile.clear();
+        }
+        i++;
+    }
+    str << "</pre><hr>\n"  
            "</body>\n"
            "</html>\n";
     resp_body = str.str();
     client->processRq->setExtension(".html");
-    closedir(op_dir);// check 
+    
+}
 
+std::string ServeStaticRq::last_modif_time(struct stat s)
+{
+    char buff[25];
+    time_t _time = s.st_mtime;
+    struct tm* time_modif = localtime(&_time);
+    strftime(buff,sizeof(buff)," %d-%b-%Y  %H:%M", time_modif);
+    return(buff);
 }
 
 void ServeStaticRq::_ServeDeleteRq()
-{
+{ 
+    
+    std::string resource_path = client->processRq->getResourcePath();
     if (client->processRq->is_dir)
     {
-        size_t pos = client->processRq->getResourcePath().rfind("/");
+        size_t pos = resource_path.rfind("/");
         if (pos == std::string::npos)
-              throw HttpError(FORBIDDEN );;
+            throw HttpError(BAD_REQUEST);// because the resource_path doesn't mach the target
 
-        // pos = client->processRq->getResourcePath().rfind("/",pos - 1);
+        pos = resource_path.rfind("/",pos - 1);
 
-        std::string dir_path = client->processRq->getResourcePath() ;
-        if (access(dir_path.c_str(), F_OK))
+        std::string parnt_dir_path = client->processRq->getResourcePath().substr(0,pos) ;// get _path to the parent dir
+        if (access(parnt_dir_path.c_str(), F_OK | W_OK | X_OK))
            throw HttpError(FORBIDDEN );
-            return;
+        std::vector<std::string> files = directory_files(resource_path);
+        delete_files(files);
     }
-    check_valid_path( client->processRq->getResourcePath());
-    std::string cmd = "rm -rf " + client->processRq->getResourcePath();/// if no premis
-    std::system(cmd.c_str());
-}
-void    ServeStaticRq::check_valid_path(std::string path)
-{
-    for (size_t i = 0; i < path.size(); ++i)
+    if (std::remove(resource_path.c_str()) == -1)
     {
-        char c = path[i];
-        if (c == ';' || c == '|' || c == '&' || c == '`' || c == '$' || c == '(' || c == ')')
-        {
-            throw HttpError(400);
-        }
+        //check ernno to specify the error
+        throw HttpError(FORBIDDEN );
+    }
+        
+}
+
+void    ServeStaticRq::delete_files(std::vector<std::string> files)
+{
+    size_t i = 0;
+    std::string path = client->processRq->getResourcePath();
+    while (i < files.size())
+    {
+        path += files[i];
+        std::remove(path.c_str());
+        path.clear();
+        path = client->processRq->getResourcePath();
+        i++;
     }
 }
 
@@ -143,6 +178,7 @@ void    ServeStaticRq::_ServePostRq()
         file_path = client->processRq->getLocation().upload_store;
         if ((pos = file_path.rfind("/")) != file_path.length() - 1)
             file_path += "/"; 
+      
         if (client->request->is_boundry)
             upload_files();
         else throw HttpError(METHOD_NOT_ALLOWED );
@@ -155,10 +191,12 @@ void ServeStaticRq::upload_files()
     std::map<std::string, std::string> boundry = client->request->getBoundryMap();
     std::map<std::string, std::string>::iterator it;
     std::string path = file_path;
-    std::vector<std::string> files = directory_files();
+    std::vector<std::string> files = directory_files(file_path);
     it = boundry.begin();
+    if (boundry.empty())
+        throw HttpError(404);
     while(it != boundry.end())
-    {
+    {  std::cout << "file name == " << path<<"\n";
         path += it->first;
         check_exist_file(it->first,files);
         std:: ofstream file (path.c_str());
@@ -174,19 +212,20 @@ void ServeStaticRq::upload_files()
     client->processRq->setRedirctUrl(file_path);
     throw HttpError(CREATED);;
 }
-std::vector<std::string> ServeStaticRq:: directory_files()
+std::vector<std::string> ServeStaticRq:: directory_files(std::string& path)
 {
     std::vector<std::string> files;
     DIR* op_dir;
     struct dirent* read_dir;
 
-    op_dir = opendir(file_path.c_str());
+    op_dir = opendir(path.c_str());
     if (!op_dir)
        throw HttpError(403);
     while ((read_dir = readdir(op_dir)) != NULL)
     {
         files.push_back(read_dir->d_name);
     }
+    closedir(op_dir);
     return(files);
 }
 

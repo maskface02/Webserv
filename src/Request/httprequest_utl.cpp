@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 19:54:39 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/07/02 17:21:22 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/03 14:44:53 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,7 +64,7 @@ void Request::check_valid_URI()
 
     if (RequestLine.URI[0] != '/' || RequestLine.URI.length() > 8000)
         throw HttpError(URI_TOO_LONG);
-    // is_valid_char(RequestLine.URI);
+    is_valid_char(RequestLine.URI);
 }
 
 void    Request::is_valid_char(std::string& URI)
@@ -72,11 +72,9 @@ void    Request::is_valid_char(std::string& URI)
     size_t i = 0;
     while (i < URI.size())
     {
-        if (isalpha(URI[i]) || isdigit(URI[i]) || is_reserved(URI[i]))
-        {
-            i++;
-        }
-        else throw HttpError(BAD_REQUEST);
+        if (!isalpha(URI[i]) && !isdigit(URI[i]) && !is_reserved(URI[i]))
+            throw HttpError(BAD_REQUEST);
+        i++;
     }
 }
 
