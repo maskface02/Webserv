@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/17 12:24:10 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/07/03 20:52:03 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/04 23:12:55 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -146,9 +146,10 @@ void ProcessCgi::EnvArray()
             }
         }
     }
-     body = cgi_output.substr(p_body + 4);
+    body = cgi_output.substr(p_body + 4);
     if (!body.empty())
-    {  if (cgi_output.find("Content-Type") == std::string::npos)
+    { 
+        if (cgi_output.find("Content-Type") == std::string::npos)
         {
             Cgi_resp = ServeStaticRq::html_Error_page(502, "Bad Gateway");
             ErrorHead << "Content-Length: " << Cgi_resp.size() << "\r\n";

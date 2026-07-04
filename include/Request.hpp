@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 19:54:51 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/07/02 09:16:11 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/04 17:17:01 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,6 +45,8 @@ class Request
         std::string                                         content_type;
         int                                                 status_code;
         std::map<std::string, std::string>                  boundry_map;
+        std::string                                         session_id;
+        std::string                                         cookies;
         // Request();
     public:
         bool                                                is_boundry;
@@ -66,6 +68,7 @@ class Request
         int                                                 getStatusCode() ;
         std::string                                         getPath() const;
         std::map<std::string, std::string>&                 getBoundryMap() ;
+        std::string                                         getSessionId() const ;
     //pars
         size_t                                              pars_lineRequest(std::string  &header, size_t LineEnd);
         void                                                pars_Headers(std::string  &Map, size_t HeadersSrart,size_t HeadersEnd);
@@ -81,7 +84,9 @@ class Request
         void                                                store_variable(std::string& key, std::string& value);
         void                                                store_cont_lenght(const std::string& lenght);
         void                                                store_host_port(std::string &str);
-    //check
+        void                                                define_session_id();
+    
+        //
         void                                                check_valid_nbr_space(std::string  &Rqline, size_t EndLine);
         void                                                check_valid_line();
         void                                                check_valid_Method();
@@ -94,6 +99,7 @@ class Request
         bool                                                is_reserved(char c);
         // utils
     // util
+        std::string                                        generateSessionId();
         std::string                                         remove_white_space( std::string str);
         int                                                 strIsDigits(const std::string& str);
         int                                                 HexStr_to_Int(const char c);

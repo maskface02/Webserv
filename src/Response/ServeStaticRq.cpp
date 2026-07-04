@@ -87,34 +87,44 @@ void ServeStaticRq::html_list_dir()
     struct stat structStat;
     str << "<!DOCTYPE html>\n";
     str << "<html>\n";
-    str << "<body>\n";
+    str << "<head>\n"
+            "<title>Index of /path/</title>\n"
+            "<style>\n"
+            "body { font-family: monospace; margin: 20px; }\n"
+            "       table { border-collapse: collapse; width: 100%; }\n"
+            "th, td { text-align: left; padding: 4px 15px; }\n"
+            "th { border-bottom: 1px solid #ccc; }\n"
+            "tr:hover { background: #f5f5f5; }\n"
+            "a { text-decoration: none; color: #0645ad; }\n"
+            " </style>\n"
+            "</head>\n";
+    str << "<body>\n"
+        "<table>\n"
+        "<tr><th>Name</th><th>Last Modified</th><th>Size</th></tr>\n";
     str << "<h2>List files</h2>\n";
 
-    str << "<hr><pre><a href=\"../</a>\n";
+    str << "<tr><td><a href=\"../\">../</a></td><td>-</td><td>-</td></tr>\n";
     size_t i = 0;
     while (i < files.size())
     {   
         toFile = path + files[i];
-        if (!stat(toFile.c_str(), &structStat) && files[i] != ".")
+        if (!stat(toFile.c_str(), &structStat) && files[i] != "." && files[i] != "..")
         {
             if (S_ISDIR(structStat.st_mode))
                 files[i] += "/";
             std::string last_modif = last_modif_time(structStat);
             size_t file_size = structStat.st_size;
-            str <<  "<a href=\""<< files[i]<<  "\">"<< files[i] <<"</a> ";
-            str << std::setw(50);
-            str << last_modif;
-            str << std::setw(50);
+            str <<  "<tr><td><a href=\""<< files[i]<<  "\">"<< files[i]<< "</a>" ;
+            str << "</td><td>  "<<last_modif<<"</td>";
            if (S_ISDIR(structStat.st_mode))
-                str << "-";
+                str <<  "<td>  "<< "-" <<"</td></tr>\n";
             else 
-                str << file_size;
-            str<<"\n";
+                str << "<td>  "<< file_size <<"</td></tr>\n";
             toFile.clear();
         }
         i++;
     }
-    str << "</pre><hr>\n"  
+    str << "</table>\n"  
            "</body>\n"
            "</html>\n";
     resp_body = str.str();
