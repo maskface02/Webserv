@@ -466,7 +466,7 @@ void Server::handlePollIn() {
 void Server::handleCgiPipeRead() {
   std::vector<int> ready_pipe_fds;
   for (size_t i = 0; i < _poll_fds.size(); ++i)
-    if (_poll_fds[i].revents & POLLIN && _pipe_to_client_fd.count(_poll_fds[i].fd))
+    if ((_poll_fds[i].revents & (POLLIN | POLLHUP)) && _pipe_to_client_fd.count(_poll_fds[i].fd))
       ready_pipe_fds.push_back(_poll_fds[i].fd);
 
   for (size_t i = 0; i < ready_pipe_fds.size(); ++i) {
@@ -525,8 +525,20 @@ void Server::handleCgiStdinWrite() {
 
     size_t to_write = std::min(client->cgi_input_buffer.size(), (size_t)CGI_CHUNK_SIZE);
     ssize_t bytes = write(pipe_fd, client->cgi_input_buffer.c_str(), to_write);
-    if (bytes > 0)
+    if (bytes > 0) {
       client->cgi_input_buffer.erase(0, bytes);
+      if (client->cgi_input_buffer.empty()) {
+        close(pipe_fd);
+        for (size_t j = 0; j < _poll_fds.size(); ++j) {
+          if (_poll_fds[j].fd == pipe_fd) {
+            _poll_fds.erase(_poll_fds.begin() + j);
+            break;
+          }
+        }
+        _pipe_to_client_fd.erase(pipe_fd);
+        client->cgi_stdin_fd = -1;
+      }
+    }
   }
 }
 
@@ -563,9 +575,16 @@ void Server::handlePollErrors() {
       std::map<int, Client*>::iterator it = _clients.find(client_fd);
       if (it != _clients.end()) {
         Client* client = it->second;
-        if (client->cgi_pid != -1)
-          _cgi->killCgi(client, SIGKILL);
-        client->state = STATE_CGI_ERROR;
+        for (size_t i = 0; i < _poll_fds.size(); ++i) {
+          if (_poll_fds[i].fd == fd) {
+            if (fd == client->cgi_stdout_fd && !(_poll_fds[i].revents & POLLERR))
+              break;
+            if (client->cgi_pid != -1)
+              _cgi->killCgi(client, SIGKILL);
+            client->state = STATE_CGI_ERROR;
+            break;
+          }
+        }
       }
       continue;
     }
