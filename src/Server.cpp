@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 21:51:55 by zatais            #+#    #+#             */
-/*   Updated: 2026/07/02 16:16:39 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/04 17:28:27 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -184,6 +184,7 @@ void Server::handleClientRead(int client_fd) {
     client->read_buffer.erase(0, request_size);
 
     client->request = new Request(client ,request_data);
+    //cookies class -> creat session if new || check expired ->if yes creat new
     client->processRq = new  ProcessRequest (client, _config.getServers()[client->server_idx]);
     if (!client->processRq->is_CgiRq)
     {
@@ -530,7 +531,7 @@ void Server::handlePollOut() {
 void Server::handlePollErrors() {
   std::vector<int> error_fds;
   for (size_t i = 0; i < _poll_fds.size(); ++i)
-    if (_poll_fds[i].revents & (POLLERR | POLLHUP))
+    if (_poll_fds[i].revents & (POLLERR /*| POLLHUP*/))
       error_fds.push_back(_poll_fds[i].fd);
 
   for (size_t i = 0; i < error_fds.size(); ++i) {

@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/22 10:02:50 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/07/03 14:49:40 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/04 17:19:02 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -95,6 +95,7 @@ void  Request::pars_Headers(std::string& Rq, size_t HeadersSrart ,size_t Headers
             throw HttpError(BAD_REQUEST);
     }
     check_existe("Host");
+    define_session_id();
 }
 
 void Request::pars_Body(std::string& RqBody, size_t bodyStart)
@@ -119,7 +120,7 @@ void Request::pars_Body(std::string& RqBody, size_t bodyStart)
 
 void Request::pars_chunked_body(std::string& chnk_body)
 {
-    // do it using found
+    // recheck
     int i = 0;
     size_t indx = 0;
     int Val = 0;
@@ -149,7 +150,8 @@ void Request::pars_chunked_body(std::string& chnk_body)
         indx+= 2;
     }
 }
-// check boundary parssing
+
+
 void Request:: pars_boundry(size_t& pos)
 {
     size_t bound_pos = content_type.find("=",pos);

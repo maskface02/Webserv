@@ -6,14 +6,15 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/17 12:24:10 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/07/03 20:24:32 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/04 15:57:06 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../include/WebServ.hpp"
 
 ProcessCgi::ProcessCgi(Client *client, ProcessRequest &ProcessRq, Request& request)
-:cgi_path(ProcessRq.getCgiPath()),_client(client), script_path(ProcessRq.getResourcePath())
+:env(NULL), cgi_path(ProcessRq.getCgiPath()),_client(client) , script_path(ProcessRq.getResourcePath())
+
 {
 
     if (request.getRequestLine().Method == "POST")
@@ -37,8 +38,10 @@ void ProcessCgi::EnvMap(Request& request,std::string ClientIp)
 {
     if (request.getRequestLine().Method == "POST")
     {
-        env_map["CONTENT_LENGTH"] = (request.getContentLenght());
-        env_map["CONTENT_TYPE"] = (request.getContentType());
+        std::stringstream ss;
+        ss << request.getContentLenght();
+        env_map["CONTENT_LENGTH"] = ss.str();
+        env_map["CONTENT_TYPE"] = request.getContentType();
     }
     env_map["GATEWAY_INTERFACE"] = ("CGI/1.1");
     env_map["QUERY_STRING"] = request.getRequestLine().Query;
@@ -49,7 +52,9 @@ void ProcessCgi::EnvMap(Request& request,std::string ClientIp)
     env_map["PATH_INFO"] = request.getPath();//=>request path
     env_map["REQUEST_URI"] = request.getRequestLine().URI; //=>  req URI
     env_map["SERVER_NAME"] = request.getHost();
-    env_map["SERVER_PORT"] = request.getPort();
+    std::stringstream port;
+    port << request.getPort();
+    env_map["SERVER_PORT"] = port.str();
     env_map["SERVER_PROTOCOL"] = request.getRequestLine().HttpVers;
     env_map["SERVER_SOFTWARE"] = "Webserver/1.1";
     //cookies env
@@ -118,6 +123,7 @@ void ProcessCgi::EnvArray()
         Cgi_resp = ServeStaticRq::html_Error_page(502, "Bad Gateway");
         ErrorHead << "Content-Length: " << Cgi_resp.size() << "\r\n";
         Cgi_resp = ErrorHead.str() + "\r\n "+Cgi_resp;
+        _client->write_buffer = Cgi_resp;
         return;
     }
     addHeader =  cgi_output.substr(0, p_body) + "\r\n";
@@ -140,13 +146,15 @@ void ProcessCgi::EnvArray()
             }
         }
     }
-     body = cgi_output.substr(p_body + 4);
+    body = cgi_output.substr(p_body + 4);
     if (!body.empty())
-    {  if (cgi_output.find("Content-Type") == std::string::npos)
+    { 
+        if (cgi_output.find("Content-Type") == std::string::npos)
         {
             Cgi_resp = ServeStaticRq::html_Error_page(502, "Bad Gateway");
             ErrorHead << "Content-Length: " << Cgi_resp.size() << "\r\n";
             Cgi_resp = ErrorHead.str() + "\r\n "+ Cgi_resp;
+            _client->write_buffer = Cgi_resp;
             return;
         }
         if (cgi_output.find("Content-Length") == std::string::npos)

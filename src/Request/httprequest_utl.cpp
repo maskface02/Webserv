@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 19:54:39 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/07/03 14:44:53 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/04 17:23:23 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -80,7 +80,7 @@ void    Request::is_valid_char(std::string& URI)
 
 bool Request::is_reserved(char c)
 {
-    std::string reserved_chars = ".:/?#[]@!$&'()*+,;=";
+    std::string reserved_chars = "_.:/?#[]@!$&'()*+,;=";
     size_t j = 0;
     while (j < reserved_chars.size())
     {
@@ -154,6 +154,8 @@ void Request::store_variable(std::string& key, std::string& value)
         store_host_port(value);
     if (key == "Content-Type")
         content_type = value;
+    if (key == "Cookie")
+        cookies = value;
 }
 
 void Request::store_cont_lenght(const std::string &lenght)
@@ -180,7 +182,51 @@ void Request::store_host_port(std::string &str)
             throw HttpError(BAD_REQUEST);
     }
     else    throw HttpError(BAD_REQUEST);
-    // Host = str;
+}
+// // new Add 
+
+void        Request::define_session_id()
+{
+     if (!cookies.empty())
+    {
+        size_t id_pos = 0;
+        id_pos = cookies.find("session_id=");
+        if (id_pos != std::string::npos)
+        {   
+            id_pos += 11;
+            size_t id_end = 0;
+            id_end  = cookies.find(";");
+            if (id_end  != std::string::npos)
+                session_id = cookies.substr(id_pos, id_end - id_pos);
+            else
+                session_id = cookies.substr(id_pos);
+            std::cout<<"found session id == "<<session_id;
+        }
+        else  session_id = generateSessionId(); 
+    }
+    else 
+    {
+        session_id = generateSessionId();
+        std::cout<<"generated session id == "<<session_id;
+    }
+}
+
+std::string     Request:: generateSessionId()
+{
+    
+    std::string str = "0123456789"
+                     "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                     "abcdefghijklmnopqrstuvwxyz";
+    std::string random_str ;
+    size_t i = 0;
+    
+    srand(time(NULL));
+    while (i < 10)
+    {
+        random_str += str[rand() % str.size()];
+        i++;
+    }
+    return(random_str);
 }
 
 void Request::check_Post()
@@ -272,3 +318,7 @@ std::string Request::getPath() const
  {
     return(boundry_map);
  }
+std::string Request::getSessionId() const
+{
+    return (session_id);
+}

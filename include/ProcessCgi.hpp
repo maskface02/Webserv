@@ -13,20 +13,22 @@ class ProcessCgi
     std::string                                 cgi_path;
  
 
-    std::string                                 Cgi_resp;
+   
     std::string                                  connection;
     Client *                                    _client;
-   std::string                                 script_path;
+   std::string                                 script_path; 
+   std::string                                 Cgi_resp;
   public:
     ProcessCgi(Client *client, ProcessRequest &ProcessRq, Request& request);
     ~ProcessCgi();
     void                EnvMap(Request& request, std::string ClientIp);
     void                EnvArray();
-    // void                ParsCgiOutput();
-     std::string         CgiResponse(Client *client);
+    void                 GeneretCgiResponse();
+
+
     char**              getEnv() const;
     std::string&         getCgiPath();
-    void                 GeneretCgiResponse();
+   
 };
 
 
