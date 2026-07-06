@@ -158,6 +158,7 @@ void Server::handleClientRead(int client_fd) {
 
   std::vector<ServerConfig>& servers = _config.getServers();
   size_t max_size = servers[client->server_idx].client_max_body_size;
+  // std::cout << "Test "<<max_size<<std::endl;
 
   while (true) {
     char buffer[4096];
@@ -166,7 +167,6 @@ void Server::handleClientRead(int client_fd) {
     if (bytes > 0) {
       client->read_buffer.append(buffer, bytes);
       client->last_activity = time(NULL);
-
       if (client->read_buffer.size() > max_size) {
         client->write_buffer = "HTTP/1.1 413 Payload Too Large\r\nContent-Length: 0\r\nConnection: close\r\n\r\n";
         client->keep_alive = false;
@@ -187,7 +187,10 @@ void Server::handleClientRead(int client_fd) {
     else
       break;
   }
-  
+      //
+      // std::cout << "reqData : " << client->read_buffer << std::endl;
+      // std::cout << "maxSize : " << max_size << std::endl;
+      // std::cout << "read_buffer.size : " << client->read_buffer.size() << std::endl;
   size_t request_size = getRequestSize(client->read_buffer);
   if (request_size != std::string::npos) {
     std::string request_data = client->read_buffer.substr(0, request_size);
@@ -565,7 +568,7 @@ void Server::handlePollOut() {
 void Server::handlePollErrors() {
   std::vector<int> error_fds;
   for (size_t i = 0; i < _poll_fds.size(); ++i)
-    if (_poll_fds[i].revents & (POLLERR /*| POLLHUP*/))
+    if (_poll_fds[i].revents & POLLERR)
       error_fds.push_back(_poll_fds[i].fd);
 
   for (size_t i = 0; i < error_fds.size(); ++i) {

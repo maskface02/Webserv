@@ -48,8 +48,6 @@ void Request::check_valid_line()
 
 void Request::check_valid_Method()
 {   
-  if (RequestLine.Method == "OPTIONS" || RequestLine.Method == "HEAD" || RequestLine.Method == "PUT" || RequestLine.Method == "TRACE" || RequestLine.Method == "CONNECT")
-        throw(HttpError(NOT_IMPLEMENTED));
   if (RequestLine.Method != "GET" && RequestLine.Method != "POST" && RequestLine.Method != "DELETE")
     throw(HttpError( METHOD_NOT_ALLOWED));
 }

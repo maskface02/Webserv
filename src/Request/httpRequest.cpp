@@ -36,7 +36,7 @@ Request::Request(Client* client, std::string& Rq)
                 check_Post();
                 pars_Body(Rq, header_end + 4);
             }
-            if (RequestLine.Method == "POST" && body.empty())
+            if (RequestLine.Method == "POST" && body.empty() && !isChunked)
                 throw(HttpError(BAD_REQUEST));
         }
         else   throw(HttpError(BAD_REQUEST));  

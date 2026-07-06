@@ -26,6 +26,13 @@ if ! pgrep webserv > /dev/null 2>&1; then
     echo "Please start the server first"
     exit 1
 fi
+# Check if server is running
+if ! which siege > /dev/null 2>&1; then
+    echo -e "${RED}ERROR: siege not found${RESET}"
+    echo "Please install it first"
+    exit 1
+fi
+
 
 # Run a siege test and evaluate pass/fail based on availability
 # Args: $1=test_name, $2=timeout_seconds, $3...=siege arguments
