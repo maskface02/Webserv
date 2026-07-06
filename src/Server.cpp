@@ -59,8 +59,11 @@ void Server::closeClient(int fd) {
   if (it != _clients.end()) {
     if (it->second->state == STATE_CGI_RUNNING && it->second->cgi_pid != -1)
       _cgi->killCgi(it->second, SIGKILL);
-    _logger.logConnection(it->second->ip, it->second->port, false);
-    close(fd);
+    ServerConfig& srv = _config.getServers()[it->second->server_idx];
+    std::ostringstream server_name;
+    server_name << srv.listens[0].host << ":" << srv.listens[0].port;
+    _logger.logConnection(it->second->ip, it->second->port, false, server_name.str());    close(fd);
+
     delete it->second->request;
     delete it->second->processRq;
     delete it->second->processCgi;
@@ -114,8 +117,8 @@ void Server::checkTimeouts() {
 }
 
 void Server::acceptConnection(int listen_fd) {
-  if (_clients.size() + 1 > MAX_CLIENTS) {
-    _logger.warn("max clients reached");
+  if (_clients.size() + 1 > 1024 - 3 - _listen_fds.size()) {
+    _logger.warn("max clients reached (FD LIMIT)");
     return;
   }
 
@@ -137,7 +140,11 @@ void Server::acceptConnection(int listen_fd) {
   _clients[client_fd] = client;
   addToPoll(client_fd, POLLIN, _poll_fds);
 
-  _logger.logConnection(client_ip, client_port, true);
+  int srv_idx = _fd_to_server_idx[listen_fd];
+  ServerConfig& srv = _config.getServers()[srv_idx];
+  std::ostringstream server_name;
+  server_name << srv.listens[0].host << ":" << srv.listens[0].port;
+  _logger.logConnection(client_ip, client_port, true, server_name.str());
 }
 
 void Server::handleClientRead(int client_fd) {
@@ -159,6 +166,19 @@ void Server::handleClientRead(int client_fd) {
     if (bytes > 0) {
       client->read_buffer.append(buffer, bytes);
       client->last_activity = time(NULL);
+
+      if (client->read_buffer.size() > max_size) {
+        client->write_buffer = "HTTP/1.1 413 Payload Too Large\r\nContent-Length: 0\r\nConnection: close\r\n\r\n";
+        client->keep_alive = false;
+        client->state = STATE_SENDING;
+        for (size_t i = 0; i < _poll_fds.size(); ++i) {
+          if (_poll_fds[i].fd == client_fd) {
+            _poll_fds[i].events = POLLOUT;
+            break;
+          }
+        }
+        return;
+      }
     }
     else if (!bytes) {
       closeClient(client_fd);
@@ -167,23 +187,7 @@ void Server::handleClientRead(int client_fd) {
     else
       break;
   }
-
-  if (client->read_buffer.size() > max_size) {
-    client->write_buffer = "HTTP/1.1 413 Payload Too Large\r\n"
-                            "Content-Length: 0\r\n"
-                            "Connection: close\r\n"
-                            "\r\n";
-    client->keep_alive = false;
-    client->state = STATE_SENDING;
-    for (size_t i = 0; i < _poll_fds.size(); ++i) {
-      if (_poll_fds[i].fd == client_fd) {
-        _poll_fds[i].events = POLLOUT;
-        break;
-      }
-    }
-    return;
-  }
-
+  
   size_t request_size = getRequestSize(client->read_buffer);
   if (request_size != std::string::npos) {
     std::string request_data = client->read_buffer.substr(0, request_size);
@@ -353,6 +357,7 @@ void Server::sendResponse(int client_fd) {
         break;
       }
     }
+    client->cgi_output_buffer.clear();
     if (client->keep_alive)
     {
       delete client->request;
@@ -365,7 +370,6 @@ void Server::sendResponse(int client_fd) {
     }
     else
       closeClient(client_fd);
-    client->cgi_output_buffer.clear();
   }
 }
 

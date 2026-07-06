@@ -20,6 +20,9 @@ private:
   Logger(const Logger &);
   Logger &operator=(const Logger &);
   std::string getCurrentTimestamp();
+  std::string colorizeStatus(int status);
+  std::string formatSize(size_t bytes);
+  std::string statusText(int status);
 
 public:
   Logger();
@@ -29,7 +32,7 @@ public:
   void warn(const std::string &message);
   void error(const std::string &message);
 
-  void logConnection(const std::string &client_ip, int port, bool connected);
+  void logConnection(const std::string &client_ip, int port, bool connected, const std::string &server_name);
   void logRequest(const std::string &client_ip, const std::string &method,
                   const std::string &path, const std::string &protocol,
                   int status, size_t response_size);

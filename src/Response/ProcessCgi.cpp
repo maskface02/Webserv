@@ -117,6 +117,14 @@ void ProcessCgi::EnvArray()
     ErrorHead <<"Content-Type: text/html\r\n";
     ErrorHead << "Date: " << generateHttpDate();
     ErrorHead << "Connection: "<<connection<<"\r\n";
+    if (_client->state == STATE_CGI_ERROR) {
+      Cgi_resp = ServeStaticRq::html_Error_page(502, "Bad Gateway");
+      ErrorHead << "Content-Length: " << Cgi_resp.size() << "\r\n";
+      Cgi_resp = ErrorHead.str() + "\r\n "+Cgi_resp;
+      _client->write_buffer = Cgi_resp;
+      return;
+    }
+
     size_t p_body = 0;
     if ((p_body = cgi_output.find("\r\n\r\n")) == std::string::npos)
     {
