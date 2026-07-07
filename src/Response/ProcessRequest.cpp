@@ -86,15 +86,18 @@ void ProcessRequest::match_location(ServerConfig& server)
            throw HttpError(404);
         target_location = location.rbegin()->second; 
     }
-   
+  //added 
+    std::string path_after_location = request->getPath().substr(target_location.path.length());
+    if (!path_after_location.empty() && path_after_location[0] == '/')
+        path_after_location = path_after_location.substr(1);
     if (target_location.root.rfind("/") == target_location.root.length() - 1)
-           resource_path = target_location.root + request->getPath().substr(1);
+        resource_path = target_location.root + path_after_location;
     else
-        resource_path = target_location.root + request->getPath();   
+        resource_path = target_location.root + "/" + path_after_location;
    
       std::cout<<"Target location == "<<target_location.path<<std::endl;
-        std::cout<<"Resource path == "<<resource_path<<std::endl;
-  
+      std::cout<<"Resource path == "<<resource_path<<std::endl;
+ //added 
 }
 
 // normalize
@@ -168,17 +171,21 @@ int ProcessRequest::define_type()
             else
             {
                 is_dir = true;
+                check_index_file();
+                
                 size_t pos = resource_path.rfind("/");
-               
                 if (pos != resource_path.length() - 1)
                 {                    
                     if(request->getRequestLine().Method == "GET")
                     {
-                        redirect_url = "http://" + request->getHost() + request->getPath() + "/";// added
+                        if (Index_file.empty() && !target_location.autoindex)
+                            return(NOT_FOUND);
+                        std::stringstream port_ss;
+                        port_ss << request->getPort();
+                        redirect_url = "http://" + request->getHost() + ":" + port_ss.str() + request->getPath() + "/";
                         return(MOVED_PERMANENTLY);
                     }
                 }
-                check_index_file();// also for post in case of  CGI
             }
         }
         else if(S_ISREG(pathStat.st_mode))

@@ -31,7 +31,7 @@ std::string Logger::getCurrentTimestamp() {
   return fullTime.str();
 }
 
-void Logger::info(const std::string& message) {std::cout << "[" << getCurrentTimestamp() << "] " << "[" << GREEN "INFO" RESET "] " << message << std::endl;}
+void Logger::info(const std::string& message) {std::cout << CYAN "[" << getCurrentTimestamp() << "]" RESET " " "[" << BLUE "INFO" RESET "] " << message << std::endl;}
 
 void Logger::warn(const std::string& message) {std::cout << "[" << getCurrentTimestamp() << "] " << "[" << YELLOW "WARN" RESET "] " << message << std::endl;}
 

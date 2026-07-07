@@ -49,7 +49,7 @@ void Response::staticRespHeaders()
         Headers << "Content-Type: " << matchMimeType(client->processRq->getExtension()) << "\r\n";
     }
     Headers << "Connection: " << client->request->getConnection() << "\r\n";
-    if (client->processRq->is_RedirecRq || client->processRq->getStatusCode() == 201)
+    if (client->processRq->is_RedirecRq || client->processRq->getStatusCode() == 201 || client->processRq->getStatusCode() == 301) //added 301
         Headers << "Location: " <<client->processRq->getRedirectUrl() << "\r\n";
     Headers <<"\r\n";
      _RespHeaders = Headers.str();
