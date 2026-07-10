@@ -115,7 +115,7 @@ void ProcessCgi::EnvArray()
     ErrorHead<<"HTTP/1.1 502 Bad Gateway\r\n";
     ErrorHead << "Server: Webserver/1.1\r\n";
     ErrorHead <<"Content-Type: text/html\r\n";
-    ErrorHead << "Date: " << generateHttpDate();
+    ErrorHead << "Date: " << generateHttpDate()<<"\r\n";
     ErrorHead << "Connection: "<<connection<<"\r\n";
     if (_client->state == STATE_CGI_ERROR) {
       Cgi_resp = ServeStaticRq::html_Error_page(502, "Bad Gateway");

@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 21:51:55 by zatais            #+#    #+#             */
-/*   Updated: 2026/07/04 23:15:05 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/09 19:36:27 by m45kf4c3         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -163,12 +163,13 @@ void Server::handleClientRead(int client_fd) {
   while (true) {
     char buffer[4096];
     ssize_t bytes = recv(client_fd, buffer, sizeof(buffer), 0);
-
     if (bytes > 0) {
       client->read_buffer.append(buffer, bytes);
       client->last_activity = time(NULL);
       if (client->read_buffer.size() > max_size) {
+      std::cout << "Blocked!!" << std::endl;//
         client->write_buffer = "HTTP/1.1 413 Payload Too Large\r\nContent-Length: 0\r\nConnection: close\r\n\r\n";
+        //_logger.logRequest(client->ip, client->request->getRequestLine().Method, client->request->getRequestLine().Path,  client->request->getRequestLine().HttpVers, 413, client->write_buffer.size());
         client->keep_alive = false;
         client->state = STATE_SENDING;
         for (size_t i = 0; i < _poll_fds.size(); ++i) {
@@ -187,16 +188,12 @@ void Server::handleClientRead(int client_fd) {
     else
       break;
   }
-      //
-      // std::cout << "reqData : " << client->read_buffer << std::endl;
-      // std::cout << "maxSize : " << max_size << std::endl;
-      // std::cout << "read_buffer.size : " << client->read_buffer.size() << std::endl;
+
   size_t request_size = getRequestSize(client->read_buffer);
   if (request_size != std::string::npos) {
-    std::string request_data = client->read_buffer.substr(0, request_size);
+    client->request = new Request(client , client->read_buffer);
     client->read_buffer.erase(0, request_size);
 
-    client->request = new Request(client ,request_data);
     //cookies class -> creat session if new || check expired ->if yes creat new
     client->processRq = new  ProcessRequest (client, _config.getServers()[client->server_idx]);
     if (!client->processRq->is_CgiRq)
@@ -336,7 +333,6 @@ void Server::sendResponse(int client_fd) {
   std::map<int, Client*>::iterator it = _clients.find(client_fd);
   if (it == _clients.end())
     return;
-
   Client* client = it->second;
   if (client->state != STATE_SENDING)
     return;
@@ -446,9 +442,9 @@ void Server::run() {
          continue;
       _logger.error("poll failed");
     }
-
-    if (!_clients.empty())
-      checkTimeouts();
+    //
+    // if (!_clients.empty())
+    //   checkTimeouts();
 
     handlePollErrors();
     handlePollIn();

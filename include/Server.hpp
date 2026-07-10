@@ -84,7 +84,6 @@ class Server {
     size_t  findHeaderValue(std::string& buffer, const std::string& name, size_t headerEnd);
     size_t  parseChunkedBody(std::string& buffer, size_t bodyStart);
     Client* initClient(int client_fd, int listen_fd, const std::string& client_ip, int client_port);
-    void    generateResponse(Client* client);
     void    sendResponse(int client_fd);
     void    handlePollIn();
     void    handleCgiPipeRead();
@@ -101,7 +100,6 @@ class Server {
     ~Server();
 
     void run();
-
     static void setNonBlocking(int fd);
     static void addToPoll(int fd, short events, std::vector<struct pollfd>& poll_fds);
     static void signalHandler(int sig); 

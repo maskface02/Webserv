@@ -171,7 +171,7 @@ int ProcessRequest::define_type()
             else
             {
                 is_dir = true;
-                check_index_file();
+                check_index_file(); // red flag
                 
                 size_t pos = resource_path.rfind("/");
                 if (pos != resource_path.length() - 1)
