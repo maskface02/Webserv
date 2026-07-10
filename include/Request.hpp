@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 19:54:51 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/07/04 17:17:01 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/10 18:51:16 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,7 +74,7 @@ class Request
         void                                                pars_Headers(std::string  &Map, size_t HeadersSrart,size_t HeadersEnd);
         void                                                pars_Body(std::string &body, size_t HeaderStart);
         void                                                pars_boundry(size_t& pos);
-        void                                                pars_chunked_body(std::string& chunck_body);
+        void                                                pars_chunked_body(const std::string& chunck_body);
        std::vector<std::string>                             split_boundary_part(std::string& boundary);
         std::string                                         find_file_name(std::string& part);
         std::string                                         find_boundry_body(std::string& part);

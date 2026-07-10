@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Cgi.cpp                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: zatais <zatais@student.1337.ma>            +#+  +:+       +#+        */
+/*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/13 10:00:00 by zatais            #+#    #+#             */
-/*   Updated: 2026/06/14 22:24:53 by m45kf4c3         ###   ########.fr       */
+/*   Updated: 2026/07/10 12:48:13 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -100,6 +100,8 @@ void Cgi::handleCgiRead(std::map<int, int>::iterator pipe_it, std::map<int, Clie
   std::map<int, Client*>::iterator client_it = clients.find(client_fd);
   if (client_it == clients.end())
     return;
+  if (client_it->second->state != STATE_CGI_RUNNING)
+    return;
 
   Client* client = client_it->second;
   int pipe_fd = pipe_it->first;
@@ -117,16 +119,15 @@ void Cgi::handleCgiRead(std::map<int, int>::iterator pipe_it, std::map<int, Clie
     }
     else if (bytes == 0) {
       int status;
-      pid_t result = waitpid(client->cgi_pid, &status, 0);
+      pid_t result = waitpid(client->cgi_pid, &status, WNOHANG);
       if (result > 0)
         cleanupCgi(client, status);
       else
         cleanupCgi(client, -1);
       return;
     }
-    else {
+    else
       return;
-    }
   }
 }
 

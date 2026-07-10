@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/22 10:02:50 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/07/04 17:19:02 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/10 18:51:30 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,7 @@ Request::Request(Client* client, std::string& Rq)
 {
     size_t          LineEnd = 0;
     size_t          header_end = std::string::npos;   
-  
+
     try
     {
         LineEnd = Rq.find("\r\n");
@@ -36,7 +36,7 @@ Request::Request(Client* client, std::string& Rq)
                 check_Post();
                 pars_Body(Rq, header_end + 4);
             }
-            if (RequestLine.Method == "POST" && body.empty())
+            if (RequestLine.Method == "POST" && body.empty() && !isChunked)
                 throw(HttpError(BAD_REQUEST));
         }
         else   throw(HttpError(BAD_REQUEST));  
@@ -55,6 +55,7 @@ size_t  Request::pars_lineRequest(std::string& Rq, size_t LineEnd)
     str >> RequestLine.Method >> RequestLine.URI >> RequestLine.HttpVers;
     check_valid_line();
     store_path_query();
+    std::cout<<str.str();
     return (Rq.find("\r\n\r\n",LineEnd + 2));
 }
 
@@ -98,27 +99,47 @@ void  Request::pars_Headers(std::string& Rq, size_t HeadersSrart ,size_t Headers
     define_session_id();
 }
 
+// void Request::pars_Body(std::string& RqBody, size_t bodyStart)
+// {
+//     size_t pos = 0;  
+//     std::string Text_body ;
+//     Text_body.append( RqBody.substr(bodyStart));
+
+//     if (isChunked == false 
+//         && Text_body.size() < content_lenght)
+//         throw(HttpError(BAD_REQUEST));     
+//     if (isChunked)
+//        pars_chunked_body(Text_body);
+//     else
+//         body = RqBody.substr(bodyStart, content_lenght);
+    
+//    if ((pos = content_type.rfind("boundary")) != std::string::npos)
+//    {
+//      pars_boundry(pos);
+//      is_boundry = true; 
+//    }   
+// }
+
 void Request::pars_Body(std::string& RqBody, size_t bodyStart)
 {
     size_t pos = 0;  
-    std::string Text_body = RqBody.substr(bodyStart);
 
     if (isChunked == false 
-        && Text_body.size() < content_lenght)
+        && (RqBody.size() - bodyStart) < content_lenght)
         throw(HttpError(BAD_REQUEST));     
     if (isChunked)
-       pars_chunked_body(Text_body);
+       pars_chunked_body(RqBody.substr(bodyStart));
     else
         body = RqBody.substr(bodyStart, content_lenght);
     
-   if ((pos = content_type.rfind("boundary")) != std::string::npos)
-   {
-     pars_boundry(pos);
-     is_boundry = true; 
-   }   
+    if ((pos = content_type.rfind("boundary")) != std::string::npos)
+    {
+      pars_boundry(pos);
+      is_boundry = true; 
+    }   
 }
 
-void Request::pars_chunked_body(std::string& chnk_body)
+void Request::pars_chunked_body(const std::string& chnk_body)
 {
     // recheck
     int i = 0;
@@ -143,7 +164,8 @@ void Request::pars_chunked_body(std::string& chnk_body)
        while (i < Val && (indx + 1) < chnk_body.length() 
             && !(chnk_body[indx] == '\r' && chnk_body[indx + 1] == '\n'))
         {
-            body = body + chnk_body[indx];
+            // body = body + chnk_body[indx];
+            body.append(1, chnk_body[indx]);
             i++;
             indx++;
         }

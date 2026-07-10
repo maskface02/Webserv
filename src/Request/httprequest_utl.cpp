@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 19:54:39 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/07/04 17:23:23 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/04 23:12:24 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,6 @@
 
 void Request::check_valid_nbr_space(std::string  &Rqline, size_t EndLine)
 {
-  
     size_t         i = 0;
     size_t         countSpace = 0;
     std::string    line = Rqline.substr(0,EndLine);
@@ -38,7 +37,6 @@ void Request::check_valid_nbr_space(std::string  &Rqline, size_t EndLine)
     }
     if (countSpace != 2)
        throw(HttpError(BAD_REQUEST));
-
 }
 
 void Request::check_valid_line()
@@ -50,13 +48,8 @@ void Request::check_valid_line()
 
 void Request::check_valid_Method()
 {   
-    if (RequestLine.Method == "OPTIONS" || RequestLine.Method == "HEAD" || RequestLine.Method == "PUT" 
-            || RequestLine.Method == "TRACE"  ||  RequestLine.Method == "CONNECT" )
-    {
-          throw(HttpError(NOT_IMPLEMENTED));
-    }
-    if (RequestLine.Method != "GET" && RequestLine.Method != "POST" && RequestLine.Method != "DELETE")
-        throw(HttpError(BAD_REQUEST));
+  if (RequestLine.Method != "GET" && RequestLine.Method != "POST" && RequestLine.Method != "DELETE")
+    throw(HttpError( METHOD_NOT_ALLOWED));
 }
 
 void Request::check_valid_URI()
@@ -80,7 +73,7 @@ void    Request::is_valid_char(std::string& URI)
 
 bool Request::is_reserved(char c)
 {
-    std::string reserved_chars = "_.:/?#[]@!$&'()*+,;=";
+    std::string reserved_chars = "_.:/?#[]@!$&'()*+,;=%";
     size_t j = 0;
     while (j < reserved_chars.size())
     {

@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 21:51:55 by zatais            #+#    #+#             */
-/*   Updated: 2026/07/04 17:28:27 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/10 19:09:11 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,8 @@ Server::~Server() {
     if (it->second->state == STATE_CGI_RUNNING && it->second->cgi_pid != -1)
       _cgi->killCgi(it->second, SIGKILL);
     close(it->second->fd);
+    delete it->second->request;
+    delete it->second->processRq;
     delete it->second->processCgi;
     delete it->second;
   }
@@ -34,6 +36,10 @@ Server::~Server() {
 }
 
 /******************************************************************************/
+ void Server::signalHandler(int sig){
+   (void)sig;
+   running = false;
+ }
 
 void Server::setNonBlocking(int fd) {
   int flags = fcntl(fd, F_GETFL, 0);
@@ -53,8 +59,11 @@ void Server::closeClient(int fd) {
   if (it != _clients.end()) {
     if (it->second->state == STATE_CGI_RUNNING && it->second->cgi_pid != -1)
       _cgi->killCgi(it->second, SIGKILL);
-    _logger.logConnection(it->second->ip, it->second->port, false);
-    close(fd);
+    ServerConfig& srv = _config.getServers()[it->second->server_idx];
+    std::ostringstream server_name;
+    server_name << srv.listens[0].host << ":" << srv.listens[0].port;
+    _logger.logConnection(it->second->ip, it->second->port, false, server_name.str());    close(fd);
+
     delete it->second->request;
     delete it->second->processRq;
     delete it->second->processCgi;
@@ -84,6 +93,7 @@ void Server::checkTimeouts() {
         std::string body = ServeStaticRq::html_Error_page(504, "Gateway Timeout");
         std::ostringstream res;
         res << "HTTP/1.1 504 Gateway Timeout\r\n"<< "Content-Length: "<< body.size() << "\r\n\r\n" << body; /// still needs the date to be added
+        _logger.logRequest(it->second->ip, it->second->request->getRequestLine().Method, it->second->request->getRequestLine().Path, it->second->request->getRequestLine().HttpVers, it->second->processRq->getStatusCode(), it->second->write_buffer.size());
         it->second->write_buffer = res.str(); 
                                     
         it->second->state = STATE_SENDING;
@@ -108,8 +118,8 @@ void Server::checkTimeouts() {
 }
 
 void Server::acceptConnection(int listen_fd) {
-  if (_clients.size() + 1 > MAX_CLIENTS) {
-    _logger.warn("max clients reached");
+  if (_clients.size() + 1 > 1024 - 3 - _listen_fds.size()) {
+    _logger.warn("max clients reached (FD LIMIT)");
     return;
   }
 
@@ -131,7 +141,11 @@ void Server::acceptConnection(int listen_fd) {
   _clients[client_fd] = client;
   addToPoll(client_fd, POLLIN, _poll_fds);
 
-  _logger.logConnection(client_ip, client_port, true);
+  int srv_idx = _fd_to_server_idx[listen_fd];
+  ServerConfig& srv = _config.getServers()[srv_idx];
+  std::ostringstream server_name;
+  server_name << srv.listens[0].host << ":" << srv.listens[0].port;
+  _logger.logConnection(client_ip, client_port, true, server_name.str());
 }
 
 void Server::handleClientRead(int client_fd) {
@@ -145,6 +159,7 @@ void Server::handleClientRead(int client_fd) {
 
   std::vector<ServerConfig>& servers = _config.getServers();
   size_t max_size = servers[client->server_idx].client_max_body_size;
+  // std::cout << "Test "<<max_size<<std::endl;
 
   while (true) {
     char buffer[4096];
@@ -153,6 +168,20 @@ void Server::handleClientRead(int client_fd) {
     if (bytes > 0) {
       client->read_buffer.append(buffer, bytes);
       client->last_activity = time(NULL);
+      if (client->read_buffer.size() > max_size) {
+        client->write_buffer = "HTTP/1.1 413 Payload Too Large\r\nContent-Length: 0\r\nConnection: close\r\n\r\n";
+        //tt
+        //         _logger.logRequest(it->second->ip, it->second->request->getRequestLine().Methodi it->second->request->getRequestLine().Path, it->second->request->getRequestLine().HttpVers, it->second->processRq->getStatusCode(), it->second->write_buffer.size());
+        client->keep_alive = false;
+        client->state = STATE_SENDING;
+        for (size_t i = 0; i < _poll_fds.size(); ++i) {
+          if (_poll_fds[i].fd == client_fd) {
+            _poll_fds[i].events = POLLOUT;
+            break;
+          }
+        }
+        return;
+      }
     }
     else if (!bytes) {
       closeClient(client_fd);
@@ -161,38 +190,24 @@ void Server::handleClientRead(int client_fd) {
     else
       break;
   }
-
-  if (client->read_buffer.size() > max_size) {
-    client->write_buffer = "HTTP/1.1 413 Payload Too Large\r\n"
-                            "Content-Length: 0\r\n"
-                            "Connection: close\r\n"
-                            "\r\n";
-    client->keep_alive = false;
-    client->state = STATE_SENDING;
-    for (size_t i = 0; i < _poll_fds.size(); ++i) {
-      if (_poll_fds[i].fd == client_fd) {
-        _poll_fds[i].events = POLLOUT;
-        break;
-      }
-    }
-    return;
-  }
-
+  std::ofstream test("test.txt");
+  test << client->read_buffer << std::endl;
+      //
+      // std::cout << "reqData : " << client->read_buffer << std::endl;
+      // std::cout << "maxSize : " << max_size << std::endl;
+      // std::cout << "read_buffer.size : " << client->read_buffer.size() << std::endl;
   size_t request_size = getRequestSize(client->read_buffer);
   if (request_size != std::string::npos) {
-    std::string request_data = client->read_buffer.substr(0, request_size);
+    client->request = new Request(client , client->read_buffer);//request_size
     client->read_buffer.erase(0, request_size);
-
-    client->request = new Request(client ,request_data);
     //cookies class -> creat session if new || check expired ->if yes creat new
     client->processRq = new  ProcessRequest (client, _config.getServers()[client->server_idx]);
     if (!client->processRq->is_CgiRq)
     {
       ServeStaticRq StaticRq(client, _config.getServers()[client->server_idx]);
       Response StaticResponse (client , StaticRq,  _config.getServers()[client->server_idx]);
-      // client->response_obj = &StaticResponse;
       client->write_buffer = StaticResponse.getHttpResponse();
-      _logger.logRequest(client->ip, client->request->getRequestLine().Method, client->request->getRequestLine().URI, client->request->getRequestLine().HttpVers, client->processRq->getStatusCode(), sizeof(client->write_buffer));
+      _logger.logRequest(client->ip, client->request->getRequestLine().Method, client->request->getRequestLine().URI, client->request->getRequestLine().HttpVers, client->processRq->getStatusCode(), client->write_buffer.size());
 
       client->state = STATE_SENDING;
        for (size_t i = 0; i < _poll_fds.size(); ++i) {
@@ -305,7 +320,7 @@ Client* Server::initClient(int client_fd, int listen_fd, const std::string& clie
   client->read_buffer = "";
   client->write_buffer = "";
   client->state = STATE_READING;
-  client->keep_alive = true;
+  client->keep_alive = false;
   client->server_idx = _fd_to_server_idx[listen_fd];
   client->last_activity = time(NULL);
   client->cgi_pid = -1;
@@ -315,7 +330,8 @@ Client* Server::initClient(int client_fd, int listen_fd, const std::string& clie
   client->cgi_output_buffer = "";
   client->cgi_start_time = 0;
   client->request = NULL;
-  client->staticResponse = NULL;//
+  client->processCgi = NULL;
+  client->processRq = NULL;
   return client;
 }
 
@@ -347,8 +363,17 @@ void Server::sendResponse(int client_fd) {
         break;
       }
     }
+    client->cgi_output_buffer.clear();
     if (client->keep_alive)
+    {
+      delete client->request;
+      delete client->processRq;
+      delete client->processCgi;
+      client->request = NULL;
+      client->processRq = NULL;
+      client->processCgi = NULL;
       client->state = STATE_READING;
+    }
     else
       closeClient(client_fd);
   }
@@ -453,7 +478,7 @@ void Server::handlePollIn() {
 void Server::handleCgiPipeRead() {
   std::vector<int> ready_pipe_fds;
   for (size_t i = 0; i < _poll_fds.size(); ++i)
-    if (_poll_fds[i].revents & POLLIN && _pipe_to_client_fd.count(_poll_fds[i].fd))
+    if ((_poll_fds[i].revents & (POLLIN | POLLHUP)) && _pipe_to_client_fd.count(_poll_fds[i].fd))
       ready_pipe_fds.push_back(_poll_fds[i].fd);
 
   for (size_t i = 0; i < ready_pipe_fds.size(); ++i) {
@@ -462,12 +487,16 @@ void Server::handleCgiPipeRead() {
     if (pipe_it != _pipe_to_client_fd.end()) {
       int client_fd = pipe_it->second;
       _cgi->handleCgiRead(pipe_it, _clients);
-
       std::map<int, Client*>::iterator client_it = _clients.find(client_fd);
       if (client_it != _clients.end() &&
-          (client_it->second->state == STATE_WRITING_RESPONSE ||
-           client_it->second->state == STATE_CGI_ERROR)) {
+      (client_it->second->state == STATE_WRITING_RESPONSE ||
+        client_it->second->state == STATE_CGI_ERROR)) {
+             std::ofstream test("test2.txt");
+             test << client_it->second->cgi_output_buffer << std::endl;
         client_it->second->processCgi->GeneretCgiResponse();
+        std::ofstream test2("test3.txt");
+        test2 << client_it->second->write_buffer << "\n";
+        _logger.logRequest(client_it->second->ip, client_it->second->request->getRequestLine().Method, client_it->second->request->getRequestLine().Path, client_it->second->request->getRequestLine().HttpVers, client_it->second->processRq->getStatusCode(), client_it->second->write_buffer.size());
         client_it->second->state = STATE_SENDING;
         for (size_t j = 0; j < _poll_fds.size(); ++j) {
           if (_poll_fds[j].fd == client_fd) {
@@ -494,6 +523,9 @@ void Server::handleCgiStdinWrite() {
       continue;
 
     Client* client = it->second;
+    if (client->state != STATE_CGI_RUNNING)
+      continue;
+
     if (client->cgi_input_buffer.empty()) {
       close(pipe_fd);
       for (size_t j = 0; j < _poll_fds.size(); ++j) {
@@ -509,8 +541,20 @@ void Server::handleCgiStdinWrite() {
 
     size_t to_write = std::min(client->cgi_input_buffer.size(), (size_t)CGI_CHUNK_SIZE);
     ssize_t bytes = write(pipe_fd, client->cgi_input_buffer.c_str(), to_write);
-    if (bytes > 0)
+    if (bytes > 0) {
       client->cgi_input_buffer.erase(0, bytes);
+      if (client->cgi_input_buffer.empty()) {
+        close(pipe_fd);
+        for (size_t j = 0; j < _poll_fds.size(); ++j) {
+          if (_poll_fds[j].fd == pipe_fd) {
+            _poll_fds.erase(_poll_fds.begin() + j);
+            break;
+          }
+        }
+        _pipe_to_client_fd.erase(pipe_fd);
+        client->cgi_stdin_fd = -1;
+      }
+    }
   }
 }
 
@@ -531,7 +575,7 @@ void Server::handlePollOut() {
 void Server::handlePollErrors() {
   std::vector<int> error_fds;
   for (size_t i = 0; i < _poll_fds.size(); ++i)
-    if (_poll_fds[i].revents & (POLLERR /*| POLLHUP*/))
+    if (_poll_fds[i].revents & POLLERR)
       error_fds.push_back(_poll_fds[i].fd);
 
   for (size_t i = 0; i < error_fds.size(); ++i) {
@@ -547,9 +591,16 @@ void Server::handlePollErrors() {
       std::map<int, Client*>::iterator it = _clients.find(client_fd);
       if (it != _clients.end()) {
         Client* client = it->second;
-        if (client->cgi_pid != -1)
-          _cgi->killCgi(client, SIGKILL);
-        client->state = STATE_CGI_ERROR;
+        for (size_t i = 0; i < _poll_fds.size(); ++i) {
+          if (_poll_fds[i].fd == fd) {
+            if (fd == client->cgi_stdout_fd && !(_poll_fds[i].revents & POLLERR))
+              break;
+            if (client->cgi_pid != -1)
+              _cgi->killCgi(client, SIGKILL);
+            client->state = STATE_CGI_ERROR;
+            break;
+          }
+        }
       }
       continue;
     }

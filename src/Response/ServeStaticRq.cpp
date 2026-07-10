@@ -102,6 +102,7 @@ void ServeStaticRq::html_list_dir()
         "<table>\n"
         "<tr><th>Name</th><th>Last Modified</th><th>Size</th></tr>\n";
     str << "<h2>List files</h2>\n";
+
     str << "<tr><td><a href=\"../\">../</a></td><td>-</td><td>-</td></tr>\n";
     size_t i = 0;
     while (i < files.size())
@@ -191,9 +192,12 @@ void    ServeStaticRq::_ServePostRq()
       
         if (client->request->is_boundry)
             upload_files();
-        else throw HttpError(METHOD_NOT_ALLOWED );
+        else {
+            std::cout<<"\n hello from serve post no boundary\n";
+            throw HttpError(METHOD_NOT_ALLOWED );}
     }
-    else  throw HttpError(METHOD_NOT_ALLOWED);
+    else  { std::cout<<"\n hello from serve post no up;od\n";
+        throw HttpError(METHOD_NOT_ALLOWED);}
 }
 
 void ServeStaticRq::upload_files()
@@ -261,7 +265,7 @@ std::string  ServeStaticRq::  html_Error_page(int status_code, std::string stat)
     body <<"<hr><center>" << "WebServer/1.1"<< "</center>\n";
     body<<"</body>\n";
     body<<"</html>\n";
-
+    
   return body.str();
 }
 
