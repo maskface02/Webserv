@@ -102,12 +102,7 @@ void Request::pars_Body(std::string& RqBody, size_t bodyStart)
 {
     size_t pos = 0;  
     std::string Text_body = RqBody.substr(bodyStart);
-    std::cout << "hbessssss "<< std::endl;
-    // std::string::iterator body_start = RqBody.begin() + bodyStart;
-    
-
-    if (isChunked == false 
-        && Text_body.size() < content_lenght)
+    if (isChunked == false && RqBody.size() < content_lenght)
         throw(HttpError(BAD_REQUEST));     
     if (isChunked)
        pars_chunked_body(Text_body);
@@ -146,7 +141,7 @@ void Request::pars_chunked_body(std::string& chnk_body)
        while (i < Val && (indx + 1) < chnk_body.length() 
             && !(chnk_body[indx] == '\r' && chnk_body[indx + 1] == '\n'))
         {
-            body = body + chnk_body[indx];
+            body.append(1,chnk_body[indx]);
             i++;
             indx++;
         }

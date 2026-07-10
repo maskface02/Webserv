@@ -122,17 +122,19 @@ void ProcessCgi::EnvArray()
       ErrorHead << "Content-Length: " << Cgi_resp.size() << "\r\n";
       Cgi_resp = ErrorHead.str() + "\r\n "+Cgi_resp;
       _client->write_buffer = Cgi_resp;
+      _client->processRq->setStatusCode(502);
       return;
     }
 
     size_t p_body = 0;
     if ((p_body = cgi_output.find("\r\n\r\n")) == std::string::npos)
     {
-        Cgi_resp = ServeStaticRq::html_Error_page(502, "Bad Gateway");
-        ErrorHead << "Content-Length: " << Cgi_resp.size() << "\r\n";
-        Cgi_resp = ErrorHead.str() + "\r\n "+Cgi_resp;
-        _client->write_buffer = Cgi_resp;
-        return;
+      Cgi_resp = ServeStaticRq::html_Error_page(502, "Bad Gateway");
+      ErrorHead << "Content-Length: " << Cgi_resp.size() << "\r\n";
+      Cgi_resp = ErrorHead.str() + "\r\n "+Cgi_resp;
+      _client->write_buffer = Cgi_resp;
+      _client->processRq->setStatusCode(502);
+      return;
     }
     addHeader =  cgi_output.substr(0, p_body) + "\r\n";
     addLine = "HTTP/1.1 200 OK\r\n";
@@ -163,6 +165,7 @@ void ProcessCgi::EnvArray()
             ErrorHead << "Content-Length: " << Cgi_resp.size() << "\r\n";
             Cgi_resp = ErrorHead.str() + "\r\n "+ Cgi_resp;
             _client->write_buffer = Cgi_resp;
+            _client->processRq->setStatusCode(502);
             return;
         }
         if (cgi_output.find("Content-Length") == std::string::npos)
@@ -175,6 +178,7 @@ void ProcessCgi::EnvArray()
    if (!body.empty())
         Cgi_resp +=body;
     _client->write_buffer = Cgi_resp;
+    _client->processRq->setStatusCode(200);
 }
 
 char**   ProcessCgi::getEnv() const

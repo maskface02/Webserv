@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "../include/WebServ.hpp"
+#include <cstdlib>
 
 Cgi::Cgi(std::vector<struct pollfd>& poll_fds, std::map<int, int>& pipe_to_client_fd, Logger& logger)
     : _poll_fds(poll_fds), _pipe_to_client_fd(pipe_to_client_fd), _logger(logger) {}
@@ -117,14 +118,15 @@ void Cgi::handleCgiRead(std::map<int, int>::iterator pipe_it, std::map<int, Clie
       client->last_activity = time(NULL);
       read_this_cycle += bytes;
     }
-    else if (bytes == 0) {
+    else if (!bytes) {
       int status;
-      pid_t result = waitpid(client->cgi_pid, &status, 0);
+      pid_t result = waitpid(client->cgi_pid, &status, WNOHANG);
       if (result > 0)
         cleanupCgi(client, status);
+      else if (!result)
+        return;
       else
         cleanupCgi(client, -1);
-      return;
     }
     else
       return;

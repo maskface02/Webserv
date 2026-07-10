@@ -15,7 +15,8 @@
 int main(int argc, char** argv)
 {
     signal(SIGPIPE, SIG_IGN);
-      signal(SIGINT, Server::signalHandler);
+    signal(SIGINT, Server::signalHandler);
+
     std::string configPath = "conf/default.conf";
     if (argc > 1)
         configPath = argv[1];
@@ -28,9 +29,7 @@ int main(int argc, char** argv)
       server.run();
     }
     catch (std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        return 1;
+      std::cerr << e.what() << std::endl;
+      return 1;
     }
-
-    return 0;
 }
