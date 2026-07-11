@@ -569,6 +569,7 @@ void Server::handleCgiStdinWrite() {
     ssize_t bytes = write(pipe_fd, client->cgi_input_buffer.c_str(), to_write);
     if (bytes > 0) {
       client->cgi_input_buffer.erase(0, bytes);
+      client->cgi_start_time = time(NULL);
       if (client->cgi_input_buffer.empty()) {
         close(pipe_fd);
         for (size_t j = 0; j < _poll_fds.size(); ++j) {

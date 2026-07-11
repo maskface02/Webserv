@@ -12,6 +12,7 @@
 
 #include "../include/WebServ.hpp"
 #include <cstdlib>
+#include <ctime>
 
 Cgi::Cgi(std::vector<struct pollfd>& poll_fds, std::map<int, int>& pipe_to_client_fd, Logger& logger)
     : _poll_fds(poll_fds), _pipe_to_client_fd(pipe_to_client_fd), _logger(logger) {}
@@ -116,6 +117,7 @@ void Cgi::handleCgiRead(std::map<int, int>::iterator pipe_it, std::map<int, Clie
     if (bytes > 0) {
       client->cgi_output_buffer.append(buffer, bytes);
       client->last_activity = time(NULL);
+      client->cgi_start_time = time(NULL);//
       read_this_cycle += bytes;
     }
     else if (!bytes) {
