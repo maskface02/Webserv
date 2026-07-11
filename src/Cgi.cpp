@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/13 10:00:00 by zatais            #+#    #+#             */
-/*   Updated: 2026/07/11 14:24:31 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/11 17:33:48 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -115,11 +115,12 @@ void Cgi::handleCgiRead(std::map<int, int>::iterator pipe_it, std::map<int, Clie
     if (bytes > 0) {
       client->cgi_output_buffer.append(buffer, bytes);
       client->last_activity = time(NULL);
+      client->cgi_start_time = time(NULL);//
       read_this_cycle += bytes;
     }
     else if (bytes == 0) {
       int status;//
-      pid_t result = waitpid(client->cgi_pid, &status, WNOHANG);
+      pid_t result = waitpid(client->cgi_pid, &status, 0);//
       if (result > 0)
         cleanupCgi(client, status);
       else
@@ -160,13 +161,17 @@ void Cgi::cleanupCgi(Client* client, int exit_status) {
 
   if (exit_status == -1) {
     client->state = STATE_CGI_ERROR;
-    return;
+  std::cout <<"helooo from cgi 1\n";
+   return;
   }
 
   if (WIFEXITED(exit_status) && WEXITSTATUS(exit_status) == 0)
     client->state = STATE_WRITING_RESPONSE;
   else
-    client->state = STATE_CGI_ERROR;
+{
+  std::cout <<"helooo from cgi 2\n";
+  client->state = STATE_CGI_ERROR;
+}
 }
 
 void Cgi::killCgi(Client* client, int signal) {

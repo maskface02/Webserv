@@ -1,0 +1,94 @@
+[36m[2026-07-11 15:13:30.664][0m [[34mINFO[0m] Listening on 127.0.0.1:8080
+[36m[2026-07-11 15:13:30.664][0m [[34mINFO[0m] Server started, listening on 1 port(s)
+[36m[2026-07-11 15:13:39.879][0m [[34mINFO[0m] Client 127.0.0.1:49402 connected to 127.0.0.1:8080
+GET / HTTP/1.1generated session id == 7rswIOz1qlTarget location == /
+Resource path == ./
+
+===this is the extension=====  default
+[36m[2026-07-11 15:13:39.879][0m [[34mINFO[0m] 127.0.0.1 "GET / HTTP/1.1" [32m 200 OK [0m2.32227 KB
+[36m[2026-07-11 15:13:39.879][0m [[34mINFO[0m] Client 127.0.0.1:49402 disconnected from 127.0.0.1:8080
+[36m[2026-07-11 15:13:39.879][0m [[34mINFO[0m] Client 127.0.0.1:49410 connected to 127.0.0.1:8080
+POST / HTTP/1.1generated session id == 7rswIOz1qlTarget location == /
+Resource path == ./
+[36m[2026-07-11 15:13:39.883][0m [[34mINFO[0m] 127.0.0.1 "POST / HTTP/1.1" [31m 405 Method Not Allowed [0m307 B
+[36m[2026-07-11 15:13:39.883][0m [[34mINFO[0m] Client 127.0.0.1:49410 disconnected from 127.0.0.1:8080
+[36m[2026-07-11 15:13:39.883][0m [[34mINFO[0m] Client 127.0.0.1:49424 connected to 127.0.0.1:8080
+[36m[2026-07-11 15:13:39.884][0m [[34mINFO[0m] 127.0.0.1 "HEAD / HTTP/1.1" [31m 405 Method Not Allowed [0m307 B
+[36m[2026-07-11 15:13:39.884][0m [[34mINFO[0m] Client 127.0.0.1:49424 disconnected from 127.0.0.1:8080
+[36m[2026-07-11 15:13:39.884][0m [[34mINFO[0m] Client 127.0.0.1:49432 connected to 127.0.0.1:8080
+GET /directory HTTP/1.1generated session id == 7rswIOz1qlTarget location == /directory
+Resource path == ./YoupiBanane/
+
+===this is the extension=====  .bad_extension
+[36m[2026-07-11 15:13:39.886][0m [[34mINFO[0m] 127.0.0.1 "GET /directory HTTP/1.1" [32m 200 OK [0m96 B
+[36m[2026-07-11 15:13:39.886][0m [[34mINFO[0m] Client 127.0.0.1:49432 disconnected from 127.0.0.1:8080
+[36m[2026-07-11 15:13:39.886][0m [[34mINFO[0m] Client 127.0.0.1:49436 connected to 127.0.0.1:8080
+GET /directory/youpi.bad_extension HTTP/1.1generated session id == 7rswIOz1qlTarget location == /directory
+Resource path == ./YoupiBanane/youpi.bad_extension
+
+===this is the extension=====  .bad_extension
+[36m[2026-07-11 15:13:39.890][0m [[34mINFO[0m] 127.0.0.1 "GET /directory/youpi.bad_extension HTTP/1.1" [32m 200 OK [0m96 B
+[36m[2026-07-11 15:13:39.890][0m [[34mINFO[0m] Client 127.0.0.1:49436 disconnected from 127.0.0.1:8080
+[36m[2026-07-11 15:13:39.891][0m [[34mINFO[0m] Client 127.0.0.1:49448 connected to 127.0.0.1:8080
+GET /directory/youpi.bla HTTP/1.1generated session id == 7rswIOz1qlTarget location == /directory
+Resource path == ./YoupiBanane/youpi.bla
+
+===this is the extension=====  .bla
+[36m[2026-07-11 15:13:39.898][0m [[34mINFO[0m] 127.0.0.1 "GET /directory/youpi.bla HTTP/1.1" [32m 200 OK [0m59 B
+[36m[2026-07-11 15:13:39.898][0m [[34mINFO[0m] Client 127.0.0.1:49448 disconnected from 127.0.0.1:8080
+[36m[2026-07-11 15:13:39.899][0m [[34mINFO[0m] Client 127.0.0.1:49450 connected to 127.0.0.1:8080
+GET /directory/oulalala HTTP/1.1generated session id == 7rswIOz1qlTarget location == /directory
+Resource path == ./YoupiBanane/oulalala
+[36m[2026-07-11 15:13:39.904][0m [[34mINFO[0m] 127.0.0.1 "GET /directory/oulalala HTTP/1.1" [31m 404 Not Found [0m289 B
+[36m[2026-07-11 15:13:39.904][0m [[34mINFO[0m] Client 127.0.0.1:49450 disconnected from 127.0.0.1:8080
+[36m[2026-07-11 15:13:39.904][0m [[34mINFO[0m] Client 127.0.0.1:49462 connected to 127.0.0.1:8080
+GET /directory/nop HTTP/1.1generated session id == 7rswIOz1qlTarget location == /directory
+Resource path == ./YoupiBanane/nop
+[36m[2026-07-11 15:13:39.908][0m [[34mINFO[0m] 127.0.0.1 "GET /directory/nop HTTP/1.1" [33m 301 Moved Permanently [0m353 B
+[36m[2026-07-11 15:13:39.908][0m [[34mINFO[0m] Client 127.0.0.1:49462 disconnected from 127.0.0.1:8080
+[36m[2026-07-11 15:13:39.908][0m [[34mINFO[0m] Client 127.0.0.1:49478 connected to 127.0.0.1:8080
+GET /directory/nop/ HTTP/1.1generated session id == 7rswIOz1qlTarget location == /directory
+Resource path == ./YoupiBanane/nop/
+
+===this is the extension=====  .bad_extension
+[36m[2026-07-11 15:13:39.912][0m [[34mINFO[0m] 127.0.0.1 "GET /directory/nop/ HTTP/1.1" [32m 200 OK [0m96 B
+[36m[2026-07-11 15:13:39.912][0m [[34mINFO[0m] Client 127.0.0.1:49478 disconnected from 127.0.0.1:8080
+[36m[2026-07-11 15:13:39.912][0m [[34mINFO[0m] Client 127.0.0.1:49486 connected to 127.0.0.1:8080
+GET /directory/nop/ HTTP/1.1generated session id == 7rswIOz1qlTarget location == /directory
+Resource path == ./YoupiBanane/nop/
+
+===this is the extension=====  .bad_extension
+[36m[2026-07-11 15:13:39.916][0m [[34mINFO[0m] 127.0.0.1 "GET /directory/nop/ HTTP/1.1" [32m 200 OK [0m96 B
+[36m[2026-07-11 15:13:39.916][0m [[34mINFO[0m] Client 127.0.0.1:49486 disconnected from 127.0.0.1:8080
+[36m[2026-07-11 15:13:39.916][0m [[34mINFO[0m] Client 127.0.0.1:49500 connected to 127.0.0.1:8080
+GET /directory/nop/other.pouic HTTP/1.1generated session id == 7rswIOz1qlTarget location == /directory
+Resource path == ./YoupiBanane/nop/other.pouic
+
+===this is the extension=====  .pouic
+[36m[2026-07-11 15:13:39.923][0m [[34mINFO[0m] 127.0.0.1 "GET /directory/nop/other.pouic HTTP/1.1" [32m 200 OK [0m96 B
+[36m[2026-07-11 15:13:39.923][0m [[34mINFO[0m] Client 127.0.0.1:49500 disconnected from 127.0.0.1:8080
+[36m[2026-07-11 15:13:39.923][0m [[34mINFO[0m] Client 127.0.0.1:49514 connected to 127.0.0.1:8080
+GET /directory/nop/other.pouac HTTP/1.1generated session id == 7rswIOz1qlTarget location == /directory
+Resource path == ./YoupiBanane/nop/other.pouac
+[36m[2026-07-11 15:13:39.926][0m [[34mINFO[0m] 127.0.0.1 "GET /directory/nop/other.pouac HTTP/1.1" [31m 404 Not Found [0m289 B
+[36m[2026-07-11 15:13:39.926][0m [[34mINFO[0m] Client 127.0.0.1:49514 disconnected from 127.0.0.1:8080
+[36m[2026-07-11 15:13:39.926][0m [[34mINFO[0m] Client 127.0.0.1:49518 connected to 127.0.0.1:8080
+GET /directory/Yeah HTTP/1.1generated session id == 7rswIOz1qlTarget location == /directory
+Resource path == ./YoupiBanane/Yeah
+[36m[2026-07-11 15:13:39.931][0m [[34mINFO[0m] 127.0.0.1 "GET /directory/Yeah HTTP/1.1" [31m 404 Not Found [0m289 B
+[36m[2026-07-11 15:13:39.931][0m [[34mINFO[0m] Client 127.0.0.1:49518 disconnected from 127.0.0.1:8080
+[36m[2026-07-11 15:13:39.932][0m [[34mINFO[0m] Client 127.0.0.1:49522 connected to 127.0.0.1:8080
+GET /directory/Yeah/not_happy.bad_extension HTTP/1.1generated session id == 7rswIOz1qlTarget location == /directory
+Resource path == ./YoupiBanane/Yeah/not_happy.bad_extension
+
+===this is the extension=====  .bad_extension
+[36m[2026-07-11 15:13:39.936][0m [[34mINFO[0m] 127.0.0.1 "GET /directory/Yeah/not_happy.bad_extension HTTP/1.1" [32m 200 OK [0m96 B
+[36m[2026-07-11 15:13:39.936][0m [[34mINFO[0m] Client 127.0.0.1:49522 disconnected from 127.0.0.1:8080
+[36m[2026-07-11 15:13:39.937][0m [[34mINFO[0m] Client 127.0.0.1:49538 connected to 127.0.0.1:8080
+POST /directory/youpi.bla HTTP/1.1generated session id == whd3AAkn3tTarget location == /directory
+Resource path == ./YoupiBanane/youpi.bla
+
+===this is the extension=====  .bla
+[36m[2026-07-11 15:14:47.445][0m [[34mINFO[0m] 127.0.0.1 "POST /directory/youpi.bla HTTP/1.1" [32m 200 OK [0m95.3675 MB
+[36m[2026-07-11 15:14:47.567][0m [[34mINFO[0m] Client 127.0.0.1:49538 disconnected from 127.0.0.1:8080
+[36m[2026-07-11 15:14:47.580][0m [[34mINFO[0m] Client 127.0.0.1:38858 connected to 127.0.0.1:8080

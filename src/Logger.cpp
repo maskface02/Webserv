@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Logger.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: zatais <zatais@student.1337.ma>            +#+  +:+       +#+        */
+/*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/16 16:33:28 by zatais            #+#    #+#             */
-/*   Updated: 2026/05/16 16:33:28 by zatais           ###   ########.fr       */
+/*   Updated: 2026/07/11 16:23:53 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -85,6 +85,7 @@ std::string Logger::statusText(int status) {
     case 501: return "Not Implemented";
     case 502: return "Bad Gateway";
     case 503: return "Service Unavailable";
+    case 504: return "Gateway Timeout";
     default:  return "Unknown";
   }
 }

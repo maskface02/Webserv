@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 21:51:55 by zatais            #+#    #+#             */
-/*   Updated: 2026/07/11 14:27:12 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/11 17:31:38 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -91,6 +91,7 @@ void Server::checkTimeouts() {
         _logger.warn(oss.str());
         _cgi->killCgi(it->second, SIGKILL);
         std::string body = ServeStaticRq::html_Error_page(504, "Gateway Timeout");
+        it->second->processRq->setStatusCode(504);
         std::ostringstream res;
         res << "HTTP/1.1 504 Gateway Timeout\r\n"<< "Content-Length: "<< body.size() << "\r\n\r\n" << body; /// still needs the date to be added
         _logger.logRequest(it->second->ip, it->second->request->getRequestLine().Method, it->second->request->getRequestLine().Path, it->second->request->getRequestLine().HttpVers, it->second->processRq->getStatusCode(), it->second->write_buffer.size());
@@ -547,6 +548,7 @@ void Server::handleCgiStdinWrite() {
     ssize_t bytes = write(pipe_fd, client->cgi_input_buffer.c_str(), to_write);
     if (bytes > 0) {
       client->cgi_input_buffer.erase(0, bytes);
+      client->cgi_start_time = time(NULL);//
       if (client->cgi_input_buffer.empty()) {
         close(pipe_fd);
         for (size_t j = 0; j < _poll_fds.size(); ++j) {

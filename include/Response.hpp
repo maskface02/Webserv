@@ -20,6 +20,7 @@ enum statusMsg
     NOT_IMPLEMENTED                 = 501,
     HTTP_VERSION_NOT_SUPPORTED      = 505,
     BAD_GATEWAY                     = 502,
+    GATEWAY_TIMEOUT                 = 504,
 };
 
 // status code 409 indicates 

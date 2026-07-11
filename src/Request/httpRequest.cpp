@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/22 10:02:50 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/07/11 14:49:29 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/11 15:12:18 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -89,9 +89,6 @@ void  Request::pars_Headers(std::string& Rq, size_t HeadersSrart ,size_t Headers
             HeaderMap[Key] = Value;
             std::map<std::string,std::string> ::iterator it;
             it = HeaderMap.begin();
-            std::cout<<"key=== "<<it->first<<"  ++++   ";
-            std::cout<<"value=== "<<it->second<<"\n";
-            
         }
         else
             throw HttpError(BAD_REQUEST);

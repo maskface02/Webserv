@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/17 12:24:10 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/07/11 14:45:53 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/11 17:31:28 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -137,14 +137,14 @@ void ProcessCgi::EnvArray()
     ErrorHead << "Date: " << generateHttpDate();
     ErrorHead << "Connection: "<<connection<<"\r\n";
     //FIXED
-    // if (_client->state == STATE_CGI_ERROR) {
-    //     _client->processRq->setStatusCode(502);
-    //   Cgi_resp = ServeStaticRq::html_Error_page(502, "Bad Gateway");
-    //   ErrorHead << "Content-Length: " << Cgi_resp.size() << "\r\n";
-    //   Cgi_resp = ErrorHead.str() + "\r\n "+Cgi_resp;
-    //   _client->write_buffer = Cgi_resp;
-    //   return;
-    // }
+    if (_client->state == STATE_CGI_ERROR) {
+        _client->processRq->setStatusCode(500);
+      Cgi_resp = ServeStaticRq::html_Error_page(500, "Internal Server Error");
+      ErrorHead << "Content-Length: " << Cgi_resp.size() << "\r\n";
+      Cgi_resp = ErrorHead.str() + "\r\n "+Cgi_resp;
+      _client->write_buffer = Cgi_resp;
+      return;
+    }
 
     size_t p_body = 0;
     if ((p_body = cgi_output.find("\r\n\r\n")) == std::string::npos)
@@ -185,6 +185,7 @@ void ProcessCgi::EnvArray()
             _client->write_buffer.append(ServeStaticRq::html_Error_page(502, "Bad Gateway"));
             ErrorHead << "Content-Length: " << _client->write_buffer.size() << "\r\n";
             _client->write_buffer.insert(0,ErrorHead.str() + "\r\n ");
+             _client->processRq->setStatusCode(502);
             return;
         }
         _client->write_buffer.append(cgi_output.substr(p_body + 4));

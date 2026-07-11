@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 19:54:39 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/07/04 23:12:24 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/11 17:00:22 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -213,7 +213,6 @@ std::string     Request:: generateSessionId()
     std::string random_str ;
     size_t i = 0;
     
-    srand(time(NULL));
     while (i < 10)
     {
         random_str += str[rand() % str.size()];

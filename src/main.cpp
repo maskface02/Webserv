@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: zatais <zatais@student.1337.ma>            +#+  +:+       +#+        */
+/*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 21:38:25 by zatais            #+#    #+#             */
-/*   Updated: 2026/05/15 23:36:40 by zatais           ###   ########.fr       */
+/*   Updated: 2026/07/11 16:28:01 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,7 @@ int main(int argc, char** argv)
         configPath = argv[1];
 
     try {
+       srand(time(NULL));
       Config config;
       config.load(configPath);
 
