@@ -193,8 +193,16 @@ void    ServeStaticRq::_ServePostRq()
         if (client->request->is_boundry)
             upload_files();
         else {
-            std::cout<<"\n hello from serve post no boundary\n";
-            throw HttpError(METHOD_NOT_ALLOWED );}
+                std::string randm_name = client->request->generateSessionId();
+                file_path.append(randm_name);
+                std:: ofstream file (file_path.c_str());
+                if (file.is_open())
+                    file << client->request->getBody();
+                else
+                    throw HttpError(FORBIDDEN );
+                file.close();
+                throw HttpError(CREATED);;
+        }
     }
     else  { std::cout<<"\n hello from serve post no up;od\n";
         throw HttpError(METHOD_NOT_ALLOWED);}

@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/17 12:24:10 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/07/10 21:47:55 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/11 14:45:53 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,6 +34,13 @@ ProcessCgi::~ProcessCgi()
         delete[] env;
     }
 }
+char  env_meta_data(char c)
+{
+        c = std::toupper(c);
+        if(c == '-')
+            c = '_';
+        return(c);
+}
 void ProcessCgi::EnvMap(Request& request,std::string ClientIp)
 {
     if (request.getRequestLine().Method == "POST")
@@ -57,13 +64,18 @@ void ProcessCgi::EnvMap(Request& request,std::string ClientIp)
     env_map["SERVER_PORT"] = port.str();
     env_map["SERVER_PROTOCOL"] = request.getRequestLine().HttpVers;
     env_map["SERVER_SOFTWARE"] = "Webserver/1.1";
-    std::map<std::string , std::string> ::iterator it;
-    it = request.getHeaderMap().find("X-Secret-Header-For-Test");
-    if (it != request.getHeaderMap().end())
-    {
-        env_map["HTTP_X_SECRET_HEADER_FOR_TEST"] = it->second.c_str();
-    }
+    std::map<std::string , std::string> ::iterator it_headr;
+    std::map<std::string , std::string> header = request.getHeaderMap();
+  
+    it_headr = header.begin();
+    while(it_headr != header.end())
+    {  
+        std::string env_name = "HTTP_" + it_headr->first;
+        std::transform(env_name.begin(), env_name.end(), env_name.begin(), env_meta_data);
     
+        env_map[env_name] = it_headr->second ;
+         it_headr++;
+    }
     //cookies env
 }
 void ProcessCgi::EnvArray()
@@ -139,11 +151,9 @@ void ProcessCgi::EnvArray()
     {
         _client->processRq->setStatusCode(502);
 
-        Cgi_resp = ServeStaticRq::html_Error_page(502, "Bad Gateway");
-        ErrorHead << "Content-Length: " << Cgi_resp.size() << "\r\n";
-        Cgi_resp = ErrorHead.str() + "\r\n "+Cgi_resp;
-        _client->write_buffer = Cgi_resp;
-        
+        _client->write_buffer.append(ServeStaticRq::html_Error_page(502, "Bad Gateway"));
+        ErrorHead << "Content-Length: " << _client->write_buffer.size() << "\r\n";
+        _client->write_buffer.insert(0,ErrorHead.str() + "\r\n ");
         return;
     }
     addHeader =  cgi_output.substr(0, p_body) + "\r\n";
@@ -151,7 +161,7 @@ void ProcessCgi::EnvArray()
     size_t p_stat =  cgi_output.find("Status:");
     if (p_stat != std::string::npos)
     {
-        size_t lineEnd = 0; std::cout<<"\n this is cgi headers "<<Cgi_resp<<"\n";
+        size_t lineEnd = 0;
         if ((lineEnd = cgi_output.find("\r\n",p_stat)) != std::string::npos)
         {
             size_t pos_value = 0;
@@ -162,34 +172,29 @@ void ProcessCgi::EnvArray()
                     pos_value++;
                 std::string status_value = cgi_output.substr(pos_value , lineEnd - (pos_value));
                 addLine = "HTTP/1.1 " + status_value + "\r\n";
-        _client->processRq->setStatusCode(200);
+                _client->processRq->setStatusCode(200);
                 
-                addHeader = addHeader.erase(p_stat,(lineEnd - p_stat) + 2);
+              addHeader.erase(p_stat,(lineEnd - p_stat) + 2);
             }
         }
     }
-    body = cgi_output.substr(p_body + 4);
-    if (!body.empty())
+    if (cgi_output.size() > p_body + 4)
     { 
         if (cgi_output.find("Content-Type") == std::string::npos)
         {
-            Cgi_resp = ServeStaticRq::html_Error_page(502, "Bad Gateway");
-            ErrorHead << "Content-Length: " << Cgi_resp.size() << "\r\n";
-            Cgi_resp = ErrorHead.str() + "\r\n "+ Cgi_resp;
-            _client->write_buffer = Cgi_resp;
+            _client->write_buffer.append(ServeStaticRq::html_Error_page(502, "Bad Gateway"));
+            ErrorHead << "Content-Length: " << _client->write_buffer.size() << "\r\n";
+            _client->write_buffer.insert(0,ErrorHead.str() + "\r\n ");
             return;
         }
+        _client->write_buffer.append(cgi_output.substr(p_body + 4));
         if (cgi_output.find("Content-Length") == std::string::npos)
         {
-            str << "Content-Length: " << body.size() << "\r\n"; 
-            addHeader += str.str();
-        } std::cout<<"\n this is cgi headers "<<Cgi_resp<<"\n";
+            str << "Content-Length: " <<  _client->write_buffer.size() << "\r\n"; 
+            addHeader.append(str.str()) ;
+        }
     }
-   Cgi_resp = addLine + addHeader + "\r\n" ;   
-   if (!body.empty())
-        Cgi_resp.append(body);
-    _client->write_buffer = Cgi_resp;
-
+   _client->write_buffer.insert(0,addLine + addHeader + "\r\n" ) ; 
      _client->processRq->setStatusCode(200);
 }
 

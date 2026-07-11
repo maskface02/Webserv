@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 21:51:55 by zatais            #+#    #+#             */
-/*   Updated: 2026/07/10 19:09:11 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/11 14:27:12 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -190,8 +190,8 @@ void Server::handleClientRead(int client_fd) {
     else
       break;
   }
-  std::ofstream test("test.txt");
-  test << client->read_buffer << std::endl;
+  // std::ofstream test("test.txt");
+  // test << client->read_buffer << std::endl;
       //
       // std::cout << "reqData : " << client->read_buffer << std::endl;
       // std::cout << "maxSize : " << max_size << std::endl;
@@ -491,11 +491,15 @@ void Server::handleCgiPipeRead() {
       if (client_it != _clients.end() &&
       (client_it->second->state == STATE_WRITING_RESPONSE ||
         client_it->second->state == STATE_CGI_ERROR)) {
-             std::ofstream test("test2.txt");
-             test << client_it->second->cgi_output_buffer << std::endl;
+          
+            //  std::ofstream test("test2.txt");
+            //  test << client_it->second->cgi_output_buffer << std::endl;
+             
         client_it->second->processCgi->GeneretCgiResponse();
-        std::ofstream test2("test3.txt");
-        test2 << client_it->second->write_buffer << "\n";
+        
+        // std::ofstream test2("test3.txt");
+        // test2 << client_it->second->write_buffer << "\n";
+        
         _logger.logRequest(client_it->second->ip, client_it->second->request->getRequestLine().Method, client_it->second->request->getRequestLine().Path, client_it->second->request->getRequestLine().HttpVers, client_it->second->processRq->getStatusCode(), client_it->second->write_buffer.size());
         client_it->second->state = STATE_SENDING;
         for (size_t j = 0; j < _poll_fds.size(); ++j) {

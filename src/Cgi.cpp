@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/13 10:00:00 by zatais            #+#    #+#             */
-/*   Updated: 2026/07/10 12:48:13 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/11 14:24:31 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -118,7 +118,7 @@ void Cgi::handleCgiRead(std::map<int, int>::iterator pipe_it, std::map<int, Clie
       read_this_cycle += bytes;
     }
     else if (bytes == 0) {
-      int status;
+      int status;//
       pid_t result = waitpid(client->cgi_pid, &status, WNOHANG);
       if (result > 0)
         cleanupCgi(client, status);
