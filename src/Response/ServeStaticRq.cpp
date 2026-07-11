@@ -180,12 +180,10 @@ void ServeStaticRq::_ServePostRq() {
         throw HttpError(FORBIDDEN);
       file.close();
       throw HttpError(CREATED);
-      ;
     }
-  } else {
-    std::cout << "\n hello from serve post no up;od\n";
-    throw HttpError(METHOD_NOT_ALLOWED);
   }
+  else
+    throw HttpError(METHOD_NOT_ALLOWED);
 }
 
 void ServeStaticRq::upload_files() {
