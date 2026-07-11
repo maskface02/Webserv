@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/22 10:02:50 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/07/04 17:19:02 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/11 14:49:29 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,7 @@ Request::Request(Client* client, std::string& Rq)
 {
     size_t          LineEnd = 0;
     size_t          header_end = std::string::npos;   
-  
+
     try
     {
         LineEnd = Rq.find("\r\n");
@@ -55,6 +55,7 @@ size_t  Request::pars_lineRequest(std::string& Rq, size_t LineEnd)
     str >> RequestLine.Method >> RequestLine.URI >> RequestLine.HttpVers;
     check_valid_line();
     store_path_query();
+    std::cout<<str.str();
     return (Rq.find("\r\n\r\n",LineEnd + 2));
 }
 
@@ -86,6 +87,11 @@ void  Request::pars_Headers(std::string& Rq, size_t HeadersSrart ,size_t Headers
             check_duplic(Key);
             store_variable(Key,Value);
             HeaderMap[Key] = Value;
+            std::map<std::string,std::string> ::iterator it;
+            it = HeaderMap.begin();
+            std::cout<<"key=== "<<it->first<<"  ++++   ";
+            std::cout<<"value=== "<<it->second<<"\n";
+            
         }
         else
             throw HttpError(BAD_REQUEST);
@@ -98,29 +104,51 @@ void  Request::pars_Headers(std::string& Rq, size_t HeadersSrart ,size_t Headers
     define_session_id();
 }
 
+// void Request::pars_Body(std::string& RqBody, size_t bodyStart)
+// {
+//     size_t pos = 0;  
+//     std::string Text_body ;
+//     Text_body.append( RqBody.substr(bodyStart));
+
+//     if (isChunked == false 
+//         && Text_body.size() < content_lenght)
+//         throw(HttpError(BAD_REQUEST));     
+//     if (isChunked)
+//        pars_chunked_body(Text_body);
+//     else
+//         body = RqBody.substr(bodyStart, content_lenght);
+    
+//    if ((pos = content_type.rfind("boundary")) != std::string::npos)
+//    {
+//      pars_boundry(pos);
+//      is_boundry = true; 
+//    }   
+// }
+
 void Request::pars_Body(std::string& RqBody, size_t bodyStart)
 {
     size_t pos = 0;  
-    std::string Text_body = RqBody.substr(bodyStart);
-    if (isChunked == false && RqBody.size() < content_lenght)
+
+
+    if (isChunked == false && (RqBody.size() - bodyStart) < content_lenght)
         throw(HttpError(BAD_REQUEST));     
     if (isChunked)
-       pars_chunked_body(Text_body);
+       pars_chunked_body(RqBody,bodyStart);
     else
         body = RqBody.substr(bodyStart, content_lenght);
     
-   if ((pos = content_type.rfind("boundary")) != std::string::npos)
-   {
-     pars_boundry(pos);
-     is_boundry = true; 
-   }   
+    if ((pos = content_type.rfind("boundary")) != std::string::npos)
+    {
+      pars_boundry(pos);
+      is_boundry = true; 
+    }   
 }
 
-void Request::pars_chunked_body(std::string& chnk_body)
+void Request::pars_chunked_body(const std::string& chnk_body,size_t body_start)
 {
     // recheck
     int i = 0;
-    size_t indx = 0;
+    size_t indx = body_start;
     int Val = 0;
     size_t start = 0;
     std::stringstream str;
@@ -128,7 +156,7 @@ void Request::pars_chunked_body(std::string& chnk_body)
     {
         start = indx;
         Val = 0;
-        while (indx  < chnk_body.length() && chnk_body[indx] != '\r' )
+        while (indx  < chnk_body.length() && chnk_body[indx] != '\r')
             indx++;
         str << chnk_body.substr(start, indx - start ); 
         str >>std::hex >> Val ;//str reach end of file caz we read all its bufff
@@ -138,8 +166,7 @@ void Request::pars_chunked_body(std::string& chnk_body)
         if (Val == 0 || Val < 0 )
             break;
         i = 0;
-       while (i < Val && (indx + 1) < chnk_body.length() 
-            && !(chnk_body[indx] == '\r' && chnk_body[indx + 1] == '\n'))
+       while (i < Val && (indx + 1) < chnk_body.length() && !(chnk_body[indx] == '\r' && chnk_body[indx + 1] == '\n'))
         {
             body.append(1,chnk_body[indx]);
             i++;

@@ -6,13 +6,11 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 21:51:55 by zatais            #+#    #+#             */
-/*   Updated: 2026/07/10 16:32:46 by m45kf4c3         ###   ########.fr       */
+/*   Updated: 2026/07/11 14:27:12 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../include/WebServ.hpp"
-#include <istream>
-#include <string>
 
 bool Server::running = true;
 
@@ -119,8 +117,7 @@ void Server::checkTimeouts() {
           }
         }
       }
-    }
-    else if (difftime(now, it->second->last_activity) > CLIENT_TIMEOUT) {
+    } else if (difftime(now, it->second->last_activity) > CLIENT_TIMEOUT) {
       std::ostringstream oss;
       oss << "Client timeout: " << it->second->ip << ":" << it->second->port;
       _logger.warn(oss.str());
@@ -159,6 +156,7 @@ void Server::acceptConnection(int listen_fd) {
 
   int srv_idx = _fd_to_server_idx[listen_fd];
   ServerConfig &srv = _config.getServers()[srv_idx];
+
   std::ostringstream server_name;
   server_name << srv.listens[0].host << ":" << srv.listens[0].port;
   _logger.logConnection(client_ip, client_port, true, server_name.str());
@@ -175,7 +173,6 @@ void Server::handleClientRead(int client_fd) {
 
   std::vector<ServerConfig> &servers = _config.getServers();
   size_t max_size = servers[client->server_idx].client_max_body_size;
-  // std::cout << "Test "<<max_size<<std::endl;
 
   while (true) {
     char buffer[4096];
@@ -209,15 +206,15 @@ void Server::handleClientRead(int client_fd) {
       else if (!bytes) {
         closeClient(client_fd);
         return;
-      }
-      else
+      } else
         break;
     }
   }
   size_t request_size = getRequestSize(client->read_buffer);
   if (request_size != std::string::npos) {
     client->request = new Request(client, client->read_buffer);
-    client->read_buffer.erase(0, request_size);    client->processRq =
+    client->read_buffer.erase(0, request_size);
+    client->processRq =
         new ProcessRequest(client, _config.getServers()[client->server_idx]);
 
     if (!client->processRq->is_CgiRq) {
@@ -238,8 +235,7 @@ void Server::handleClientRead(int client_fd) {
           break;
         }
       }
-    }
-    else {
+    } else {
       ProcessCgi *procCgi =
           new ProcessCgi(client, *client->processRq, *client->request);
       std::string script = client->processRq->getResourcePath();
@@ -247,6 +243,7 @@ void Server::handleClientRead(int client_fd) {
     }
   }
 }
+
 bool Server::iequal(std::string &a, const std::string &b) {
   if (a.size() != b.size())
     return false;
@@ -373,12 +370,15 @@ void Server::sendResponse(int client_fd) {
                        client->write_buffer.size(), 0);
 
   if (bytes > 0) {
-    client->write_buffer.erase(0, bytes);
+    client->write_buffer.erase(
+        0, bytes); // remove erase and replace with offset reading
     client->last_activity = time(NULL);
   } else if (bytes < 0)
     return;
 
-  if (client->write_buffer.empty()) {
+  if (client->write_buffer
+          .empty()) // conpare the offset with the size of write_buffer
+  {
     for (size_t i = 0; i < _poll_fds.size(); ++i) {
       if (_poll_fds[i].fd == client_fd) {
         _poll_fds[i].events = POLLIN;
@@ -386,6 +386,7 @@ void Server::sendResponse(int client_fd) {
       }
     }
     client->cgi_output_buffer.clear();
+
     if (client->keep_alive) {
       delete client->request;
       delete client->processRq;
@@ -508,7 +509,6 @@ void Server::handleCgiPipeRead() {
     if (pipe_it != _pipe_to_client_fd.end()) {
       int client_fd = pipe_it->second;
       _cgi->handleCgiRead(pipe_it, _clients);
-
       std::map<int, Client *>::iterator client_it = _clients.find(client_fd);
       if (client_it != _clients.end() &&
           (client_it->second->state == STATE_WRITING_RESPONSE ||
@@ -521,7 +521,7 @@ void Server::handleCgiPipeRead() {
             client_it->second->request->getRequestLine().HttpVers,
             client_it->second->processRq->getStatusCode(),
             client_it->second->write_buffer.size());
-        client_it->second->state = STATE_SENDING;
+       client_it->second->state = STATE_SENDING;
         for (size_t j = 0; j < _poll_fds.size(); ++j) {
           if (_poll_fds[j].fd == client_fd) {
             _poll_fds[j].events = POLLOUT;
