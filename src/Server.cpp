@@ -242,7 +242,6 @@ void Server::handleClientRead(int client_fd) {
   if (request_size != std::string::npos) {
     client->request = new Request(client, client->read_buffer); // request_size
     client->read_buffer.erase(0, request_size);
-    // cookies class -> creat session if new || check expired ->if yes creat new
     client->processRq =
         new ProcessRequest(client, _config.getServers()[client->server_idx]);
     if (!client->processRq->is_CgiRq) {

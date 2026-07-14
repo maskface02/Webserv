@@ -91,6 +91,7 @@ private:
   size_t parseChunkedBody(std::string &buffer, size_t bodyStart);
   Client *initClient(int client_fd, int listen_fd, const std::string &client_ip,
                      int client_port);
+  ParsedRequestLine parseRequestLine(const std::string &buffer);
   void sendResponse(int client_fd);
   void handlePollIn();
   void handleCgiPipeRead();
@@ -111,6 +112,5 @@ public:
   static void addToPoll(int fd, short events,
                         std::vector<struct pollfd> &poll_fds);
   static void signalHandler(int sig);
-  static ParsedRequestLine parseRequestLine(const std::string &buffer);
 };
 #endif // !SERVER_HPP
