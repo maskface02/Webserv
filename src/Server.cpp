@@ -165,6 +165,32 @@ void Server::acceptConnection(int listen_fd) {
   _logger.logConnection(client_ip, client_port, true, server_name.str());
 }
 
+ParsedRequestLine Server::parseRequestLine(const std::string& buffer) {
+    ParsedRequestLine line;
+    line.method = "-";
+    line.uri = "-";
+    line.httpVers = "-";
+
+    size_t pos = buffer.find("\r\n");
+    if (pos == std::string::npos)
+        return line;
+
+    std::string reqLine = buffer.substr(0, pos);
+
+    size_t sp1 = reqLine.find(' ');
+    if (sp1 == std::string::npos)
+        return line;
+    line.method = reqLine.substr(0, sp1);
+
+    size_t sp2 = reqLine.find(' ', sp1 + 1);
+    if (sp2 == std::string::npos)
+        return line;
+    line.uri = reqLine.substr(sp1 + 1, sp2 - sp1 - 1);
+    line.httpVers = reqLine.substr(sp2 + 1);
+
+    return line;
+}
+
 void Server::handleClientRead(int client_fd) {
   std::map<int, Client *>::iterator it = _clients.find(client_fd);
   if (it == _clients.end())
@@ -187,16 +213,11 @@ void Server::handleClientRead(int client_fd) {
       client->read_buffer.append(buffer, bytes);
       client->last_activity = time(NULL);
       if (client->read_buffer.size() > max_size) {
+        ParsedRequestLine line = parseRequestLine(client->read_buffer);
         client->write_buffer =
-            "HTTP/1.1 413 Payload Too Large\r\nContent-Length: "
-            "0\r\nConnection: close\r\n\r\n";
-        // tt
-        //          _logger.logRequest(it->second->ip,
-        //          it->second->request->getRequestLine().Methodi
-        //          it->second->request->getRequestLine().Path,
-        //          it->second->request->getRequestLine().HttpVers,
-        //          it->second->processRq->getStatusCode(),
-        //          it->second->write_buffer.size());
+            "HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\nConnection: close\r\n\r\n";
+        client->write_offset = 0;
+        _logger.logRequest(client->ip, line.method, line.uri, line.httpVers, 400, client->write_buffer.size());
         client->keep_alive = false;
         client->state = STATE_SENDING;
         for (size_t i = 0; i < _poll_fds.size(); ++i) {
@@ -216,13 +237,7 @@ void Server::handleClientRead(int client_fd) {
     else
       break;
   }
-  // std::ofstream test("test.txt");
-  // test << client->read_buffer << std::endl;
-  //
-  // std::cout << "reqData : " << client->read_buffer << std::endl;
-  // std::cout << "maxSize : " << max_size << std::endl;
-  // std::cout << "read_buffer.size : " << client->read_buffer.size() <<
-  // std::endl;
+
   size_t request_size = getRequestSize(client->read_buffer);
   if (request_size != std::string::npos) {
     client->request = new Request(client, client->read_buffer); // request_size
@@ -530,15 +545,7 @@ void Server::handleCgiPipeRead() {
       if (client_it != _clients.end() &&
           (client_it->second->state == STATE_WRITING_RESPONSE ||
            client_it->second->state == STATE_CGI_ERROR)) {
-
-        //  std::ofstream test("test2.txt");
-        //  test << client_it->second->cgi_output_buffer << std::endl;
-
         client_it->second->processCgi->GeneretCgiResponse();
-
-        // std::ofstream test2("test3.txt");
-        // test2 << client_it->second->write_buffer << "\n";
-
         _logger.logRequest(
             client_it->second->ip,
             client_it->second->request->getRequestLine().Method,
