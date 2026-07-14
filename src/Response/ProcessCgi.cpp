@@ -20,7 +20,8 @@ ProcessCgi::ProcessCgi(Client *client, ProcessRequest &ProcessRq,
 {
 
   if (request.getRequestLine().Method == "POST")
-    client->cgi_input_buffer = request.getBody();
+    client->cgi_input_buffer = &request.getBody();
+  client->cgi_input_offset = 0;
   EnvMap(request, client->ip);
   EnvArray();
   connection = request.getConnection();
@@ -130,6 +131,7 @@ void ProcessCgi::GeneretCgiResponse() {
     ErrorHead << "Content-Length: " << Cgi_resp.size() << "\r\n";
     Cgi_resp = ErrorHead.str() + "\r\n " + Cgi_resp;
     _client->write_buffer = Cgi_resp;
+    _client->write_offset = 0;
     _client->processRq->setStatusCode(500);
     return;
   }
@@ -143,6 +145,7 @@ void ProcessCgi::GeneretCgiResponse() {
     ErrorHead << "Content-Length: " << _client->write_buffer.size() << "\r\n";
     _client->processRq->setStatusCode(502);
     _client->write_buffer.insert(0, ErrorHead.str() + "\r\n ");
+    _client->write_offset = 0;
     return;
   }
   addHeader = cgi_output.substr(0, p_body) + "\r\n";
@@ -171,6 +174,7 @@ void ProcessCgi::GeneretCgiResponse() {
           ServeStaticRq::html_Error_page(502, "Bad Gateway"));
       ErrorHead << "Content-Length: " << _client->write_buffer.size() << "\r\n";
       _client->write_buffer.insert(0, ErrorHead.str() + "\r\n ");
+      _client->write_offset = 0;
       _client->processRq->setStatusCode(502);
       return;
     }
@@ -182,6 +186,7 @@ void ProcessCgi::GeneretCgiResponse() {
   }
 
   _client->write_buffer.insert(0, addLine + addHeader + "\r\n");
+  _client->write_offset = 0;
   _client->processRq->setStatusCode(200);
 }
 

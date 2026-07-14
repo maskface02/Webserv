@@ -60,7 +60,7 @@ class Request
         reqLine                                             getRequestLine() const;
         int                                                 getPort() const;
         std::string                                         getHost() const;
-        std::string                                         getBody() const;
+        std::string&                                        getBody();
         std::string                                         getConnection() const;
         std::string                                         getContentType()const;
         int                                                 getContentLenght() const;

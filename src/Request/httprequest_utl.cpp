@@ -197,7 +197,7 @@ void        Request::define_session_id()
         }
         else  session_id = generateSessionId(); 
     }
-    else 
+     else 
     {
         session_id = generateSessionId();
         std::cout<<"generated session id == "<<session_id;
@@ -276,7 +276,7 @@ std::string    Request::getHost() const
 {
     return (Host);
 }
-std::string    Request::getBody() const
+std::string&   Request::getBody()
 {
     return(body);
 }

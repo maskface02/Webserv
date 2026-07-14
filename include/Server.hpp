@@ -51,8 +51,10 @@ struct Client {
     int             cgi_pid;
     int             cgi_stdin_fd;
     int             cgi_stdout_fd;
-    std::string     cgi_input_buffer;
+    std::string*    cgi_input_buffer;
     std::string     cgi_output_buffer;
+    size_t          write_offset;
+    size_t          cgi_input_offset;
     time_t          cgi_start_time;
 
     Request*           request; 

@@ -38,6 +38,7 @@ Server::~Server() {
 }
 
 /******************************************************************************/
+
 void Server::signalHandler(int sig) {
   (void)sig;
   running = false;
@@ -109,8 +110,9 @@ void Server::checkTimeouts() {
                            it->second->request->getRequestLine().HttpVers,
                            it->second->processRq->getStatusCode(),
                            it->second->write_buffer.size());
-        it->second->write_buffer = res.str();
-        it->second->state = STATE_SENDING;
+         it->second->write_buffer = res.str();
+         it->second->write_offset = 0;
+         it->second->state = STATE_SENDING;
         for (size_t j = 0; j < _poll_fds.size(); ++j) {
           if (_poll_fds[j].fd == it->first) {
             _poll_fds[j].events = POLLOUT;
@@ -118,7 +120,8 @@ void Server::checkTimeouts() {
           }
         }
       }
-    } else if (difftime(now, it->second->last_activity) > CLIENT_TIMEOUT) {
+    }
+    else if (difftime(now, it->second->last_activity) > CLIENT_TIMEOUT) {
       std::ostringstream oss;
       oss << "Client timeout: " << it->second->ip << ":" << it->second->port;
       _logger.warn(oss.str());
@@ -173,9 +176,10 @@ void Server::handleClientRead(int client_fd) {
 
   std::vector<ServerConfig> &servers = _config.getServers();
   size_t max_size = servers[client->server_idx].client_max_body_size;
-  // std::cout << "Test "<<max_size<<std::endl;
 
-  while (true) {
+  size_t max_per_cycle = 64 * 1024;
+  size_t read_this_cycle = 0;
+  while (read_this_cycle < max_per_cycle) {
     char buffer[4096];
     ssize_t bytes = recv(client_fd, buffer, sizeof(buffer), 0);
 
@@ -203,10 +207,13 @@ void Server::handleClientRead(int client_fd) {
         }
         return;
       }
-    } else if (!bytes) {
+      read_this_cycle += bytes;
+    }
+    else if (!bytes) {
       closeClient(client_fd);
       return;
-    } else
+    }
+    else
       break;
   }
   // std::ofstream test("test.txt");
@@ -228,6 +235,7 @@ void Server::handleClientRead(int client_fd) {
       Response StaticResponse(client, StaticRq,
                               _config.getServers()[client->server_idx]);
       client->write_buffer = StaticResponse.getHttpResponse();
+      client->write_offset = 0;
       _logger.logRequest(client->ip, client->request->getRequestLine().Method,
                          client->request->getRequestLine().URI,
                          client->request->getRequestLine().HttpVers,
@@ -352,8 +360,10 @@ Client *Server::initClient(int client_fd, int listen_fd,
   client->cgi_pid = -1;
   client->cgi_stdin_fd = -1;
   client->cgi_stdout_fd = -1;
-  client->cgi_input_buffer = "";
+  client->cgi_input_buffer = NULL;
   client->cgi_output_buffer = "";
+  client->write_offset = 0;
+  client->cgi_input_offset = 0;
   client->cgi_start_time = 0;
   client->request = NULL;
   client->processCgi = NULL;
@@ -370,19 +380,21 @@ void Server::sendResponse(int client_fd) {
   if (client->state != STATE_SENDING)
     return;
 
-  if (client->write_buffer.empty())
+  if (client->write_offset >= client->write_buffer.size())
     return;
 
-  ssize_t bytes = send(client_fd, client->write_buffer.c_str(),
-                       client->write_buffer.size(), 0);
+  ssize_t bytes = send(client_fd, client->write_buffer.data() + client->write_offset,
+                       client->write_buffer.size() - client->write_offset, 0);
 
   if (bytes > 0) {
-    client->write_buffer.erase(0, bytes);
+    client->write_offset += bytes;
     client->last_activity = time(NULL);
   } else if (bytes < 0)
     return;
 
-  if (client->write_buffer.empty()) {
+  if (client->write_offset == client->write_buffer.size()) {
+    client->write_buffer.clear();
+    client->write_offset = 0;
     for (size_t i = 0; i < _poll_fds.size(); ++i) {
       if (_poll_fds[i].fd == client_fd) {
         _poll_fds[i].events = POLLIN;
@@ -397,6 +409,8 @@ void Server::sendResponse(int client_fd) {
       client->request = NULL;
       client->processRq = NULL;
       client->processCgi = NULL;
+      client->write_offset = 0;
+      client->cgi_input_offset = 0;
       client->state = STATE_READING;
     } else
       closeClient(client_fd);
@@ -562,7 +576,7 @@ void Server::handleCgiStdinWrite() {
     if (client->state != STATE_CGI_RUNNING)
       continue;
 
-    if (client->cgi_input_buffer.empty()) {
+    if (!client->cgi_input_buffer || client->cgi_input_offset >= client->cgi_input_buffer->size()) {
       close(pipe_fd);
       for (size_t j = 0; j < _poll_fds.size(); ++j) {
         if (_poll_fds[j].fd == pipe_fd) {
@@ -575,13 +589,13 @@ void Server::handleCgiStdinWrite() {
       continue;
     }
 
-    size_t to_write =
-        std::min(client->cgi_input_buffer.size(), (size_t)CGI_CHUNK_SIZE);
-    ssize_t bytes = write(pipe_fd, client->cgi_input_buffer.c_str(), to_write);
+    size_t rem = client->cgi_input_buffer->size() - client->cgi_input_offset;
+    size_t to_write = std::min(rem, (size_t)CGI_CHUNK_SIZE);
+    ssize_t bytes = write(pipe_fd, client->cgi_input_buffer->data() + client->cgi_input_offset, to_write);
     if (bytes > 0) {
-      client->cgi_input_buffer.erase(0, bytes);
-      client->cgi_start_time = time(NULL); //
-      if (client->cgi_input_buffer.empty()) {
+      client->cgi_input_offset += bytes;
+      client->cgi_start_time = time(NULL);
+      if (client->cgi_input_offset == client->cgi_input_buffer->size()) {
         close(pipe_fd);
         for (size_t j = 0; j < _poll_fds.size(); ++j) {
           if (_poll_fds[j].fd == pipe_fd) {

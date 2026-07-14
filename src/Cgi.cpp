@@ -88,7 +88,7 @@ void Cgi::startCgi(Client *client, std::string &interpreter,
   Server::addToPoll(pipe_from_cgi[0], POLLIN, _poll_fds);
   _pipe_to_client_fd[pipe_from_cgi[0]] = client->fd;
 
-  if (!client->cgi_input_buffer.empty()) {
+  if (client->cgi_input_buffer && !client->cgi_input_buffer->empty()) {
     Server::setNonBlocking(pipe_to_cgi[1]);
     Server::addToPoll(pipe_to_cgi[1], POLLOUT, _poll_fds);
     _pipe_to_client_fd[pipe_to_cgi[1]] = client->fd;
