@@ -103,9 +103,9 @@ void ProcessRequest::match_location(ServerConfig& server)
     else
         resource_path = target_location.root + "/" + path_after_location;
    
-      std::cout<<"Target location == "<<target_location.path<<std::endl;
-      std::cout<<"Resource path == "<<resource_path<<std::endl;
- //added 
+ //      std::cout<<"Target location == "<<target_location.path<<std::endl;
+ //      std::cout<<"Resource path == "<<resource_path<<std::endl;
+ // //added 
 }
 
 // normalize
@@ -269,7 +269,7 @@ void    ProcessRequest::extract_file_extension()
         if (pos1 != std::string::npos && pos2 != std::string::npos && pos1 > pos2 )
             extension = resource_path.substr(pos1);
         }
-    std::cout<<"\n===this is the extension=====  "<<extension<<"\n";
+    // std::cout<<"\n===this is the extension=====  "<<extension<<"\n";
 }
 
 void ProcessRequest::check_Cgi()

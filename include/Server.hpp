@@ -89,6 +89,8 @@ private:
   size_t findHeaderValue(std::string &buffer, const std::string &name,
                          size_t headerEnd);
   size_t parseChunkedBody(std::string &buffer, size_t bodyStart);
+  bool isChunked(std::string &buffer, size_t headerEnd);
+  size_t getContentLength(std::string &buffer, size_t headerEnd);
   Client *initClient(int client_fd, int listen_fd, const std::string &client_ip,
                      int client_port);
   ParsedRequestLine parseRequestLine(const std::string &buffer);
@@ -98,6 +100,12 @@ private:
   void handlePollOut();
   void handlePollErrors();
   void handleCgiStdinWrite();
+  void handleCgiTimeout(Client *client);
+  bool readClientData(Client *client);
+  void processCompleteRequest(Client *client);
+  void handleCgiPipePollError(int fd);
+  void handleListenSocketPollError(int fd);
+  void removeListenFd(int fd);
 
   Server();
   Server(const Server &);

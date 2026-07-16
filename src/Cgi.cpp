@@ -136,27 +136,11 @@ void Cgi::handleCgiRead(std::map<int, int>::iterator pipe_it,
 
 void Cgi::cleanupCgi(Client *client, int exit_status) {
   if (client->cgi_stdin_fd != -1) {
-    close(client->cgi_stdin_fd);
-    for (size_t i = 0; i < _poll_fds.size(); ++i) {
-      if (_poll_fds[i].fd == client->cgi_stdin_fd) {
-        _poll_fds.erase(_poll_fds.begin() + i);
-        break;
-      }
-    }
-    _pipe_to_client_fd.erase(client->cgi_stdin_fd);
-    client->cgi_stdin_fd = -1;
+    closePipeAndRemove(client->cgi_stdin_fd, _poll_fds, _pipe_to_client_fd, client->cgi_stdin_fd);
   }
 
   if (client->cgi_stdout_fd != -1) {
-    close(client->cgi_stdout_fd);
-    for (size_t i = 0; i < _poll_fds.size(); ++i) {
-      if (_poll_fds[i].fd == client->cgi_stdout_fd) {
-        _poll_fds.erase(_poll_fds.begin() + i);
-        break;
-      }
-    }
-    _pipe_to_client_fd.erase(client->cgi_stdout_fd);
-    client->cgi_stdout_fd = -1;
+    closePipeAndRemove(client->cgi_stdout_fd, _poll_fds, _pipe_to_client_fd, client->cgi_stdout_fd);
   }
 
   client->cgi_pid = -1;

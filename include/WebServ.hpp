@@ -62,6 +62,7 @@
 #include "Logger.hpp"
 #include "Server.hpp"
 #include "Cgi.hpp"
+#include "Utils.hpp"
 
 
 

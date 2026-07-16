@@ -89,8 +89,8 @@ void  Request::pars_Headers(std::string& Rq, size_t HeadersSrart ,size_t Headers
             HeaderMap[Key] = Value;
             std::map<std::string,std::string> ::iterator it;
             it = HeaderMap.begin();
-            std::cout<<"key=== "<<it->first<<"  ++++   ";
-            std::cout<<"value=== "<<it->second<<"\n";
+            // std::cout<<"key=== "<<it->first<<"  ++++   ";
+            // std::cout<<"value=== "<<it->second<<"\n";
             
         }
         else

@@ -200,7 +200,7 @@ void        Request::define_session_id()
      else 
     {
         session_id = generateSessionId();
-        std::cout<<"generated session id == "<<session_id;
+        // std::cout<<"generated session id == "<<session_id;
     }
 }
 

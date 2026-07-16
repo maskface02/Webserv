@@ -69,20 +69,11 @@ void Server::closeClient(int fd) {
     _logger.logConnection(it->second->ip, it->second->port, false,
                           server_name.str());
     close(fd);
-
-    delete it->second->request;
-    delete it->second->processRq;
-    delete it->second->processCgi;
+    deleteClientObjects(it->second);
     delete it->second;
     _clients.erase(it);
   }
-
-  for (size_t i = 0; i < _poll_fds.size(); ++i) {
-    if (_poll_fds[i].fd == fd) {
-      _poll_fds.erase(_poll_fds.begin() + i);
-      break;
-    }
-  }
+  removeFdFromPoll(fd, _poll_fds);
 }
 
 void Server::checkTimeouts() {
@@ -92,34 +83,8 @@ void Server::checkTimeouts() {
   for (std::map<int, Client *>::iterator it = _clients.begin();
        it != _clients.end(); ++it) {
     if (it->second->state == STATE_CGI_RUNNING && it->second->cgi_pid != -1) {
-      if (difftime(now, it->second->cgi_start_time) > CGI_TIMEOUT) {
-        std::ostringstream oss;
-        oss << "CGI timeout: " << it->second->ip << ":" << it->second->port;
-        _logger.warn(oss.str());
-        _cgi->killCgi(it->second, SIGKILL);
-        std::string body =
-            ServeStaticRq::html_Error_page(504, "Gateway Timeout");
-        it->second->processRq->setStatusCode(504);
-        std::ostringstream res;
-        res << "HTTP/1.1 504 Gateway Timeout\r\n"
-            << "Content-Length: " << body.size() << "\r\n\r\n"
-            << body; /// still needs the date to be added
-        _logger.logRequest(it->second->ip,
-                           it->second->request->getRequestLine().Method,
-                           it->second->request->getRequestLine().Path,
-                           it->second->request->getRequestLine().HttpVers,
-                           it->second->processRq->getStatusCode(),
-                           it->second->write_buffer.size());
-         it->second->write_buffer = res.str();
-         it->second->write_offset = 0;
-         it->second->state = STATE_SENDING;
-        for (size_t j = 0; j < _poll_fds.size(); ++j) {
-          if (_poll_fds[j].fd == it->first) {
-            _poll_fds[j].events = POLLOUT;
-            break;
-          }
-        }
-      }
+      if (difftime(now, it->second->cgi_start_time) > CGI_TIMEOUT)
+        handleCgiTimeout(it->second);
     }
     else if (difftime(now, it->second->last_activity) > CLIENT_TIMEOUT) {
       std::ostringstream oss;
@@ -131,6 +96,29 @@ void Server::checkTimeouts() {
 
   for (size_t i = 0; i < to_close.size(); ++i)
     closeClient(to_close[i]);
+}
+
+void Server::handleCgiTimeout(Client *client)
+{
+  std::ostringstream oss;
+  oss << "CGI timeout: " << client->ip << ":" << client->port;
+  _logger.warn(oss.str());
+  _cgi->killCgi(client, SIGKILL);
+  std::string body = ServeStaticRq::html_Error_page(504, "Gateway Timeout");
+  client->processRq->setStatusCode(504);
+  std::ostringstream res;
+  res << "HTTP/1.1 504 Gateway Timeout\r\n"
+      << "Content-Length: " << body.size() << "\r\n\r\n"
+      << body;
+  _logger.logRequest(client->ip,
+                     client->request->getRequestLine().Method,
+                     client->request->getRequestLine().Path,
+                     client->request->getRequestLine().HttpVers,
+                     client->processRq->getStatusCode(),
+                     client->write_buffer.size());
+  client->write_buffer = res.str();
+  client->write_offset = 0;
+  switchClientToSending(client, _poll_fds);
 }
 
 void Server::acceptConnection(int listen_fd) {
@@ -166,29 +154,29 @@ void Server::acceptConnection(int listen_fd) {
 }
 
 ParsedRequestLine Server::parseRequestLine(const std::string& buffer) {
-    ParsedRequestLine line;
-    line.method = "-";
-    line.uri = "-";
-    line.httpVers = "-";
+  ParsedRequestLine line;
+  line.method = "-";
+  line.uri = "-";
+  line.httpVers = "-";
 
-    size_t pos = buffer.find("\r\n");
-    if (pos == std::string::npos)
-        return line;
+  size_t pos = buffer.find("\r\n");
+  if (pos == std::string::npos)
+      return line;
 
-    std::string reqLine = buffer.substr(0, pos);
+  std::string reqLine = buffer.substr(0, pos);
 
-    size_t sp1 = reqLine.find(' ');
-    if (sp1 == std::string::npos)
-        return line;
-    line.method = reqLine.substr(0, sp1);
-
-    size_t sp2 = reqLine.find(' ', sp1 + 1);
-    if (sp2 == std::string::npos)
-        return line;
-    line.uri = reqLine.substr(sp1 + 1, sp2 - sp1 - 1);
-    line.httpVers = reqLine.substr(sp2 + 1);
-
+  size_t sp1 = reqLine.find(' ');
+  if (sp1 == std::string::npos)
     return line;
+  line.method = reqLine.substr(0, sp1);
+
+  size_t sp2 = reqLine.find(' ', sp1 + 1);
+  if (sp2 == std::string::npos)
+    return line;
+  line.uri = reqLine.substr(sp1 + 1, sp2 - sp1 - 1);
+  line.httpVers = reqLine.substr(sp2 + 1);
+
+  return line;
 }
 
 void Server::handleClientRead(int client_fd) {
@@ -200,6 +188,15 @@ void Server::handleClientRead(int client_fd) {
   if (client->state != STATE_READING)
     return;
 
+  if (!readClientData(client))
+    return;
+
+  size_t request_size = getRequestSize(client->read_buffer);
+  if (request_size != std::string::npos)
+    processCompleteRequest(client);
+}
+
+bool Server::readClientData(Client *client) {
   std::vector<ServerConfig> &servers = _config.getServers();
   size_t max_size = servers[client->server_idx].client_max_body_size;
 
@@ -207,7 +204,7 @@ void Server::handleClientRead(int client_fd) {
   size_t read_this_cycle = 0;
   while (read_this_cycle < max_per_cycle) {
     char buffer[4096];
-    ssize_t bytes = recv(client_fd, buffer, sizeof(buffer), 0);
+    ssize_t bytes = recv(client->fd, buffer, sizeof(buffer), 0);
 
     if (bytes > 0) {
       client->read_buffer.append(buffer, bytes);
@@ -219,56 +216,44 @@ void Server::handleClientRead(int client_fd) {
         client->write_offset = 0;
         _logger.logRequest(client->ip, line.method, line.uri, line.httpVers, 400, client->write_buffer.size());
         client->keep_alive = false;
-        client->state = STATE_SENDING;
-        for (size_t i = 0; i < _poll_fds.size(); ++i) {
-          if (_poll_fds[i].fd == client_fd) {
-            _poll_fds[i].events = POLLOUT;
-            break;
-          }
-        }
-        return;
+        switchClientToSending(client, _poll_fds);
+        return false;
       }
       read_this_cycle += bytes;
     }
     else if (!bytes) {
-      closeClient(client_fd);
-      return;
+      closeClient(client->fd);
+      return false;
     }
     else
       break;
   }
+  return true;
+}
 
+void Server::processCompleteRequest(Client *client) {
   size_t request_size = getRequestSize(client->read_buffer);
-  if (request_size != std::string::npos) {
-    client->request = new Request(client, client->read_buffer); // request_size
-    client->read_buffer.erase(0, request_size);
-    client->processRq =
-        new ProcessRequest(client, _config.getServers()[client->server_idx]);
-    if (!client->processRq->is_CgiRq) {
-      ServeStaticRq StaticRq(client, _config.getServers()[client->server_idx]);
-      Response StaticResponse(client, StaticRq,
-                              _config.getServers()[client->server_idx]);
-      client->write_buffer = StaticResponse.getHttpResponse();
-      client->write_offset = 0;
-      _logger.logRequest(client->ip, client->request->getRequestLine().Method,
-                         client->request->getRequestLine().URI,
-                         client->request->getRequestLine().HttpVers,
-                         client->processRq->getStatusCode(),
-                         client->write_buffer.size());
-
-      client->state = STATE_SENDING;
-      for (size_t i = 0; i < _poll_fds.size(); ++i) {
-        if (_poll_fds[i].fd == client_fd) {
-          _poll_fds[i].events = POLLOUT;
-          break;
-        }
-      }
-    } else {
-      ProcessCgi *procCgi =
-          new ProcessCgi(client, *client->processRq, *client->request);
-      std::string script = client->processRq->getResourcePath();
-      _cgi->startCgi(client, procCgi->getCgiPath(), script, procCgi->getEnv());
-    }
+  client->request = new Request(client, client->read_buffer);
+  client->read_buffer.erase(0, request_size);
+  client->processRq =
+      new ProcessRequest(client, _config.getServers()[client->server_idx]);
+  if (!client->processRq->is_CgiRq) {
+    ServeStaticRq StaticRq(client, _config.getServers()[client->server_idx]);
+    Response StaticResponse(client, StaticRq,
+                            _config.getServers()[client->server_idx]);
+    client->write_buffer = StaticResponse.getHttpResponse();
+    client->write_offset = 0;
+    _logger.logRequest(client->ip, client->request->getRequestLine().Method,
+                       client->request->getRequestLine().URI,
+                       client->request->getRequestLine().HttpVers,
+                       client->processRq->getStatusCode(),
+                       client->write_buffer.size());
+    switchClientToSending(client, _poll_fds);
+  } else {
+    ProcessCgi *procCgi =
+        new ProcessCgi(client, *client->processRq, *client->request);
+    std::string script = client->processRq->getResourcePath();
+    _cgi->startCgi(client, procCgi->getCgiPath(), script, procCgi->getEnv());
   }
 }
 
@@ -310,52 +295,55 @@ size_t Server::parseChunkedBody(std::string &buffer, size_t bodyStart) {
   return bodyEnd - bodyStart + 5;
 }
 
+bool Server::isChunked(std::string &buffer, size_t headerEnd) {
+  size_t te_pos = findHeaderValue(buffer, "Transfer-Encoding", headerEnd);
+  if (te_pos == std::string::npos)
+    return false;
+  size_t lineEnd = buffer.find("\r\n", te_pos);
+  if (lineEnd == std::string::npos)
+    return false;
+  std::string value(buffer, te_pos, lineEnd - te_pos);
+  size_t last = value.find_last_not_of(" \t");
+  if (last != std::string::npos)
+    value = value.substr(0, last + 1);
+  return iequal(value, "chunked");
+}
+
+size_t Server::getContentLength(std::string &buffer, size_t headerEnd) {
+  size_t cl_pos = findHeaderValue(buffer, "Content-Length", headerEnd);
+  if (cl_pos == std::string::npos)
+    return 0;
+  size_t lineEnd = buffer.find("\r\n", cl_pos);
+  if (lineEnd == std::string::npos)
+    return 0;
+  std::string value(buffer, cl_pos, lineEnd - cl_pos);
+  size_t last = value.find_last_not_of(" \t");
+  if (last != std::string::npos)
+    value = value.substr(0, last + 1);
+  else
+    value.clear();
+  char *endptr;
+  long num = std::strtol(value.c_str(), &endptr, 10);
+  if (endptr == value.c_str() || *endptr != '\0' || num < 0)
+    return 0;
+  return static_cast<size_t>(num);
+}
+
 size_t Server::getRequestSize(std::string &buffer) {
   size_t header_end = buffer.find("\r\n\r\n");
   if (header_end == std::string::npos)
     return std::string::npos;
-
   size_t body_start = header_end + 4;
 
-  size_t te_pos = findHeaderValue(buffer, "Transfer-Encoding", header_end);
-  if (te_pos != std::string::npos) {
-    size_t lineEnd = buffer.find("\r\n", te_pos);
-    if (lineEnd != std::string::npos) {
-      std::string value(buffer, te_pos, lineEnd - te_pos);
-      size_t last = value.find_last_not_of(" \t");
-      if (last != std::string::npos)
-        value = value.substr(0, last + 1);
-      if (iequal(value, "chunked")) {
-        size_t bodySize = parseChunkedBody(buffer, body_start);
-        if (bodySize == std::string::npos)
-          return std::string::npos;
-        size_t total = body_start + bodySize;
-        return (buffer.size() >= total) ? total : std::string::npos;
-      }
-    }
-  }
-
-  size_t content_length = 0;
-  size_t cl_pos = findHeaderValue(buffer, "Content-Length", header_end);
-  if (cl_pos != std::string::npos) {
-    size_t lineEnd = buffer.find("\r\n", cl_pos);
-    if (lineEnd == std::string::npos)
+  if (isChunked(buffer, header_end)) {
+    size_t bodySize = parseChunkedBody(buffer, body_start);
+    if (bodySize == std::string::npos)
       return std::string::npos;
-    std::string value(buffer, cl_pos, lineEnd - cl_pos);
-    size_t lastNonSpace = value.find_last_not_of(" \t");
-    if (lastNonSpace != std::string::npos)
-      value = value.substr(0, lastNonSpace + 1);
-    else
-      value.clear();
-
-    char *endptr;
-    long num = std::strtol(value.c_str(), &endptr, 10);
-    if (endptr == value.c_str() || *endptr != '\0' || num < 0)
-      num = 0;
-    content_length = static_cast<size_t>(num);
+    size_t total = body_start + bodySize;
+    return (buffer.size() >= total) ? total : std::string::npos;
   }
 
-  size_t total = body_start + content_length;
+  size_t total = body_start + getContentLength(buffer, header_end);
   return (buffer.size() >= total) ? total : std::string::npos;
 }
 
@@ -417,12 +405,7 @@ void Server::sendResponse(int client_fd) {
     }
     client->cgi_output_buffer.clear();
     if (client->keep_alive) {
-      delete client->request;
-      delete client->processRq;
-      delete client->processCgi;
-      client->request = NULL;
-      client->processRq = NULL;
-      client->processCgi = NULL;
+      deleteClientObjects(client);
       client->write_offset = 0;
       client->cgi_input_offset = 0;
       client->state = STATE_READING;
@@ -552,13 +535,7 @@ void Server::handleCgiPipeRead() {
             client_it->second->request->getRequestLine().HttpVers,
             client_it->second->processRq->getStatusCode(),
             client_it->second->write_buffer.size());
-        client_it->second->state = STATE_SENDING;
-        for (size_t j = 0; j < _poll_fds.size(); ++j) {
-          if (_poll_fds[j].fd == client_fd) {
-            _poll_fds[j].events = POLLOUT;
-            break;
-          }
-        }
+        switchClientToSending(client_it->second, _poll_fds);
       }
     }
   }
@@ -583,15 +560,7 @@ void Server::handleCgiStdinWrite() {
       continue;
 
     if (!client->cgi_input_buffer || client->cgi_input_offset >= client->cgi_input_buffer->size()) {
-      close(pipe_fd);
-      for (size_t j = 0; j < _poll_fds.size(); ++j) {
-        if (_poll_fds[j].fd == pipe_fd) {
-          _poll_fds.erase(_poll_fds.begin() + j);
-          break;
-        }
-      }
-      _pipe_to_client_fd.erase(pipe_fd);
-      client->cgi_stdin_fd = -1;
+      closePipeAndRemove(pipe_fd, _poll_fds, _pipe_to_client_fd, client->cgi_stdin_fd);
       continue;
     }
 
@@ -602,15 +571,7 @@ void Server::handleCgiStdinWrite() {
       client->cgi_input_offset += bytes;
       client->cgi_start_time = time(NULL);
       if (client->cgi_input_offset == client->cgi_input_buffer->size()) {
-        close(pipe_fd);
-        for (size_t j = 0; j < _poll_fds.size(); ++j) {
-          if (_poll_fds[j].fd == pipe_fd) {
-            _poll_fds.erase(_poll_fds.begin() + j);
-            break;
-          }
-        }
-        _pipe_to_client_fd.erase(pipe_fd);
-        client->cgi_stdin_fd = -1;
+        closePipeAndRemove(pipe_fd, _poll_fds, _pipe_to_client_fd, client->cgi_stdin_fd);
       }
     }
   }
@@ -630,6 +591,51 @@ void Server::handlePollOut() {
   }
 }
 
+void Server::handleCgiPipePollError(int fd) {
+  int client_fd = _pipe_to_client_fd[fd];
+  std::map<int, Client *>::iterator it = _clients.find(client_fd);
+  if (it != _clients.end()) {
+    Client *client = it->second;
+    for (size_t i = 0; i < _poll_fds.size(); ++i) {
+      if (_poll_fds[i].fd == fd) {
+        if (fd == client->cgi_stdout_fd &&
+            !(_poll_fds[i].revents & POLLERR))
+          break;
+        if (client->cgi_pid != -1)
+          _cgi->killCgi(client, SIGKILL);
+        client->state = STATE_CGI_ERROR;
+        break;
+      }
+    }
+  }
+}
+
+void Server::handleListenSocketPollError(int fd) {
+  struct sockaddr_in addr;
+  socklen_t len = sizeof(addr);
+  std::ostringstream oss;
+  if (getsockname(fd, (struct sockaddr *)&addr, &len) >= 0) {
+    char ip[16];
+    inet_ntop(AF_INET, &addr.sin_addr, ip, sizeof(ip));
+    int port = ntohs(addr.sin_port);
+    oss << "listen socket error" << " on " << ip << ":" << port;
+  }
+  _logger.warn(oss.str());
+  removeFdFromPoll(fd, _poll_fds);
+  removeListenFd(fd);
+  _fd_to_server_idx.erase(fd);
+  close(fd);
+}
+
+void Server::removeListenFd(int fd) {
+  for (size_t j = 0; j < _listen_fds.size(); ++j) {
+    if (_listen_fds[j] == fd) {
+      _listen_fds.erase(_listen_fds.begin() + j);
+      break;
+    }
+  }
+}
+
 void Server::handlePollErrors() {
   std::vector<int> error_fds;
   for (size_t i = 0; i < _poll_fds.size(); ++i)
@@ -637,58 +643,17 @@ void Server::handlePollErrors() {
       error_fds.push_back(_poll_fds[i].fd);
 
   for (size_t i = 0; i < error_fds.size(); ++i) {
-    int fd = error_fds[i];
-
-    if (_clients.count(fd)) {
-      closeClient(fd);
+    if (_clients.count(error_fds[i])) {
+      closeClient(error_fds[i]);
       continue;
     }
 
-    if (_pipe_to_client_fd.count(fd)) {
-      int client_fd = _pipe_to_client_fd[fd];
-      std::map<int, Client *>::iterator it = _clients.find(client_fd);
-      if (it != _clients.end()) {
-        Client *client = it->second;
-        for (size_t i = 0; i < _poll_fds.size(); ++i) {
-          if (_poll_fds[i].fd == fd) {
-            if (fd == client->cgi_stdout_fd &&
-                !(_poll_fds[i].revents & POLLERR))
-              break;
-            if (client->cgi_pid != -1)
-              _cgi->killCgi(client, SIGKILL);
-            client->state = STATE_CGI_ERROR;
-            break;
-          }
-        }
-      }
+    if (_pipe_to_client_fd.count(error_fds[i])) {
+      handleCgiPipePollError(error_fds[i]);
       continue;
     }
 
-    if (_fd_to_server_idx.count(fd)) {
-      struct sockaddr_in addr;
-      socklen_t len = sizeof(addr);
-      std::ostringstream oss;
-      if (getsockname(fd, (struct sockaddr *)&addr, &len) >= 0) {
-        char ip[16];
-        inet_ntop(AF_INET, &addr.sin_addr, ip, sizeof(ip));
-        int port = ntohs(addr.sin_port);
-        oss << "listen socket error" << " on " << ip << ":" << port;
-      }
-      _logger.warn(oss.str());
-      for (size_t j = 0; j < _poll_fds.size(); ++j) {
-        if (_poll_fds[j].fd == fd) {
-          _poll_fds.erase(_poll_fds.begin() + j);
-          break;
-        }
-      }
-      for (size_t j = 0; j < _listen_fds.size(); ++j) {
-        if (_listen_fds[j] == fd) {
-          _listen_fds.erase(_listen_fds.begin() + j);
-          break;
-        }
-      }
-      _fd_to_server_idx.erase(fd);
-      close(fd);
-    }
+    if (_fd_to_server_idx.count(error_fds[i]))
+      handleListenSocketPollError(error_fds[i]);
   }
 }
