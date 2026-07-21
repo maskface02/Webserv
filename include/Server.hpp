@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 21:39:15 by zatais            #+#    #+#             */
-/*   Updated: 2026/07/03 15:08:42 by m45kf4c3         ###   ########.fr       */
+/*   Updated: 2026/07/03 15:08:42 by zatais           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 #define SERVER_HPP
 
 #include "WebServ.hpp"
+#include "RequestDelimiter.hpp"
 
 #define BACKLOG 128
 #define POLL_TIMEOUT 5000
@@ -25,12 +26,6 @@ class Request;
 class Response;
 class ProcessCgi;
 class ProcessRequest;
-
-struct ParsedRequestLine {
-  std::string method;
-  std::string uri;
-  std::string httpVers;
-};
 
 enum ClientState {
   STATE_READING,
@@ -66,6 +61,8 @@ struct Client {
 };
 
 class Cgi;
+class ClientHandler;
+class PollDispatcher;
 
 class Server {
 private:
@@ -77,35 +74,13 @@ private:
   std::map<int, int> _fd_to_server_idx;
   std::map<int, int> _pipe_to_client_fd;
   Cgi *_cgi;
+  ClientHandler *_clientHandler;
+  PollDispatcher *_pollDispatcher;
   static bool running;
 
   void createSockets();
   void checkTimeouts();
-  void closeClient(int fd);
-  void acceptConnection(int listen_fd);
-  void handleClientRead(int client_fd);
-  size_t getRequestSize(std::string &buffer);
-  bool iequal(std::string &a, const std::string &b);
-  size_t findHeaderValue(std::string &buffer, const std::string &name,
-                         size_t headerEnd);
-  size_t parseChunkedBody(std::string &buffer, size_t bodyStart);
-  bool isChunked(std::string &buffer, size_t headerEnd);
-  size_t getContentLength(std::string &buffer, size_t headerEnd);
-  Client *initClient(int client_fd, int listen_fd, const std::string &client_ip,
-                     int client_port);
-  ParsedRequestLine parseRequestLine(const std::string &buffer);
-  void sendResponse(int client_fd);
-  void handlePollIn();
-  void handleCgiPipeRead();
-  void handlePollOut();
-  void handlePollErrors();
-  void handleCgiStdinWrite();
   void handleCgiTimeout(Client *client);
-  bool readClientData(Client *client);
-  void processCompleteRequest(Client *client);
-  void handleCgiPipePollError(int fd);
-  void handleListenSocketPollError(int fd);
-  void removeListenFd(int fd);
 
   Server();
   Server(const Server &);

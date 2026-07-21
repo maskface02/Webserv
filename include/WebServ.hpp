@@ -63,6 +63,9 @@
 #include "Server.hpp"
 #include "Cgi.hpp"
 #include "Utils.hpp"
+#include "RequestDelimiter.hpp"
+#include "ClientHandler.hpp"
+#include "PollDispatcher.hpp"
 
 
 

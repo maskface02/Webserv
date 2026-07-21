@@ -193,7 +193,7 @@ void        Request::define_session_id()
                 session_id = cookies.substr(id_pos, id_end - id_pos);
             else
                 session_id = cookies.substr(id_pos);
-            std::cout<<"found session id == "<<session_id;
+            // std::cout<<"found session id == "<<session_id;
         }
         else  session_id = generateSessionId(); 
     }

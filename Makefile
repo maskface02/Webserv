@@ -8,7 +8,7 @@ INCLUDES = include
 REQ_DIR = src/Request
 RES_DIR = src/Response
 
-SOURCES = $(SRC_DIR)/main.cpp $(SRC_DIR)/Config.cpp $(SRC_DIR)/Server.cpp $(SRC_DIR)/Logger.cpp $(SRC_DIR)/Cgi.cpp $(SRC_DIR)/Utils.cpp    \
+SOURCES = $(SRC_DIR)/main.cpp $(SRC_DIR)/Config.cpp $(SRC_DIR)/Server.cpp $(SRC_DIR)/Logger.cpp $(SRC_DIR)/Cgi.cpp $(SRC_DIR)/Utils.cpp $(SRC_DIR)/RequestDelimiter.cpp $(SRC_DIR)/ClientHandler.cpp $(SRC_DIR)/PollDispatcher.cpp    \
 					$(REQ_DIR)/Request.cpp $(REQ_DIR)/httprequest_utl.cpp  \
 					$(RES_DIR)/ProcessRequest.cpp  $(RES_DIR)/ServeStaticRq.cpp $(RES_DIR)/ProcessCgi.cpp $(RES_DIR)/Response.cpp \
 
@@ -20,6 +20,7 @@ HEADERS = $(INCLUDES)/WebServ.hpp \
 					$(INCLUDES)/Logger.hpp \
 					$(INCLUDES)/ProcessRequest.hpp  $(INCLUDES)/Response.hpp  $(INCLUDES)/ServeStaticRq.hpp \
 					$(INCLUDES)/ProcessCgi.hpp  $(INCLUDES)/Request.hpp \
+					$(INCLUDES)/Utils.hpp $(INCLUDES)/RequestDelimiter.hpp $(INCLUDES)/ClientHandler.hpp $(INCLUDES)/PollDispatcher.hpp \
 
 
 all: $(NAME)

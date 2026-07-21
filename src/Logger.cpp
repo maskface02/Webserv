@@ -81,10 +81,11 @@ std::string Logger::statusText(int status) {
     case 404: return "Not Found";
     case 405: return "Method Not Allowed";
     case 413: return "Payload Too Large";
-    case 500: return "Internal Server Error";
+    case 500: return "Internal Server Error"; 
     case 501: return "Not Implemented";
     case 502: return "Bad Gateway";
     case 503: return "Service Unavailable";
+    case 504: return "Gateway Timeout";
     default:  return "Unknown";
   }
 }

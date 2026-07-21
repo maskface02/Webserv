@@ -195,7 +195,7 @@ void ServeStaticRq::upload_files() {
   if (boundry.empty())
     throw HttpError(404);
   while (it != boundry.end()) {
-    std::cout << "file name == " << path << "\n";
+    // std::cout << "file name == " << path << "\n";
     path += it->first;
     check_exist_file(it->first, files);
     std::ofstream file(path.c_str());

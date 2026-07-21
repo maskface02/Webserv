@@ -55,7 +55,7 @@ size_t  Request::pars_lineRequest(std::string& Rq, size_t LineEnd)
     str >> RequestLine.Method >> RequestLine.URI >> RequestLine.HttpVers;
     check_valid_line();
     store_path_query();
-    std::cout<<str.str();
+    // std::cout<<str.str();
     return (Rq.find("\r\n\r\n",LineEnd + 2));
 }
 
@@ -186,11 +186,12 @@ void Request:: pars_boundry(size_t& pos)
     parts = split_boundary_part(boundry);
     size_t i = 0;
     while (i < parts.size())
-    {std::cout<< "im in boundry ====\n";
+    {
+      // std::cout<< "im in boundry ====\n";
         std::string file_name = find_file_name(parts[i]);
         if(!file_name.empty())
         {
-            std::cout << "boundry fils == " << file_name<< "\n";
+            // std::cout << "boundry fils == " << file_name<< "\n";
             std::string boundry_body = find_boundry_body(parts[i]);
             boundry_map[file_name] = boundry_body;
         }

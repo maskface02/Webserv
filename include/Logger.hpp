@@ -24,6 +24,7 @@ private:
   std::string formatSize(size_t bytes);
   std::string statusText(int status);
 
+
 public:
   Logger();
   ~Logger();
