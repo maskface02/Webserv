@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 19:54:39 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/07/04 23:12:24 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/25 18:43:56 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,7 +57,28 @@ void Request::check_valid_URI()
 
     if (RequestLine.URI[0] != '/' || RequestLine.URI.length() > 8000)
         throw HttpError(URI_TOO_LONG);
-    is_valid_char(RequestLine.URI);
+    RequestLine.URI = normalize_URI(RequestLine.URI);
+  
+
+    // is_valid_char(RequestLine.URI);
+}
+std::string   Request::normalize_URI(std::string& url)
+{
+    std::string new_URI;
+    size_t i = 0;
+
+    while(i  < url.size())
+    {
+        while ( url.size() > i + 2 && url[i] == '.' 
+            && url[i + 1] == '.' && url[i + 2] == '/')
+        {
+            i += 3;
+        }
+        if ( i < url.size())
+            new_URI += url[i];
+        i++;
+    }
+    return(new_URI);
 }
 
 void    Request::is_valid_char(std::string& URI)
@@ -73,7 +94,7 @@ void    Request::is_valid_char(std::string& URI)
 
 bool Request::is_reserved(char c)
 {
-    std::string reserved_chars = "_.:/?#[]@!$&'()*+,;=%";
+    std::string reserved_chars = "_-.:/?#[]@!$&'()*+,;=%~"; // Banned:  < > " \ ^ ` { } |
     size_t j = 0;
     while (j < reserved_chars.size())
     {
@@ -83,11 +104,8 @@ bool Request::is_reserved(char c)
     }
    return (false);
 }
-
-
-
-
 ////////////
+
 void Request::check_valid_HttpV()
 { 
     if (RequestLine.HttpVers != "HTTP/1.1" && RequestLine.HttpVers !=  "HTTP/1.0")
@@ -97,23 +115,20 @@ void Request::check_valid_HttpV()
 void Request::store_path_query()
 {
     size_t sp = 0;
-    
     if ((sp = RequestLine.URI.find("?")) != std::string::npos)
     {
         RequestLine.Path = RequestLine.URI.substr(0, sp);
         RequestLine.Query = RequestLine.URI.substr(sp + 1);
-        // pars_query();
     }
     else
         RequestLine.Path =  RequestLine.URI;
-      
 }
+
 ////////////////////////////////////////////////////      Headers        ////////////////////
 
 std::string Request::remove_white_space(std::string str)
 {
     size_t  i = 0;
-    
     while(i < str.size() && ((str[i] <=31 && str[i] >= 0) || str[i] == 127) )
         i++;
     return(str.substr(i));
@@ -130,9 +145,9 @@ void Request::check_duplic(std::string& key)
 void Request::check_existe(std::string key)
 {
   
-        std::map<std::string, std::string>::iterator it = HeaderMap.find(key.c_str());
-        if (it == HeaderMap.end())
-            throw HttpError(BAD_REQUEST);
+    std::map<std::string, std::string>::iterator it = HeaderMap.find(key.c_str());
+    if (it == HeaderMap.end())
+        throw HttpError(BAD_REQUEST);
 }
 
 void Request::store_variable(std::string& key, std::string& value)
@@ -148,7 +163,7 @@ void Request::store_variable(std::string& key, std::string& value)
     if (key == "Content-Type")
         content_type = value;
     if (key == "Cookie")
-        cookies = value;
+         cookies_header = value;
 }
 
 void Request::store_cont_lenght(const std::string &lenght)
@@ -156,7 +171,6 @@ void Request::store_cont_lenght(const std::string &lenght)
     if (lenght.empty() || !strIsDigits(lenght))
         throw(HttpError(BAD_REQUEST));
     content_lenght = std::atoi(lenght.c_str());
-  
 }
 
 void Request::store_host_port(std::string &str)
@@ -176,51 +190,48 @@ void Request::store_host_port(std::string &str)
     }
     else    throw HttpError(BAD_REQUEST);
 }
-// // new Add 
-
+ 
 void        Request::define_session_id()
 {
-     if (!cookies.empty())
+    if (!cookies_header.empty())
     {
         size_t id_pos = 0;
-        id_pos = cookies.find("session_id=");
+        id_pos = cookies_header.find("session_id=");
         if (id_pos != std::string::npos)
-        {   
+        {
             id_pos += 11;
+            if (id_pos + 1 > cookies_header.size())
+            {
+                client->session_id = generateSessionId(); 
+                client->is_new = true;   
+                return;
+            }
             size_t id_end = 0;
-            id_end  = cookies.find(";");
+            id_end  = cookies_header.find(";", id_pos);
             if (id_end  != std::string::npos)
-                session_id = cookies.substr(id_pos, id_end - id_pos);
+            {
+                client->session_id = cookies_header.substr(id_pos, id_end - id_pos);
+                client->is_new = false;
+            }
             else
-                session_id = cookies.substr(id_pos);
-            // std::cout<<"found session id == "<<session_id;
+            {
+                client->session_id =  cookies_header.substr(id_pos);
+                client->is_new = false;
+            }
         }
-        else  session_id = generateSessionId(); 
+        else 
+        {
+            client->is_new = true;
+            client->session_id = generateSessionId(); 
+        } 
     }
-     else 
+    else 
     {
-        session_id = generateSessionId();
-        // std::cout<<"generated session id == "<<session_id;
+        client->is_new = true;
+        client->session_id = generateSessionId();
     }
 }
 
-std::string     Request:: generateSessionId()
-{
-    
-    std::string str = "0123456789"
-                     "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                     "abcdefghijklmnopqrstuvwxyz";
-    std::string random_str ;
-    size_t i = 0;
-    
-    srand(time(NULL));
-    while (i < 10)
-    {
-        random_str += str[rand() % str.size()];
-        i++;
-    }
-    return(random_str);
-}
 
 void Request::check_Post()
 {
@@ -311,7 +322,8 @@ std::string Request::getPath() const
  {
     return(boundry_map);
  }
-std::string Request::getSessionId() const
+
+void Request::setCookeisHeader(std::string str)
 {
-    return (session_id);
+     cookies_header = str;
 }

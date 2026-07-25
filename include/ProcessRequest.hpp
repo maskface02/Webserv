@@ -34,6 +34,7 @@ public:
     bool                            check_location_extention();
     void                            check_max_body_size(ServerConfig& _srv);
     void                            normlize_location_path(ServerConfig& server);
+    std::string                     lowerString(std::string& extension);
     //Getter
 
     std::string                 getExtension()const;

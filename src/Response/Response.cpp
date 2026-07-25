@@ -6,20 +6,20 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/21 18:30:42 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/07/03 10:48:47 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/25 17:53:11 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../include/WebServ.hpp"
 
+
+
 Response::Response(Client *_client, ServeStaticRq &_staticRq, ServerConfig &srv)
     : serveStaticRq(&_staticRq), client(_client) {
-  status_map();
-  if (client->processRq->getStatusCode() >= 201)
+
+  if (client->processRq->getStatusCode() >= CREATED )
     serveStaticRq->setResponseBody(
         serveError(client->processRq->getStatusCode(), srv));
-  // if (client->processRq->getStatusCode() <= 201)
-  // js body
   responseLine();
   mime_Types();
   staticRespHeaders();
@@ -30,7 +30,7 @@ void Response::responseLine() {
   std::stringstream Line;
   Line << client->request->getRequestLine().HttpVers;
   Line << " " << client->processRq->getStatusCode() << " "
-       << serveStaticRq->getStatus();
+       << Logger::statusText(client->processRq->getStatusCode()) ;
   Line << "\r\n";
   _RespLine = Line.str();
 }
@@ -49,9 +49,13 @@ void Response::staticRespHeaders() {
   Headers << "Connection: " << client->request->getConnection() << "\r\n";
 
   if (client->processRq->is_RedirecRq ||
-      client->processRq->getStatusCode() == 201 ||
-      client->processRq->getStatusCode() == 301) // added 301
+      client->processRq->getStatusCode() == CREATED  ||
+      client->processRq->getStatusCode() == MOVED_PERMANENTLY) 
     Headers << "Location: " << client->processRq->getRedirectUrl() << "\r\n";
+  if (client->is_new)
+  {
+      Headers << "Set-Cookie: session_id="<< client->session_id<<"; Path=/; HttpOnly;"<<"\r\n";
+  }
   Headers << "\r\n";
   _RespHeaders = Headers.str();
 }
@@ -68,6 +72,7 @@ std::string Response::matchMimeType(std::string extension) {
 
 void Response::response() {
   _HttpResponse = _RespLine + _RespHeaders + serveStaticRq->getRespBody();
+  // std::cout<<"\n"<<_HttpResponse<<"\n";
 }
 
 std::string Response::serveError(int status_code, ServerConfig &srv) {
@@ -75,9 +80,19 @@ std::string Response::serveError(int status_code, ServerConfig &srv) {
   std::map<int, std::string>::iterator it;
   it = srv.error_pages.find(status_code);
   if (it != srv.error_pages.end())
-    return (serveStaticRq->servFile(it->second));
+  {
+     try
+        {
+           return (serveStaticRq->servFile(it->second));
+        }
+        catch(  HttpError& e)
+        { 
+          return(ServeStaticRq::html_Error_page(status_code, Logger::statusText(status_code)));
+        }
+  }
+
   return (
-      ServeStaticRq::html_Error_page(status_code, getStatusMsg(status_code)));
+      ServeStaticRq::html_Error_page(status_code, Logger::statusText(status_code)));
 }
 
 void Response::mime_Types() {
@@ -101,35 +116,12 @@ void Response::mime_Types() {
   // in case excutable or bin file or no extension=>  application/octet-stream
 }
 
-void Response::status_map() {
-  status_messg[200] = "OK";
-  status_messg[201] = "Created";
-  status_messg[301] = "Moved Permanently";
-  status_messg[400] = "Bad Request";
-  status_messg[403] = "Forbidden";
-  status_messg[404] = "Not Found";
-  status_messg[405] = "Method Not Allowed";
-  status_messg[411] = "Length Required";
-  status_messg[413] = "Content Too Large";
-  status_messg[414] = "URI Too Long";
-  status_messg[500] = "Internal Server Error";
-  status_messg[501] = "Not Implemented";
-  status_messg[505] = "HTTP Version Not Supported";
-  status_messg[502] = "Bad Gateway";
-}
-
 std::string generateHttpDate() {
   time_t now = time(NULL);
   struct tm *gmt = gmtime(&now);
   char buffer[128];
   strftime(buffer, sizeof(buffer), "%a, %d %b %Y %H:%M:%S GMT", gmt);
   return std::string(buffer);
-}
-
-std::string &Response::getStatusMsg(int code) {
-  std::map<int, std::string>::iterator it;
-  it = status_messg.find(code);
-  return (it->second);
 }
 
 std::string Response::getHttpResponse() const { return (_HttpResponse); }

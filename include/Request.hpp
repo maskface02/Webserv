@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 19:54:51 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/07/11 14:50:26 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/25 17:38:43 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,13 +45,14 @@ class Request
         std::string                                         content_type;
         int                                                 status_code;
         std::map<std::string, std::string>                  boundry_map;
-        std::string                                         session_id;
-        std::string                                         cookies;
+        std::string                                         cookies_header;
+        Client*                                             client;
         // Request();
     public:
         bool                                                is_boundry;
-        Request(Client* client, std::string& header);
+        Request(Client* client, std::string& rq, size_t request_size);
         // Request(Request& other);
+       
         // Request& operator=(Request& other);
         // ~Request(); 
     //geters
@@ -68,13 +69,14 @@ class Request
         int                                                 getStatusCode() ;
         std::string                                         getPath() const;
         std::map<std::string, std::string>&                 getBoundryMap() ;
-        std::string                                         getSessionId() const ;
+        void                                                setCookeisHeader(std::string str);
+        
     //pars
         size_t                                              pars_lineRequest(std::string  &header, size_t LineEnd);
         void                                                pars_Headers(std::string  &Map, size_t HeadersSrart,size_t HeadersEnd);
-        void                                                pars_Body(std::string &body, size_t HeaderStart);
+        void                                                pars_Body(std::string &body, size_t HeaderStart,size_t req_size);
         void                                                pars_boundry(size_t& pos);
-        void                                                pars_chunked_body(const std::string& chunck_body,size_t bodyStart);
+        void                                                pars_chunked_body(const std::string& chunck_body,size_t bodyStart, size_t req_size);
        std::vector<std::string>                             split_boundary_part(std::string& boundary);
         std::string                                         find_file_name(std::string& part);
         std::string                                         find_boundry_body(std::string& part);
@@ -97,16 +99,19 @@ class Request
         void                                                check_valid_URI();
         void                                                is_valid_char (std::string& URI);
         bool                                                is_reserved(char c);
+        std::string                                         normalize_URI(std::string& url);
+        
         // utils
     // util
-        std::string                                        generateSessionId();
+  
         std::string                                         remove_white_space( std::string str);
         int                                                 strIsDigits(const std::string& str);
-        int                                                 HexStr_to_Int(const char c);
+        
+      
     ///////////////////////////////////////////////////////////
        
 };
-
+  std::string                                        generateSessionId();
 class HttpError : public std::exception
 {
     private:

@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/17 05:30:09 by zatais            #+#    #+#             */
-/*   Updated: 2026/07/11 11:59:00 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/23 16:36:38 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,6 +75,6 @@
 #include "ProcessCgi.hpp"
 #include "ServeStaticRq.hpp"
 #include "Response.hpp"
-#include  "Cookies.hpp"
+#include  "SessionManager.hpp"
 
 #endif // !WEBSERV_HPP

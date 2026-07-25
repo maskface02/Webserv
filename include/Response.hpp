@@ -26,13 +26,12 @@ enum statusMsg
 // a request conflict with the current state of the target resource.
 class Response
 {
-    ServeStaticRq*                              serveStaticRq;
-    Client*                                     client;
-    std::string                                 _HttpResponse;
-    std::string                                 _RespHeaders;
-    std::string                                 _RespLine;
-    std::map<std::string, std::string>          _Mime_map;
-    std::map<int , std::string>                 status_messg;
+    ServeStaticRq*                                      serveStaticRq;
+    Client*                                             client;
+    std::string                                         _HttpResponse;
+    std::string                                         _RespHeaders;
+    std::string                                         _RespLine;
+    std::map<std::string, std::string>                  _Mime_map;
 
     public:
     Response(Client* _client, ServeStaticRq& Static, ServerConfig& srv);
@@ -41,7 +40,6 @@ class Response
     void                                    responseLine();
     std::string                             matchMimeType(std::string extension);
     void                                    response();
-    void                                    status_map();
     std::string                             serveError(int status_code, ServerConfig& srv);
 
     // geter            
@@ -50,8 +48,5 @@ class Response
     
 
 };
-
-
-//serv error from response
 
 #endif

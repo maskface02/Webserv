@@ -84,6 +84,8 @@ Client *ClientHandler::initClient(int client_fd, int listen_fd,
   client->request = NULL;
   client->processCgi = NULL;
   client->processRq = NULL;
+  client->is_new = false;
+  client->session_id = "";
   return client;
 }
 
@@ -140,8 +142,9 @@ bool ClientHandler::readClientData(Client *client) {
 
 void ClientHandler::processCompleteRequest(Client *client) {
   size_t request_size = _delimiter.getRequestSize(client->read_buffer);
-  client->request = new Request(client, client->read_buffer);
+  client->request = new Request(client, client->read_buffer,request_size);
   client->read_buffer.erase(0, request_size);
+  SessionManager(client,sessions);//ADD
   client->processRq =
       new ProcessRequest(client, _config.getServers()[client->server_idx]);
   if (!client->processRq->is_CgiRq) {
@@ -158,7 +161,7 @@ void ClientHandler::processCompleteRequest(Client *client) {
     switchClientToSending(client, _poll_fds);
   } else {
     ProcessCgi *procCgi =
-        new ProcessCgi(client, *client->processRq, *client->request);
+        new ProcessCgi(client, *client->processRq, sessions);
     std::string script = client->processRq->getResourcePath();
     _cgi->startCgi(client, procCgi->getCgiPath(), script, procCgi->getEnv());
   }

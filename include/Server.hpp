@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 21:39:15 by zatais            #+#    #+#             */
-/*   Updated: 2026/07/03 15:08:42 by zatais           ###   ########.fr       */
+/*   Updated: 2026/07/24 12:40:09 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,11 +58,16 @@ struct Client {
   Request *request;
   ProcessCgi *processCgi;
   ProcessRequest *processRq;
+ 
+  std::string session_id;
+  bool is_new;
 };
 
 class Cgi;
 class ClientHandler;
 class PollDispatcher;
+
+
 
 class Server {
 private:
@@ -77,6 +82,7 @@ private:
   ClientHandler *_clientHandler;
   PollDispatcher *_pollDispatcher;
   static bool running;
+ 
 
   void createSockets();
   void checkTimeouts();

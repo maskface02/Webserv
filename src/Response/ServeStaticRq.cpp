@@ -30,7 +30,6 @@ ServeStaticRq::ServeStaticRq(Client *_client, ServerConfig &srv)
   } catch (HttpError &e) {
     int status_code = e.getErrorCode();
     client->processRq->setStatusCode(status_code);
-    // std::cerr<<status_code<<std::endl;
   }
 }
 
@@ -64,7 +63,7 @@ void ServeStaticRq::check_AutoIndex() {
     throw HttpError(FORBIDDEN);
 }
 
-// TO FIX problem in the file can not be serve it coild be the premssion
+
 void ServeStaticRq::html_list_dir() {
   std::stringstream str;
   std::vector<std::string> files;
@@ -171,15 +170,22 @@ void ServeStaticRq::_ServePostRq() {
     if (client->request->is_boundry)
       upload_files();
     else {
-      std::string randm_name = client->request->generateSessionId();
-      file_path.append(randm_name);
-      std::ofstream file(file_path.c_str());
-      if (file.is_open())
-        file << client->request->getBody();
-      else
-        throw HttpError(FORBIDDEN);
-      file.close();
-      throw HttpError(CREATED);
+      if (!client->processRq->is_dir)
+      {
+          struct stat pathStat;
+
+          if ((pos = client->processRq->getResourcePath().rfind("/")))
+              file_path += client->processRq->getResourcePath().substr(pos + 1);
+          if (!stat(file_path.c_str(),&pathStat) )
+              throw HttpError(FORBIDDEN );
+          std:: ofstream file (file_path.c_str());
+          if (file.is_open())
+              file << client->request->getBody();
+          else
+              throw HttpError(FORBIDDEN );
+          file.close();
+          throw HttpError(CREATED);
+      }
     }
   }
   else
@@ -195,7 +201,6 @@ void ServeStaticRq::upload_files() {
   if (boundry.empty())
     throw HttpError(404);
   while (it != boundry.end()) {
-    // std::cout << "file name == " << path << "\n";
     path += it->first;
     check_exist_file(it->first, files);
     std::ofstream file(path.c_str());
@@ -210,7 +215,6 @@ void ServeStaticRq::upload_files() {
   }
   client->processRq->setRedirctUrl(file_path);
   throw HttpError(CREATED);
-  ;
 }
 std::vector<std::string> ServeStaticRq::directory_files(std::string &path) {
   std::vector<std::string> files;
@@ -252,6 +256,6 @@ std::string ServeStaticRq::html_Error_page(int status_code, std::string stat) {
 }
 
 std::string ServeStaticRq::getRespBody() const { return (resp_body); }
-std::string ServeStaticRq::getStatus() const { return (status_messg); }
+
 
 void ServeStaticRq::setResponseBody(std::string body) { resp_body = body; }

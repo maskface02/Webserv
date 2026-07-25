@@ -4,6 +4,13 @@
 #include "WebServ.hpp"
 #include "RequestDelimiter.hpp"
 
+struct Session
+{
+    time_t                                  last_activity;
+    int                                     counter;
+};
+
+
 class ClientHandler {
 private:
   std::map<int, Client *> &_clients;
@@ -18,6 +25,7 @@ private:
   Client *initClient(int client_fd, int listen_fd,
                      const std::string &client_ip, int client_port);
 
+std::map<std::string, Session>                   sessions;
 public:
   ClientHandler(std::map<int, Client *> &clients,
                 std::vector<struct pollfd> &poll_fds,

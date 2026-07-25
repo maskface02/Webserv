@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/16 12:06:38 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/07/10 18:07:05 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/25 21:12:23 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,28 +19,24 @@ ProcessRequest::ProcessRequest(Client*client,  ServerConfig& _srv):request(clien
     try{
         init_variable();
         check_status();
-        match_location(_srv);// if 2 it match the last one !!!!!!
+        match_location(_srv);
         check_redirction();
         check_max_body_size(_srv);
         check_allowed_method();
         int code = 0;
         if ( (code = define_type()) != 0)
         {
-            if (request->getRequestLine().Method == "POST")//FIXED
+            if (request->getRequestLine().Method == "POST")
             {
                 extract_file_extension();
                 check_Cgi();
-                if (!is_CgiRq)
-                    is_Static = true;
                 return;
             }
-                
+
             throw HttpError(code);
         }
         extract_file_extension();
         check_Cgi();
-        if (!is_CgiRq)
-            is_Static = true;
     }
     catch( HttpError& e)
     {
@@ -94,7 +90,7 @@ void ProcessRequest::match_location(ServerConfig& server)
            throw HttpError(404);
         target_location = location.rbegin()->second; 
     }
-  //added 
+
     std::string path_after_location = request->getPath().substr(target_location.path.length());
     if (!path_after_location.empty() && path_after_location[0] == '/')
         path_after_location = path_after_location.substr(1);
@@ -102,21 +98,7 @@ void ProcessRequest::match_location(ServerConfig& server)
         resource_path = target_location.root + path_after_location;
     else
         resource_path = target_location.root + "/" + path_after_location;
-   
- //      std::cout<<"Target location == "<<target_location.path<<std::endl;
- //      std::cout<<"Resource path == "<<resource_path<<std::endl;
- // //added 
 }
-
-// normalize
-//* we remove the slash at the end of the location 
-//* to make the prefix match the location even if there is a slash at the end 
-//* exmple 
-// config has:   /api/
-// prefix list:  /  ,  /api  ,  /api/v1
-//  "/api" == "/api"  ?  YES 
-// "/api/" == "/api"  ?  NO  → missed without normalization
-
 
 void ProcessRequest::normlize_location_path(ServerConfig& server)
 {
@@ -191,7 +173,7 @@ int ProcessRequest::define_type()
                         std::stringstream port_ss;
                         port_ss << request->getPort();
                         redirect_url = "http://" + request->getHost() + ":" + port_ss.str() + request->getPath() + "/";
-                        return(MOVED_PERMANENTLY);
+                        return(MOVED_PERMANENTLY);std::cout<<"resource path ==="<<resource_path<<"======\n";
                     }
                 }
             }
@@ -210,12 +192,6 @@ int ProcessRequest::define_type()
     }
     return(0);
 }
-
-//*******index****
-//
-// find the first file match with the indexs in location
-//
-//********* ************/
 
 void ProcessRequest::check_index_file()
 {
@@ -252,30 +228,52 @@ void ProcessRequest::check_index_file()
 
 void    ProcessRequest::extract_file_extension()
 {
-    //TO DO lower  the extensionm serve post no boundary
     extension = "default";
-  
-      
     if (is_dir)
     {
         size_t pos = Index_file.rfind(".");
         if (pos != std::string::npos)
             extension = Index_file.substr(pos);
     }  
-    else//FIXED
+    else
     { 
-         size_t pos1 = resource_path.rfind(".");
+        size_t pos1 = resource_path.rfind(".");
         size_t pos2 = resource_path.rfind("/");
-        if (pos1 != std::string::npos && pos2 != std::string::npos && pos1 > pos2 )
+        if (pos1 != std::string::npos && pos2 != std::string::npos && pos1 > pos2)
             extension = resource_path.substr(pos1);
-        }
-    // std::cout<<"\n===this is the extension=====  "<<extension<<"\n";
+    }
+    extension = lowerString(extension);
+}
+std::string ProcessRequest::lowerString(std::string& extension)
+{
+    std::string new_str;
+    size_t i = 0;
+    while (i < extension.size())
+    {
+        new_str += std::tolower(extension[i]);
+        i++;
+    }
+    return(new_str);
 }
 
 void ProcessRequest::check_Cgi()
 {
-    if (check_location_extention())
+     if (check_location_extention())
+    { struct stat pathStat;
         is_CgiRq = true;
+        //ADD
+        if (is_dir)
+        {
+            if (resource_path.rfind("/") == std::string::npos)
+                resource_path += "/";
+            resource_path += Index_file;
+          
+            if (stat(resource_path.c_str(),&pathStat))
+            {
+                throw HttpError(404);
+            }
+        }
+    }
 }
 
 bool ProcessRequest::check_location_extention()
