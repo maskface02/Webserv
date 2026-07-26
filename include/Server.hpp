@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 21:39:15 by zatais            #+#    #+#             */
-/*   Updated: 2026/07/26 15:20:45 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/26 20:39:07 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -102,5 +102,6 @@ public:
   static void addToPoll(int fd, short events,
                         std::vector<struct pollfd> &poll_fds);
   static void signalHandler(int sig);
+  
 };
 #endif // !SERVER_HPP

@@ -240,6 +240,26 @@ void ServeStaticRq::check_exist_file(std::string new_file,
   }
 }
 
+std::string ServeStaticRq::serveError(int status_code, ServerConfig &srv, Client* client) {
+  client->processRq->setExtension(".html");
+  std::map<int, std::string>::iterator it;
+  it = srv.error_pages.find(status_code);
+  if (it != srv.error_pages.end())
+  {
+     try
+        {
+          return (ServeStaticRq::servFile(it->second));
+        }
+        catch(  HttpError& e)
+        { 
+          return(ServeStaticRq::html_Error_page(status_code, Logger::statusText(status_code)));
+        }
+  }
+
+  return (
+      ServeStaticRq::html_Error_page(status_code, Logger::statusText(status_code)));
+}
+
 std::string ServeStaticRq::html_Error_page(int status_code, std::string stat) {
 
   std::stringstream body;

@@ -6,14 +6,15 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/16 12:06:38 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/07/26 16:35:39 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/26 20:51:00 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 
 #include "../../include/WebServ.hpp"
 
-ProcessRequest::ProcessRequest(Client*client,  ServerConfig& _srv):request(client->request)
+ProcessRequest::ProcessRequest(Client*client,  ServerConfig& _srv):
+request(client->request),is_CgiRq(false)
 {
 
     try{ 
@@ -279,6 +280,7 @@ void ProcessRequest::init_variable()
     is_dir = false;  
     is_RedirecRq = false;
 }
+
 
 std::string ProcessRequest::getExtension() const
 {

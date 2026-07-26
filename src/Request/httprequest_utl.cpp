@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 19:54:39 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/07/26 09:34:25 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/26 18:17:55 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -256,8 +256,6 @@ int Request::strIsDigits(const std::string& str)
     return(1);
 }
 
-/// exception
-
 HttpError::HttpError(int ErrorCode): code(ErrorCode){}
 
 int HttpError::getErrorCode()
@@ -265,13 +263,11 @@ int HttpError::getErrorCode()
     return(code);
 }
 
-
-/////// Get
-
 std::map<std::string , std::string>  Request::getHeaderMap() const
 {
     return(HeaderMap);
 }
+
 reqLine Request::getRequestLine() const
 {
     return(RequestLine);
