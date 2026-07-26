@@ -87,6 +87,7 @@ private:
   void createSockets();
   void checkTimeouts();
   void handleCgiTimeout(Client *client);
+  void closeListenFds();
 
   Server();
   Server(const Server &);

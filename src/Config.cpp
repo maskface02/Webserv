@@ -95,27 +95,12 @@ size_t Config::toSize(std::string& s, std::string& context) {
     ++i;
   if (!i)
     throw std::runtime_error("config: invalid size value '" + s + "' for " + context);
-  // if (!s[i])
-  //     throw std::runtime_error("config: size suffix not found in '" + s + "' for " + context);
 
   std::string num = s.substr(0, i);
   long value = strtol(num.c_str(), NULL, 10);
   if (errno == ERANGE)
       throw std::runtime_error("config: size value too large for " + context);
-  // if (i < s.size()) {
-  //   char suffix = static_cast<char>(toupper(s[i]));
-  //   if (suffix == 'K')
-  //     value *= 1024;
-  //   else if (suffix == 'M')
-  //     value *= 1024 * 1024;
-  //   else if (suffix == 'G')
-  //     value *= 1024 * 1024 * 1024;
-  //   else
-  //     throw std::runtime_error("config: invalid size suffix in '" + s + "' for " + context);
-  //   if (i + 1 != s.size())
-  //     throw std::runtime_error("config: invalid size value '" + s + "' for " + context);
-  // }
-  return value;
+   return value;
 }
 
 bool Config::toBool(std::string& s, std::string& context) {
@@ -221,7 +206,12 @@ void Config::assignServerDirective(ServerConfig& server, std::vector<std::string
     }
   }
   else if (key == "client_max_body_size")
-    server.client_max_body_size = atol(tokens[idx++].c_str()) ;//toSize(tokens[idx++], key);
+  {
+    long cmbs = atol(tokens[idx++].c_str());
+    if (cmbs < 0)
+      throw std::runtime_error("config: negatif value for client_max_body_size");
+    server.client_max_body_size = cmbs;
+  }
   else
     throw std::runtime_error("config: unknown server directive '" + key + "'");
 
@@ -268,7 +258,7 @@ void Config::assignLocationDirective(Location& loc, std::vector<std::string>& to
     }
     else if (values.size() == 2) {
       loc.redirect.enabled = true;
-      loc.redirect.code = toInt(values[0], key, 100, 999);
+      loc.redirect.code = toInt(values[0], key, 300, 399);
       loc.redirect.url = values[1];
     }
     else
@@ -305,8 +295,6 @@ Location Config::parseLocationBlock(std::vector<std::string>& tokens, size_t& id
 
   if (loc.root.empty() && !loc.redirect.enabled)
     throw std::runtime_error("config: location '" + loc.path + "' missing 'root' directive");
-  // if (!loc.autoindex && loc.index.empty() && !loc.redirect.enabled)
-  //   throw std::runtime_error("config: location '" + loc.path + "' missing 'index' directive");
 
   if (idx == tokens.size() || tokens[idx] != "}")
     throw std::runtime_error("config: missing '}' after location block");

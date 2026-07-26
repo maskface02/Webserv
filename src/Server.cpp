@@ -36,10 +36,7 @@ Server::~Server() {
     delete it->second->processCgi;
     delete it->second;
   }
-
-  for (size_t i = 0; i < _listen_fds.size(); ++i)
-    close(_listen_fds[i]);
-
+  closeListenFds();
   delete _pollDispatcher;
   delete _clientHandler;
   delete _cgi;
@@ -50,6 +47,11 @@ Server::~Server() {
 void Server::signalHandler(int sig) {
   (void)sig;
   running = false;
+}
+
+void Server::closeListenFds() {
+  for (size_t i = 0; i < _listen_fds.size(); ++i)
+    close(_listen_fds[i]);
 }
 
 void Server::setNonBlocking(int fd) {
@@ -126,21 +128,24 @@ void Server::createSockets() {
       int opt = 1;
       if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
         close(sockfd);
+        closeListenFds();
         _logger.error("setsockopt SO_REUSEADDR failed");
       }
 
       struct sockaddr_in addr;
-      std::memset(&addr, 0, sizeof(addr));
+      memset(&addr, 0, sizeof(addr));
       addr.sin_family = AF_INET;
       addr.sin_port = htons(lc.port);
 
       if (inet_pton(AF_INET, lc.host.c_str(), &addr.sin_addr) <= 0) {
         close(sockfd);
+        closeListenFds();
         _logger.error("invalid IP address: " + lc.host);
       }
 
       if (bind(sockfd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
         close(sockfd);
+        closeListenFds();
         std::ostringstream oss;
         oss << lc.port;
         _logger.error("bind failed on " + lc.host + ":" + oss.str());
@@ -148,6 +153,7 @@ void Server::createSockets() {
 
       if (listen(sockfd, BACKLOG) < 0) {
         close(sockfd);
+        closeListenFds();
         _logger.error("listen failed");
       }
 

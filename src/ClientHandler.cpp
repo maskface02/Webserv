@@ -108,7 +108,7 @@ void ClientHandler::handleClientRead(int client_fd) {
 
 bool ClientHandler::readClientData(Client *client) {
   std::vector<ServerConfig> &servers = _config.getServers();
-  size_t max_size = servers[client->server_idx].client_max_body_size;
+  size_t max_size = 1024 + servers[client->server_idx].client_max_body_size;
 
   size_t max_per_cycle = 64 * 1024;
   size_t read_this_cycle = 0;
@@ -126,7 +126,6 @@ bool ClientHandler::readClientData(Client *client) {
         client->write_offset = 0;
         _logger.logRequest(client->ip, line.method, line.uri, line.httpVers,
                            400, client->write_buffer.size());
-        client->keep_alive = false;
         switchClientToSending(client, _poll_fds);
         return false;
       }
