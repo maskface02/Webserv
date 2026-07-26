@@ -1,0 +1,34 @@
+
+curl -v -c p.txt localhost:8080/cgi_bin/
+
+-c p.txt (--cookie-jar p.txt)
+
+Saves any cookies the server sends (Set-Cookie headers) into p.txt.
+Does not send any cookies from p.txt with the request.
+
+
+
+curl -v -b p.txt -c p.txt localhost:8080/cgi_bin/
+
+
+-b p.txt (--cookie p.txt)
+Reads cookies from p.txt and sends them with the request.
+-c p.txt
+Updates p.txt with any new or modified cookies received from the server.
+
+
+
+
+
+
+/home/lasoubai/testWeb/./logout.py' ==> must be not found => not paased in tester =>./cgi_tester can handl not existing file 
+so
+    =>i leet not existimg files pass to cgi => must tcheck execv errno
+
+
+
+To Do 
+    => check parsing chunked
+    => fix normilize url
+
+check Post for non existing file

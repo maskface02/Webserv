@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Logger.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: zatais <zatais@student.1337.ma>            +#+  +:+       +#+        */
+/*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/15 13:28:58 by zatais            #+#    #+#             */
-/*   Updated: 2026/05/17 05:38:17 by zatais           ###   ########.fr       */
+/*   Updated: 2026/07/25 11:18:58 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,12 +22,13 @@ private:
   std::string getCurrentTimestamp();
   std::string colorizeStatus(int status);
   std::string formatSize(size_t bytes);
-  std::string statusText(int status);
+ 
+
 
 public:
   Logger();
   ~Logger();
-
+ static std::string statusText(int status);//change it to  static + public => Lalla
   void info(const std::string &message);
   void warn(const std::string &message);
   void error(const std::string &message);

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Brave Chunked Image Upload Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background: #f4f4f9; }
+        .box { background: white; padding: 25px; border-radius: 8px; width: 400px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        button { background: #ff5722; color: white; border: none; padding: 10px 18px; font-size: 14px; cursor: pointer; border-radius: 4px; margin-top: 15px; }
+        button:hover { background: #e64a19; }
+        #log { margin-top: 20px; font-weight: bold; font-family: monospace; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+
+    <div class="box">
+        <h2>Chunked Image Upload</h2>
+        <input type="file" id="fileInput" accept="image/*"><br>
+        <button onclick="uploadChunked()">Upload Image</button>
+        <div id="log">Select an image to test.</div>
+    </div>
+
+    <script>
+        function uploadChunked() {
+            const input = document.getElementById('fileInput');
+            const log = document.getElementById('log');
+
+            if (!input.files.length) {
+                log.style.color = "red";
+                log.textContent = "Error: Please select an image first!";
+                return;
+            }
+
+            const file = input.files[0];
+            log.style.color = "#333";
+            log.textContent = `Reading "${file.name}" (${file.size} bytes)...\n`;
+
+            const reader = new FileReader();
+            reader.readAsArrayBuffer(file);
+
+            reader.onload = function(e) {
+                const arrayBuffer = e.target.result;
+                const bytes = new Uint8Array(arrayBuffer);
+                
+                // 1. Manually format the raw image into HTTP Chunked format!
+                // Chunk size (1KB = 1024 bytes) to ensure multiple chunks with binary \r\n inside
+                const chunkSize = 1024;
+                let chunkedPayload = [];
+
+                for (let i = 0; i < bytes.length; i += chunkSize) {
+                    const chunk = bytes.subarray(i, i + chunkSize);
+                    const hexSize = chunk.length.toString(16) + "\r\n";
+                    
+                    // Add Hex size header
+                    for (let j = 0; j < hexSize.length; j++) {
+                        chunkedPayload.push(hexSize.charCodeAt(j));
+                    }
+                    // Add binary chunk data
+                    for (let j = 0; j < chunk.length; j++) {
+                        chunkedPayload.push(chunk[j]);
+                    }
+                    // Add trailing \r\n after chunk data
+                    chunkedPayload.push(13, 10); // \r \n
+                }
+
+                // Add Last-Chunk: 0\r\n\r\n
+                const lastChunk = "0\r\n\r\n";
+                for (let j = 0; j < lastChunk.length; j++) {
+                    chunkedPayload.push(lastChunk.charCodeAt(j));
+                }
+
+                const finalData = new Uint8Array(chunkedPayload);
+
+                // 2. Send via XHR
+                const xhr = new XMLHttpRequest();
+                xhr.open("POST", "/cgi_bin/hh.py", true); // Change to your CGI endpoint
+                xhr.setRequestHeader("Content-Type", file.type);
+                xhr.setRequestHeader("Transfer-Encoding", "chunked");
+
+                log.textContent += "Sending manual Chunked Request to server...\n";
+
+                xhr.onload = function() {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        log.style.color = "green";
+                        log.textContent += `SUCCESS! Server returned ${xhr.status}\n\nResponse:\n` + xhr.responseText;
+                    } else {
+                        log.style.color = "red";
+                        log.textContent += `SERVER ERROR: Status ${xhr.status}\n` + xhr.responseText;
+                    }
+                };
+
+                xhr.onerror = function() {
+                    log.style.color = "red";
+                    log.textContent += "NETWORK ERROR: Server closed socket or request rejected.";
+                };
+
+                xhr.send(finalData);
+            };
+        }
+    </script>
+</body>
+</html>

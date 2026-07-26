@@ -1,0 +1,16 @@
+{
+    "name": "webserv",
+    "version": "1.0",
+    "description": "A simple HTTP web server",
+    "features": [
+        "Static file serving",
+        "CGI support",
+        "POST handling",
+        "DELETE handling"
+    ],
+    "config": {
+        "max_body_size": "1M",
+        "timeout": 60,
+        "listen_ports": [8080, 8081]
+    }
+}
