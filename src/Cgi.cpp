@@ -74,8 +74,8 @@ void Cgi::startCgi(Client *client, std::string &interpreter,
     args[0] = const_cast<char *>(interpreter.c_str());
     args[1] = const_cast<char *>(script_path.c_str());
     args[2] = NULL;
-    
-    execve(args[0], args, envp);//CHECK ERROR  
+
+    execve(args[0], args, envp);
     _exit(1);
   }
 
@@ -118,7 +118,7 @@ void Cgi::handleCgiRead(std::map<int, int>::iterator pipe_it,
     if (bytes > 0) {
       client->cgi_output_buffer.append(buffer, bytes);
       client->last_activity = time(NULL);
-      client->cgi_start_time = time(NULL); //
+      client->cgi_start_time = time(NULL);
       read_this_cycle += bytes;
     } else if (!bytes) {
       int status;
@@ -135,13 +135,13 @@ void Cgi::handleCgiRead(std::map<int, int>::iterator pipe_it,
 }
 
 void Cgi::cleanupCgi(Client *client, int exit_status) {
-  if (client->cgi_stdin_fd != -1) {
-    closePipeAndRemove(client->cgi_stdin_fd, _poll_fds, _pipe_to_client_fd, client->cgi_stdin_fd);
-  }
+  if (client->cgi_stdin_fd != -1)
+    closePipeAndRemove(client->cgi_stdin_fd, _poll_fds, _pipe_to_client_fd,
+                       client->cgi_stdin_fd);
 
-  if (client->cgi_stdout_fd != -1) {
-    closePipeAndRemove(client->cgi_stdout_fd, _poll_fds, _pipe_to_client_fd, client->cgi_stdout_fd);
-  }
+  if (client->cgi_stdout_fd != -1)
+    closePipeAndRemove(client->cgi_stdout_fd, _poll_fds, _pipe_to_client_fd,
+                       client->cgi_stdout_fd);
 
   client->cgi_pid = -1;
 
@@ -152,6 +152,16 @@ void Cgi::cleanupCgi(Client *client, int exit_status) {
 
   if (WIFEXITED(exit_status) && WEXITSTATUS(exit_status) == 0)
     client->state = STATE_WRITING_RESPONSE;
+  // else if (WIFEXITED(exit_status) && WEXITSTATUS(exit_status) == 2) {
+  //   client->write_buffer = "HTTP/1.1 404  Not Found\r\n"
+  //                          "Content-Length: 0\r\n\r\n";
+  //   // ServeStaticRq::html_Error_page(404, "Not Found");
+  //   switchClientToSending(client, _poll_fds);
+  //   _logger.logRequest(client->ip, client->request->getRequestLine().Method,
+  //                      client->request->getRequestLine().URI,
+  //                      client->request->getRequestLine().HttpVers, 404,
+  //                      client->write_buffer.size());
+  // }
   else
     client->state = STATE_CGI_ERROR;
 }

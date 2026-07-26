@@ -232,4 +232,4 @@ char env_meta_data(char c)
   
   char **ProcessCgi::getEnv() const { return (env); }
   std::string &ProcessCgi::getCgiPath() { return (cgi_path); }
-  
+
