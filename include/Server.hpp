@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 21:39:15 by zatais            #+#    #+#             */
-/*   Updated: 2026/07/24 12:40:09 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/26 15:20:45 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@
 #include "RequestDelimiter.hpp"
 
 #define BACKLOG 128
-#define POLL_TIMEOUT 5000
+#define POLL_TIMEOUT  -1 //5000
 #define CLIENT_TIMEOUT 60
 #define CGI_TIMEOUT 60
 #define CGI_CHUNK_SIZE 65536

@@ -144,7 +144,7 @@ void ClientHandler::processCompleteRequest(Client *client) {
   size_t request_size = _delimiter.getRequestSize(client->read_buffer);
   client->request = new Request(client, client->read_buffer,request_size);
   client->read_buffer.erase(0, request_size);
-  SessionManager(client,sessions);//ADD
+  SessionManager(client,sessions);
   client->processRq =
       new ProcessRequest(client, _config.getServers()[client->server_idx]);
   if (!client->processRq->is_CgiRq) {

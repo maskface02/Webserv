@@ -21,8 +21,14 @@ Updates p.txt with any new or modified cookies received from the server.
 
 
 
-/home/lasoubai/testWeb/./logout.py' ==> must be not found => fixed
+/home/lasoubai/testWeb/./logout.py' ==> must be not found => not paased in tester =>./cgi_tester can handl not existing file 
+so
+    =>i leet not existimg files pass to cgi => must tcheck execv errno
 
 
 
-clear session in processs cgi => done
+To Do 
+    => check parsing chunked
+    => fix normilize url
+
+check Post for non existing file

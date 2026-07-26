@@ -6,13 +6,11 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 19:54:39 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/07/25 18:43:56 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/26 09:34:25 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../include/WebServ.hpp"
-
-////////////////////////////////////////////////////////           Request line         ///////////////////////////////
 
 void Request::check_valid_nbr_space(std::string  &Rqline, size_t EndLine)
 {
@@ -58,10 +56,9 @@ void Request::check_valid_URI()
     if (RequestLine.URI[0] != '/' || RequestLine.URI.length() > 8000)
         throw HttpError(URI_TOO_LONG);
     RequestLine.URI = normalize_URI(RequestLine.URI);
-  
-
-    // is_valid_char(RequestLine.URI);
+    is_valid_char(RequestLine.URI);
 }
+//fix normalization
 std::string   Request::normalize_URI(std::string& url)
 {
     std::string new_URI;

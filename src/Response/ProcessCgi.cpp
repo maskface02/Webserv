@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/17 12:24:10 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/07/25 21:05:25 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/26 16:26:29 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -89,7 +89,7 @@ void ProcessCgi::EnvArray()
 void ProcessCgi::errorResponse(int status_code,std::string status_messg)
 {
   std::stringstream ErrorHead;
-  ErrorHead << "HTTP/1.1 502 Bad Gateway\r\n";
+  ErrorHead << "HTTP/1.1 " <<status_code<< " "<<status_messg<<"\r\n";
   ErrorHead << "Server: Webserver/1.1\r\n";
   ErrorHead << "Content-Type: text/html\r\n";
   ErrorHead << "Date: " << generateHttpDate() << "\r\n";
@@ -109,10 +109,11 @@ void ProcessCgi::errorResponse(int status_code,std::string status_messg)
     //status code does not update in the logger
     std::string addHeader;
     std::string addLine;
-   
     std::string &cgi_output = _client->cgi_output_buffer;
+    
     addLine = "HTTP/1.1 200 OK\r\n";  
     _client->processRq->setStatusCode(200);
+    
     if (_client->state == STATE_CGI_ERROR) {
       errorResponse(500,"Internal Server Error");
       return;
@@ -146,7 +147,6 @@ void ProcessCgi::errorResponse(int status_code,std::string status_messg)
     checkClearClientSession(addHeader);
     _client->write_buffer.insert(0, addLine + addHeader + "\r\n");
     _client->write_offset = 0;
-    
   }
   
   void ProcessCgi::defineStatusHeader(std::string& addHeader,std::string& addLine)

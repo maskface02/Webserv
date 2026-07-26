@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/16 12:06:38 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/07/25 21:12:23 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/26 16:35:39 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,27 +16,19 @@
 ProcessRequest::ProcessRequest(Client*client,  ServerConfig& _srv):request(client->request)
 {
 
-    try{
+    try{ 
+        int code = 0;
         init_variable();
         check_status();
         match_location(_srv);
         check_redirction();
         check_max_body_size(_srv);
         check_allowed_method();
-        int code = 0;
-        if ( (code = define_type()) != 0)
-        {
-            if (request->getRequestLine().Method == "POST")
-            {
-                extract_file_extension();
-                check_Cgi();
-                return;
-            }
-
-            throw HttpError(code);
-        }
+        code = define_type();
         extract_file_extension();
         check_Cgi();
+        if(!is_CgiRq && code != 0)
+            throw HttpError(code);
     }
     catch( HttpError& e)
     {
@@ -159,13 +151,12 @@ int ProcessRequest::define_type()
             if (access(resource_path.c_str(), F_OK | X_OK)) 
                  return(FORBIDDEN);
             else
-            {
-                is_dir = true;
+            { 
                 check_index_file();
-                
+                is_dir = true;
                 size_t pos = resource_path.rfind("/");
                 if (pos != resource_path.length() - 1)
-                {                    
+                {                  
                     if(request->getRequestLine().Method == "GET")
                     {
                         if (Index_file.empty() && !target_location.autoindex)
@@ -173,15 +164,13 @@ int ProcessRequest::define_type()
                         std::stringstream port_ss;
                         port_ss << request->getPort();
                         redirect_url = "http://" + request->getHost() + ":" + port_ss.str() + request->getPath() + "/";
-                        return(MOVED_PERMANENTLY);std::cout<<"resource path ==="<<resource_path<<"======\n";
-                    }
+                        return(MOVED_PERMANENTLY);std::cout<<"resource path ==="<<resource_path<<"======\n";   
+                    } 
                 }
             }
         }
         else if(S_ISREG(pathStat.st_mode))
-        {
             is_file = true;
-        }
     }
     else 
     {
@@ -236,7 +225,7 @@ void    ProcessRequest::extract_file_extension()
             extension = Index_file.substr(pos);
     }  
     else
-    { 
+    {
         size_t pos1 = resource_path.rfind(".");
         size_t pos2 = resource_path.rfind("/");
         if (pos1 != std::string::npos && pos2 != std::string::npos && pos1 > pos2)
@@ -244,6 +233,7 @@ void    ProcessRequest::extract_file_extension()
     }
     extension = lowerString(extension);
 }
+
 std::string ProcessRequest::lowerString(std::string& extension)
 {
     std::string new_str;
@@ -258,20 +248,14 @@ std::string ProcessRequest::lowerString(std::string& extension)
 
 void ProcessRequest::check_Cgi()
 {
-     if (check_location_extention())
-    { struct stat pathStat;
+    if (check_location_extention())
+    {
         is_CgiRq = true;
-        //ADD
         if (is_dir)
         {
             if (resource_path.rfind("/") == std::string::npos)
                 resource_path += "/";
             resource_path += Index_file;
-          
-            if (stat(resource_path.c_str(),&pathStat))
-            {
-                throw HttpError(404);
-            }
         }
     }
 }

@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/22 10:02:50 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/07/25 09:44:26 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/26 16:53:19 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,7 @@ Request::Request(Client* _client, std::string& Rq ,size_t request_size)
 
     try
     {
+       
         LineEnd = Rq.find("\r\n");
         if (LineEnd != std::string::npos && LineEnd < request_size)
         {
@@ -106,13 +107,17 @@ void  Request::pars_Headers(std::string& Rq, size_t HeadersSrart ,size_t Headers
 
 void Request::pars_Body(std::string& RqBody, size_t bodyStart,size_t req_size)
 {
-    size_t pos = 0;  
-
+    size_t pos = 0; 
 
     if (isChunked == false && (req_size - bodyStart) < content_lenght)
         throw(HttpError(BAD_REQUEST));     
     if (isChunked)
-       pars_chunked_body(RqBody,bodyStart,req_size);
+    {
+        pars_chunked_body(RqBody,bodyStart,req_size);
+        if (body.size() < content_lenght)
+            throw(HttpError(BAD_REQUEST));
+    }
+      
     else
         body = RqBody.substr(bodyStart, content_lenght);
     
@@ -125,7 +130,6 @@ void Request::pars_Body(std::string& RqBody, size_t bodyStart,size_t req_size)
 
 void Request::pars_chunked_body(const std::string& chnk_body,size_t body_start, size_t req_size)
 {
-    // recheck
     int i = 0;
     size_t indx = body_start;
     int Val = 0;
@@ -135,24 +139,31 @@ void Request::pars_chunked_body(const std::string& chnk_body,size_t body_start, 
     {
         start = indx;
         Val = 0;
-        while (indx  < req_size && chnk_body[indx] != '\r')
+        while (indx + 1 < req_size && chnk_body[indx] != '\r' && chnk_body[indx + 1] != '\n')
             indx++;
         str << chnk_body.substr(start, indx - start ); 
         str >>std::hex >> Val ;
+        if (Val == 0 )
+            break;
         str.str("");
         str.clear();
-        indx+= 2;
-        if (Val == 0 || Val < 0 )
+        if (indx + 1 < req_size || (chnk_body[indx] != '\r' && chnk_body[indx + 1] != '\n'))
             break;
+        indx+= 2;
         i = 0;
-       while (i < Val && (indx + 1) < req_size && !(chnk_body[indx] == '\r' && chnk_body[indx + 1] == '\n'))
+        while (i < Val && indx < req_size )
         {
             body.append(1,chnk_body[indx]);
             i++;
             indx++;
         }
+        if (indx + 1 < req_size || (chnk_body[indx] != '\r' && chnk_body[indx + 1] != '\n'))
+            break;
         indx+= 2;
+        if (body.size() > content_lenght)
+            break;
     }
+    // std::cout<<"\n"<<body<<"\n";
 }
 
 
@@ -184,10 +195,8 @@ std::vector<std::string> Request:: split_boundary_part(std::string& boundary)
     size_t end = 0;
     while((end = body.find(boundary,start)) != std::string::npos)
     {
-        int i = 0;
-       split_part.push_back(body.substr(start,end - start));std::cout << "boundry parts == "<<split_part[i] <<"\n";
+       split_part.push_back(body.substr(start,end - start));
         start = end + boundary.length();
-        i++;
     }
     return(split_part);
 }
@@ -195,10 +204,17 @@ std::vector<std::string> Request:: split_boundary_part(std::string& boundary)
 std::string Request::find_file_name(std::string& part)
 {
     size_t pos_file = part.find("filename");
+    if (pos_file == std::string::npos)
+        return("");
     size_t pos_name =  part.find("=",pos_file);
-    size_t endLine = part.find("\r\n",pos_name) - 1;
-     if ((pos_file == std::string::npos || pos_name == std::string::npos 
-        || endLine == std::string::npos))
+    if(pos_name == std::string::npos)
+        return("");
+    size_t endLine = part.find("\r\n",pos_name) ;
+    if (endLine == std::string::npos)
+        return("");
+    if (endLine > 0)
+        endLine -= 1;
+    if (pos_name + 2 >= endLine)
         return("");
     return (part.substr(pos_name + 2,endLine - (pos_name + 2)));
 }

@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/13 10:00:00 by zatais            #+#    #+#             */
-/*   Updated: 2026/07/11 14:24:31 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/26 16:34:19 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,8 +74,8 @@ void Cgi::startCgi(Client *client, std::string &interpreter,
     args[0] = const_cast<char *>(interpreter.c_str());
     args[1] = const_cast<char *>(script_path.c_str());
     args[2] = NULL;
-
-    execve(args[0], args, envp);
+    
+    execve(args[0], args, envp);//CHECK ERROR  
     _exit(1);
   }
 

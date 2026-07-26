@@ -172,19 +172,18 @@ void ServeStaticRq::_ServePostRq() {
     else {
       if (!client->processRq->is_dir)
       {
-          struct stat pathStat;
-
-          if ((pos = client->processRq->getResourcePath().rfind("/")))
-              file_path += client->processRq->getResourcePath().substr(pos + 1);
-          if (!stat(file_path.c_str(),&pathStat) )
-              throw HttpError(FORBIDDEN );
-          std:: ofstream file (file_path.c_str());
-          if (file.is_open())
-              file << client->request->getBody();
-          else
-              throw HttpError(FORBIDDEN );
-          file.close();
-          throw HttpError(CREATED);
+        struct stat pathStat;
+        if ((pos = client->processRq->getResourcePath().rfind("/")))
+            file_path += client->processRq->getResourcePath().substr(pos + 1);
+        if (!stat(file_path.c_str(),&pathStat))
+            throw HttpError(FORBIDDEN );
+        std:: ofstream file (file_path.c_str());
+        if (file.is_open())
+            file << client->request->getBody();
+        else
+            throw HttpError(FORBIDDEN );
+        file.close();
+        throw HttpError(CREATED);
       }
     }
   }
