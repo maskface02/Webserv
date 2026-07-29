@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/16 16:33:28 by zatais            #+#    #+#             */
-/*   Updated: 2026/07/29 15:12:00 by zatais           ###   ########.fr       */
+/*   Updated: 2026/07/29 22:15:25 by zatais           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,7 +53,7 @@ std::string Logger::colorizeStatus(int status) {
     return GREEN;
   else if (status >= 300 && status < 400)
     return YELLOW;
-  else if (status >= 400 && status < 500)
+  else if (status >= 400 && status < 600)
     return RED;
   return RESET;
 }

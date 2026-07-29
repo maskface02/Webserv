@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/22 10:02:50 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/07/26 16:53:19 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/29 22:08:32 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -88,9 +88,9 @@ void  Request::pars_Headers(std::string& Rq, size_t HeadersSrart ,size_t Headers
             Value = line.substr(pos);
             check_duplic(Key);
             store_variable(Key,Value);
-            HeaderMap[Key] = Value;
+            headerMap[Key] = Value;
             std::map<std::string,std::string> ::iterator it;
-            it = HeaderMap.begin();
+            it = headerMap.begin();
         }
         else
             throw HttpError(BAD_REQUEST);
@@ -114,8 +114,6 @@ void Request::pars_Body(std::string& RqBody, size_t bodyStart,size_t req_size)
     if (isChunked)
     {
         pars_chunked_body(RqBody,bodyStart,req_size);
-        if (body.size() < content_lenght)
-            throw(HttpError(BAD_REQUEST));
     }
       
     else
@@ -127,45 +125,37 @@ void Request::pars_Body(std::string& RqBody, size_t bodyStart,size_t req_size)
       is_boundry = true; 
     }   
 }
-
 void Request::pars_chunked_body(const std::string& chnk_body,size_t body_start, size_t req_size)
 {
-    int i = 0;
+   
     size_t indx = body_start;
     int Val = 0;
     size_t start = 0;
-    std::stringstream str;
+  
     while (indx < req_size)
     {
         start = indx;
         Val = 0;
-        while (indx + 1 < req_size && chnk_body[indx] != '\r' && chnk_body[indx + 1] != '\n')
-            indx++;
+        while (indx  < req_size && chnk_body[indx] != '\r'  && chnk_body[indx + 1] != '\n') 
+            indx++;  
+        std::stringstream str;
         str << chnk_body.substr(start, indx - start ); 
         str >>std::hex >> Val ;
-        if (Val == 0 )
+       
+        if (Val == 0)
             break;
-        str.str("");
-        str.clear();
-        if (indx + 1 < req_size || (chnk_body[indx] != '\r' && chnk_body[indx + 1] != '\n'))
-            break;
+        if (indx + Val + 2 > req_size)
+            throw HttpError(BAD_REQUEST);
         indx+= 2;
-        i = 0;
-        while (i < Val && indx < req_size )
-        {
-            body.append(1,chnk_body[indx]);
-            i++;
-            indx++;
-        }
-        if (indx + 1 < req_size || (chnk_body[indx] != '\r' && chnk_body[indx + 1] != '\n'))
-            break;
-        indx+= 2;
-        if (body.size() > content_lenght)
-            break;
+        body.append(chnk_body, indx, Val);
+        indx += Val;
+    
+        if (indx  < req_size && chnk_body[indx] == '\r'  && chnk_body[indx + 1] == '\n')
+            indx+= 2;
+        else 
+            throw(HttpError( BAD_REQUEST));
     }
-    // std::cout<<"\n"<<body<<"\n";
 }
-
 
 void Request:: pars_boundry(size_t& pos)
 {

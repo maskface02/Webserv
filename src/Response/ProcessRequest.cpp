@@ -6,14 +6,15 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/16 12:06:38 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/07/26 16:35:39 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/27 08:33:06 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 
 #include "../../include/WebServ.hpp"
 
-ProcessRequest::ProcessRequest(Client*client,  ServerConfig& _srv):request(client->request)
+ProcessRequest::ProcessRequest(Client*client,  ServerConfig& _srv):
+request(client->request),is_CgiRq(false)
 {
 
     try{ 
@@ -164,7 +165,7 @@ int ProcessRequest::define_type()
                         std::stringstream port_ss;
                         port_ss << request->getPort();
                         redirect_url = "http://" + request->getHost() + ":" + port_ss.str() + request->getPath() + "/";
-                        return(MOVED_PERMANENTLY);std::cout<<"resource path ==="<<resource_path<<"======\n";   
+                        return(MOVED_PERMANENTLY);
                     } 
                 }
             }
@@ -280,6 +281,7 @@ void ProcessRequest::init_variable()
     is_RedirecRq = false;
 }
 
+
 std::string ProcessRequest::getExtension() const
 {
     return(extension);
@@ -318,11 +320,6 @@ std::string     ProcessRequest::getRedirectUrl() const
 void        ProcessRequest::setStatusCode(int code)
 {
     status_code = code;
-}
-
-void        ProcessRequest::setRedirectURL(std::string redrct_url)
-{
-   redirect_url = redrct_url;
 }
 
 void        ProcessRequest::setExtension(std::string _extension)

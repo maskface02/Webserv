@@ -6,13 +6,14 @@
 /*   By: zatais <zatais@student.1337.ma>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/13 10:00:00 by zatais            #+#    #+#             */
-/*   Updated: 2026/07/29 15:12:32 by zatais           ###   ########.fr       */
+/*   Updated: 2026/07/29 22:31:22 by zatais           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef CGI_HPP
 #define CGI_HPP
 
+#include "Config.hpp"
 #include "WebServ.hpp"
 
 class Cgi {
@@ -20,6 +21,7 @@ private:
   std::vector<struct pollfd> &_poll_fds;
   std::map<int, int> &_pipe_to_client_fd;
   Logger &_logger;
+  Config &_config;
 
   Cgi();
   Cgi(const Cgi &);
@@ -30,7 +32,7 @@ private:
 
 public:
   Cgi(std::vector<struct pollfd> &poll_fds,
-      std::map<int, int> &pipe_to_client_fd, Logger &logger);
+      std::map<int, int> &pipe_to_client_fd, Logger &logger, Config &_config);
   ~Cgi();
 
   void startCgi(Client *client, std::string &interpreter,

@@ -17,7 +17,7 @@ bool Server::running = true;
 Server::Server() {}
 
 Server::Server(Config &conf)
-    : _config(conf), _cgi(new Cgi(_poll_fds, _pipe_to_client_fd, _logger)) {
+    : _config(conf), _cgi(new Cgi(_poll_fds, _pipe_to_client_fd, _logger, _config)) {
   _clientHandler = new ClientHandler(_clients, _poll_fds, _config, _logger,
                                      _cgi, _fd_to_server_idx, _listen_fds);
   _pollDispatcher = new PollDispatcher(_poll_fds, _clients, _pipe_to_client_fd,

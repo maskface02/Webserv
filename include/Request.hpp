@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 19:54:51 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/07/25 17:38:43 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/29 22:09:59 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,8 +33,7 @@ struct reqLine
 class Request
 {
     private:
-        std::map<std::string , std::string>                 HeaderMap;
-        std::map<std::string , std::vector<std::string> >   Query;
+        std::map<std::string , std::string>                 headerMap;
         reqLine                                             RequestLine;
         int                                                 port;
         std::string                                         Host;

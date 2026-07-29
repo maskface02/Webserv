@@ -6,16 +6,16 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/13 10:00:00 by zatais            #+#    #+#             */
-/*   Updated: 2026/07/29 16:30:23 by zatais           ###   ########.fr       */
+/*   Updated: 2026/07/29 22:28:53 by zatais           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../include/WebServ.hpp"
 
 Cgi::Cgi(std::vector<struct pollfd> &poll_fds,
-         std::map<int, int> &pipe_to_client_fd, Logger &logger)
+         std::map<int, int> &pipe_to_client_fd, Logger &logger, Config &config)
     : _poll_fds(poll_fds), _pipe_to_client_fd(pipe_to_client_fd),
-      _logger(logger) {}
+      _logger(logger), _config(config) {}
 
 Cgi::~Cgi() {}
 
@@ -129,8 +129,7 @@ void Cgi::handleCgiRead(std::map<int, int>::iterator pipe_it,
         return;
       else
         cleanupCgi(client, -1);
-    }
-    else
+    } else
       return;
   }
 }
@@ -153,17 +152,18 @@ void Cgi::cleanupCgi(Client *client, int exit_status) {
 
   if (WIFEXITED(exit_status) && WEXITSTATUS(exit_status) == 0)
     client->state = STATE_WRITING_RESPONSE;
-  // else if (WIFEXITED(exit_status) && WEXITSTATUS(exit_status) == 2) {
-  //   client->write_buffer = "HTTP/1.1 404  Not Found\r\n"
-  //                          "Content-Length: 0\r\n\r\n";
-  //   // ServeStaticRq::html_Error_page(404, "Not Found");
-  //   switchClientToSending(client, _poll_fds);
-  //   _logger.logRequest(client->ip, client->request->getRequestLine().Method,
-  //                      client->request->getRequestLine().URI,
-  //                      client->request->getRequestLine().HttpVers, 404,
-  //                      client->write_buffer.size());
-  // }
-  else
+  else if (WIFEXITED(exit_status) && WEXITSTATUS(exit_status) == 2) {
+    client->write_buffer =
+        "HTTP/1.1 404  Not Found\r\n"
+        "Content-Length: 0\r\n\r\n" +
+        ServeStaticRq::serveError(404, _config.getServers()[client->server_idx],
+                                  client);
+    switchClientToSending(client, _poll_fds);
+    _logger.logRequest(client->ip, client->request->getRequestLine().Method,
+                       client->request->getRequestLine().URI,
+                       client->request->getRequestLine().HttpVers, 404,
+                       client->write_buffer.size());
+  } else
     client->state = STATE_CGI_ERROR;
 }
 

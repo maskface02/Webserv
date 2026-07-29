@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/21 18:30:42 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/07/25 17:53:11 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/26 20:39:10 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,7 @@ Response::Response(Client *_client, ServeStaticRq &_staticRq, ServerConfig &srv)
 
   if (client->processRq->getStatusCode() >= CREATED )
     serveStaticRq->setResponseBody(
-        serveError(client->processRq->getStatusCode(), srv));
+        ServeStaticRq::serveError(client->processRq->getStatusCode(), srv, _client));
   responseLine();
   mime_Types();
   staticRespHeaders();
@@ -72,27 +72,6 @@ std::string Response::matchMimeType(std::string extension) {
 
 void Response::response() {
   _HttpResponse = _RespLine + _RespHeaders + serveStaticRq->getRespBody();
-  // std::cout<<"\n"<<_HttpResponse<<"\n";
-}
-
-std::string Response::serveError(int status_code, ServerConfig &srv) {
-  client->processRq->setExtension(".html");
-  std::map<int, std::string>::iterator it;
-  it = srv.error_pages.find(status_code);
-  if (it != srv.error_pages.end())
-  {
-     try
-        {
-           return (serveStaticRq->servFile(it->second));
-        }
-        catch(  HttpError& e)
-        { 
-          return(ServeStaticRq::html_Error_page(status_code, Logger::statusText(status_code)));
-        }
-  }
-
-  return (
-      ServeStaticRq::html_Error_page(status_code, Logger::statusText(status_code)));
 }
 
 void Response::mime_Types() {

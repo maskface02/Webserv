@@ -40,12 +40,13 @@ class Response
     void                                    responseLine();
     std::string                             matchMimeType(std::string extension);
     void                                    response();
-    std::string                             serveError(int status_code, ServerConfig& srv);
+    // std::string                             serveError(int status_code, ServerConfig& srv);
 
     // geter            
     std::string                             getHttpResponse() const;
     std::string&                            getStatusMsg(int code);
     
+  
 
 };
 

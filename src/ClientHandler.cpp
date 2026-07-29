@@ -6,7 +6,7 @@
 /*   By: zatais <zatais@student.1337.ma>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/29 15:12:11 by zatais            #+#    #+#             */
-/*   Updated: 2026/07/29 15:12:17 by zatais           ###   ########.fr       */
+/*   Updated: 2026/07/29 22:28:41 by zatais           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -133,8 +133,12 @@ bool ClientHandler::readClientData(Client *client) {
       if (client->read_buffer.size() > max_size) {
         ParsedRequestLine line =
             _delimiter.parseRequestLine(client->read_buffer);
-        client->write_buffer = "HTTP/1.1 400 Bad Request\r\nContent-Length: "
-                               "0\r\nConnection: close\r\n\r\n";
+
+        client->write_buffer =
+            "HTTP/1.1 400 Bad Request\r\nContent-Length: "
+            "0\r\nConnection: close\r\n\r\n" +
+            ServeStaticRq::serveError(
+                400, _config.getServers()[client->server_idx], client);
         client->write_offset = 0;
         _logger.logRequest(client->ip, line.method, line.uri, line.httpVers,
                            400, client->write_buffer.size());
@@ -196,7 +200,7 @@ void ClientHandler::sendResponse(int client_fd) {
   if (bytes > 0) {
     client->write_offset += bytes;
     client->last_activity = time(NULL);
-  } else if (bytes <= 0)// check for 0
+  } else if (bytes <= 0)
     return;
 
   if (client->write_offset == client->write_buffer.size()) {
