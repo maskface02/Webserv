@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/04 17:34:31 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/07/25 17:05:51 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/29 23:41:43 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,7 +57,7 @@ void    SessionManager::isExpired()
     while(it != sessions->end())
     {
         time_t last_activity = it->second.last_activity;
-        if (time(NULL) - last_activity > 1200)
+        if (time(NULL) - last_activity > EXP)
         {
             std::string id = it->first;
             it++;

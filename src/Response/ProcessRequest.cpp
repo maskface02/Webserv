@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/16 12:06:38 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/07/27 08:33:06 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/29 23:27:03 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,7 +31,7 @@ request(client->request),is_CgiRq(false)
         if(!is_CgiRq && code != 0)
             throw HttpError(code);
     }
-    catch( HttpError& e)
+    catch(HttpError& e)
     {
         status_code = e.getErrorCode();
     }
@@ -80,7 +80,7 @@ void ProcessRequest::match_location(ServerConfig& server)
     if ( !found)
     {
         if (location.empty()) 
-           throw HttpError(404);
+           throw HttpError(NOT_FOUND );
         target_location = location.rbegin()->second; 
     }
 
@@ -164,7 +164,9 @@ int ProcessRequest::define_type()
                             return(NOT_FOUND);
                         std::stringstream port_ss;
                         port_ss << request->getPort();
-                        redirect_url = "http://" + request->getHost() + ":" + port_ss.str() + request->getPath() + "/";
+                        is_RedirecRq = true;
+                        redirect_url = "http://" + request->getHost() + ":" + port_ss.str() 
+                                            + request->getPath() + "/";
                         return(MOVED_PERMANENTLY);
                     } 
                 }
@@ -185,8 +187,8 @@ int ProcessRequest::define_type()
 
 void ProcessRequest::check_index_file()
 {
-   size_t i = 0;
-   size_t j = 0;
+    size_t i = 0;
+    size_t j = 0;
     std::vector<std::string> IndexVect = target_location.index;
     std::vector<std::string> files;
     DIR* op_dir;
@@ -331,3 +333,5 @@ void        ProcessRequest::setRedirctUrl(std::string& url)
 {
     redirect_url = url;
 }
+
+ProcessRequest::~ProcessRequest(){}

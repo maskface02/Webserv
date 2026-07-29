@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/21 18:30:42 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/07/26 20:39:10 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/29 23:10:43 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,7 +32,7 @@ void Response::responseLine() {
   Line << " " << client->processRq->getStatusCode() << " "
        << Logger::statusText(client->processRq->getStatusCode()) ;
   Line << "\r\n";
-  _RespLine = Line.str();
+  respLine = Line.str();
 }
 
 void Response::staticRespHeaders() {
@@ -57,42 +57,39 @@ void Response::staticRespHeaders() {
       Headers << "Set-Cookie: session_id="<< client->session_id<<"; Path=/; HttpOnly;"<<"\r\n";
   }
   Headers << "\r\n";
-  _RespHeaders = Headers.str();
+  respHeaders = Headers.str();
 }
 
 std::string Response::matchMimeType(std::string extension) {
   std::map<std::string, std::string>::iterator it;
-  it = _Mime_map.find(extension);
-  if (it != _Mime_map.end()) {
+  it =  mime_map.find(extension);
+  if (it !=  mime_map.end()) {
     return (it->second);
   }
-  it = _Mime_map.find("default");
+  it =  mime_map.find("default");
   return (it->second);
 }
 
 void Response::response() {
-  _HttpResponse = _RespLine + _RespHeaders + serveStaticRq->getRespBody();
+  httpResponse = respLine + respHeaders + serveStaticRq->getRespBody();
 }
 
 void Response::mime_Types() {
-  // type/subtype
-  _Mime_map[".html"] = "text/html";
-  _Mime_map[".htm"] = "text/html";
-  _Mime_map[".css"] = "text/css";
-  _Mime_map[".js"] = "application/javascript";
-  _Mime_map[".json"] = "application/json";
-  _Mime_map[".png"] = "image/png";
-  _Mime_map[".jpeg"] = "image/jpeg";
-  _Mime_map[".gif"] = "image/gif";
-  _Mime_map[".mp3"] = "audio/mpeg";
-  _Mime_map[".mp4"] = "audio/mpeg";
-  _Mime_map[".xml"] = "application/xml";
-  _Mime_map[".pdf"] = "application/pdf";
-  _Mime_map[".txt"] = "text/plain";
-  _Mime_map["default"] = "application/octet-stream";
 
-  //=> default ?
-  // in case excutable or bin file or no extension=>  application/octet-stream
+   mime_map[".html"] = "text/html";
+   mime_map[".htm"] = "text/html";
+   mime_map[".css"] = "text/css";
+   mime_map[".js"] = "application/javascript";
+   mime_map[".json"] = "application/json";
+   mime_map[".png"] = "image/png";
+   mime_map[".jpeg"] = "image/jpeg";
+   mime_map[".gif"] = "image/gif";
+   mime_map[".mp3"] = "audio/mpeg";
+   mime_map[".mp4"] = "audio/mpeg";
+   mime_map[".xml"] = "application/xml";
+   mime_map[".pdf"] = "application/pdf";
+   mime_map[".txt"] = "text/plain";
+   mime_map["default"] = "application/octet-stream";
 }
 
 std::string generateHttpDate() {
@@ -103,4 +100,6 @@ std::string generateHttpDate() {
   return std::string(buffer);
 }
 
-std::string Response::getHttpResponse() const { return (_HttpResponse); }
+std::string Response::getHttpResponse() const { return (httpResponse); }
+
+Response::~Response(){}

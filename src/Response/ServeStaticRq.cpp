@@ -20,11 +20,11 @@ ServeStaticRq::ServeStaticRq(Client *_client, ServerConfig &srv)
     if (client->processRq->getStatusCode() != 0)
       throw HttpError(client->processRq->getStatusCode());
     if (client->request->getRequestLine().Method == "GET")
-      _ServeGetRequest(client->processRq->getResourcePath());
+      serveGetRequest(client->processRq->getResourcePath());
     else if (client->request->getRequestLine().Method == "DELETE")
-      _ServeDeleteRq();
+      serveDeleteRq();
     else if (client->request->getRequestLine().Method == "POST")
-      _ServePostRq();
+      servePostRq();
     client->processRq->setStatusCode(OK);
   } 
   catch (HttpError &e) 
@@ -34,7 +34,7 @@ ServeStaticRq::ServeStaticRq(Client *_client, ServerConfig &srv)
   }
 }
 
-void ServeStaticRq::_ServeGetRequest(std::string resource_path) {
+void ServeStaticRq::serveGetRequest(std::string resource_path) {
   std::string path_indexFile;
   if (client->processRq->is_dir) 
   {
@@ -54,7 +54,8 @@ std::string ServeStaticRq::servFile(std::string &path) {
   if (local_file.is_open()) {
     line << local_file.rdbuf();
     local_file.close();
-  } else
+  } 
+  else
     throw HttpError(NOT_FOUND);
   return (line.str());
 }
@@ -127,26 +128,23 @@ std::string ServeStaticRq::last_modif_time(struct stat s) {
   return (buff);
 }
 
-void ServeStaticRq::_ServeDeleteRq() {
+void ServeStaticRq::serveDeleteRq() {
 
   std::string resource_path = client->processRq->getResourcePath();
   if (client->processRq->is_dir) {
     size_t pos = resource_path.rfind("/");
     if (pos == std::string::npos)
-      throw HttpError(
-          BAD_REQUEST); // because the resource_path doesn't mach the target
+      throw HttpError(BAD_REQUEST); 
 
     pos = resource_path.rfind("/", pos - 1);
-
-    std::string parnt_dir_path = client->processRq->getResourcePath().substr(
-        0, pos); // get _path to the parent dir
+    std::string parnt_dir_path ;
+    parnt_dir_path = client->processRq->getResourcePath().substr(0, pos); 
     if (access(parnt_dir_path.c_str(), F_OK | W_OK | X_OK))
       throw HttpError(FORBIDDEN);
     std::vector<std::string> files = directory_files(resource_path);
     delete_files(files);
   }
   if (std::remove(resource_path.c_str()) == -1) {
-    // check ernno to specify the error
     throw HttpError(FORBIDDEN);
   }
 }
@@ -163,7 +161,7 @@ void ServeStaticRq::delete_files(std::vector<std::string> files) {
   }
 }
 
-void ServeStaticRq::_ServePostRq() {
+void ServeStaticRq::servePostRq() {
   if (client->processRq->getLocation().upload_enabled) {
     size_t pos = 0;
     file_path = client->processRq->getLocation().upload_store;
@@ -201,7 +199,7 @@ void ServeStaticRq::upload_files() {
   std::vector<std::string> files = directory_files(file_path);
   it = boundry.begin();
   if (boundry.empty())
-    throw HttpError(404);
+    throw HttpError(NOT_FOUND );
   while (it != boundry.end()) {
     path += it->first;
     check_exist_file(it->first, files);
@@ -225,7 +223,7 @@ std::vector<std::string> ServeStaticRq::directory_files(std::string &path) {
 
   op_dir = opendir(path.c_str());
   if (!op_dir)
-    throw HttpError(403);
+    throw HttpError(FORBIDDEN);
   while ((read_dir = readdir(op_dir)) != NULL) {
     files.push_back(read_dir->d_name);
   }
@@ -253,7 +251,7 @@ std::string ServeStaticRq::serveError(int status_code, ServerConfig &srv, Client
         {
           return (ServeStaticRq::servFile(it->second));
         }
-        catch(  HttpError& e)
+        catch( HttpError& e)
         { 
           return(ServeStaticRq::html_Error_page(status_code, Logger::statusText(status_code)));
         }
@@ -281,3 +279,5 @@ std::string ServeStaticRq::getRespBody() const { return (resp_body); }
 
 
 void ServeStaticRq::setResponseBody(std::string body) { resp_body = body; }
+
+ServeStaticRq::~ServeStaticRq(){}

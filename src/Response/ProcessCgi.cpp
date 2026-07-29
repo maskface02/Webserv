@@ -6,26 +6,26 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/17 12:24:10 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/07/26 18:01:56 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/29 23:21:05 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../include/WebServ.hpp"
 
-ProcessCgi::ProcessCgi(Client *client, ProcessRequest &ProcessRq,std::map<std::string, Session>& _sessions)
-    : env(NULL), cgi_path(ProcessRq.getCgiPath()), _client(client),
-      script_path(ProcessRq.getResourcePath()),sessions(&_sessions)
+ProcessCgi::ProcessCgi(Client *client, ProcessRequest &processRq,std::map<std::string, Session>& _sessions)
+    : env(NULL), cgi_path(processRq.getCgiPath()), _client(client),
+      script_path(processRq.getResourcePath()),sessions(&_sessions)
 {
   if (_client->request->getRequestLine().Method == "POST" )
     client->cgi_input_buffer = &_client->request->getBody();
   client->cgi_input_offset = 0;
-  EnvMap();
-  EnvArray();
+  envMap();
+  envArray();
   connection = _client->request->getConnection();
   client->processCgi = this;
 }
 
-void ProcessCgi::EnvMap()
+void ProcessCgi::envMap()
 {
   if (_client->request->getContentLenght() > 0)
   {
@@ -70,7 +70,7 @@ void ProcessCgi::EnvMap()
   }
 }
 
-void ProcessCgi::EnvArray() 
+void ProcessCgi::envArray() 
 {
   size_t i = 0;
   env = new char *[env_map.size() + 1];
@@ -104,9 +104,8 @@ void ProcessCgi::errorResponse(int status_code,std::string status_messg)
     _client->write_offset = 0;
   }
   
-  void ProcessCgi::GeneretCgiResponse() 
+  void ProcessCgi::generetCgiResponse() 
   {
-    //status code does not update in the logger
     std::string addHeader;
     std::string addLine;
     std::string &cgi_output = _client->cgi_output_buffer;
@@ -121,7 +120,7 @@ void ProcessCgi::errorResponse(int status_code,std::string status_messg)
     size_t p_body = 0;
     if ((p_body = cgi_output.find("\r\n\r\n")) == std::string::npos) 
     {
-      errorResponse(502,"Bad Gateway");
+      errorResponse(BAD_GATEWAY,"Bad Gateway");
       return;
     }
     addHeader = cgi_output.substr(0, p_body) + "\r\n";
@@ -133,7 +132,7 @@ void ProcessCgi::errorResponse(int status_code,std::string status_messg)
     {
       if (cgi_output.find("Content-Type") == std::string::npos)
       {
-        errorResponse(502,"Bad Gateway");
+        errorResponse(BAD_GATEWAY,"Bad Gateway");
         return;
       }
       _client->write_buffer.append(cgi_output.substr(p_body + 4));

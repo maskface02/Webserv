@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 19:54:39 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/07/29 22:09:43 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/29 23:24:26 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,17 +46,17 @@ void Request::check_valid_line()
 
 void Request::check_valid_Method()
 {   
-  if (RequestLine.Method != "GET" && RequestLine.Method != "POST" && RequestLine.Method != "DELETE")
+  if (requestLine.Method != "GET" && requestLine.Method != "POST" && requestLine.Method != "DELETE")
     throw(HttpError( METHOD_NOT_ALLOWED));
 }
 
 void Request::check_valid_URI()
 {
 
-    if (RequestLine.URI[0] != '/' || RequestLine.URI.length() > 8000)
+    if (requestLine.URI[0] != '/' || requestLine.URI.length() > 8000)
         throw HttpError(URI_TOO_LONG);
-    RequestLine.URI = normalize_URI(RequestLine.URI);
-    is_valid_char(RequestLine.URI);
+    requestLine.URI = normalize_URI(requestLine.URI);
+    is_valid_char(requestLine.URI);
 }
 
 std::string   Request::normalize_URI(std::string& url)
@@ -106,27 +106,26 @@ bool Request::is_reserved(char c)
     }
    return (false);
 }
-////////////
+
 
 void Request::check_valid_HttpV()
 { 
-    if (RequestLine.HttpVers != "HTTP/1.1" && RequestLine.HttpVers !=  "HTTP/1.0")
-        throw(HttpError(505));
+    if (requestLine.HttpVers != "HTTP/1.1" && requestLine.HttpVers !=  "HTTP/1.0")
+        throw(HttpError(HTTP_VERSION_NOT_SUPPORTED));
 }
 
 void Request::store_path_query()
 {
     size_t sp = 0;
-    if ((sp = RequestLine.URI.find("?")) != std::string::npos)
+    if ((sp = requestLine.URI.find("?")) != std::string::npos)
     {
-        RequestLine.Path = RequestLine.URI.substr(0, sp);
-        RequestLine.Query = RequestLine.URI.substr(sp + 1);
+        requestLine.Path = requestLine.URI.substr(0, sp);
+        requestLine.Query = requestLine.URI.substr(sp + 1);
     }
     else
-        RequestLine.Path =  RequestLine.URI;
+        requestLine.Path =  requestLine.URI;
 }
 
-////////////////////////////////////////////////////      Headers        ////////////////////
 
 std::string Request::remove_white_space(std::string str)
 {
@@ -160,7 +159,7 @@ void Request::store_variable(std::string& key, std::string& value)
         store_cont_lenght(value);
     if (key == "Transfer-Encoding" &&  value == "chunked" )
         isChunked = true;
-    if (key == "Host")
+    if (key == "host")
         store_host_port(value);
     if (key == "Content-Type")
         content_type = value;
@@ -183,7 +182,7 @@ void Request::store_host_port(std::string &str)
     p = str.find(":");
     if (p != std::string::npos)
     {
-        Host = str.substr(0, p);
+        host = str.substr(0, p);
         strNbr = str.substr(p + 1);
         if (!strNbr.empty() && strIsDigits(strNbr))
             port = std::atoi(strNbr.c_str());
@@ -275,7 +274,7 @@ std::map<std::string , std::string>  Request::getHeaderMap() const
 
 reqLine Request::getRequestLine() const
 {
-    return(RequestLine);
+    return(requestLine);
 }
 int  Request::getPort() const
 {
@@ -283,7 +282,7 @@ int  Request::getPort() const
 }
 std::string    Request::getHost() const
 {
-    return (Host);
+    return (host);
 }
 std::string&   Request::getBody()
 {
@@ -313,7 +312,7 @@ int  Request::getStatusCode()
 
 std::string Request::getPath() const 
 {
-    return(RequestLine.Path);
+    return(requestLine.Path);
 }
 
  std::map<std::string, std::string>&       Request::getBoundryMap() 

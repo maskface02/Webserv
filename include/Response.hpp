@@ -22,29 +22,28 @@ enum statusMsg
     BAD_GATEWAY                     = 502,
 };
 
-// status code 409 indicates 
-// a request conflict with the current state of the target resource.
 class Response
 {
     ServeStaticRq*                                      serveStaticRq;
     Client*                                             client;
-    std::string                                         _HttpResponse;
-    std::string                                         _RespHeaders;
-    std::string                                         _RespLine;
-    std::map<std::string, std::string>                  _Mime_map;
-
+    std::string                                         httpResponse;
+    std::string                                         respHeaders;
+    std::string                                         respLine;
+    std::map<std::string, std::string>                  mime_map;
+    Response(const Response&);
+    Response& operator=(const Response&);
     public:
     Response(Client* _client, ServeStaticRq& Static, ServerConfig& srv);
-    void                                    staticRespHeaders();
-    void                                    mime_Types();
-    void                                    responseLine();
-    std::string                             matchMimeType(std::string extension);
-    void                                    response();
-    // std::string                             serveError(int status_code, ServerConfig& srv);
+    ~Response();
+    void                                                staticRespHeaders();
+    void                                                mime_Types();
+    void                                                responseLine();
+    std::string                                         matchMimeType(std::string extension);
+    void                                                response();
 
-    // geter            
-    std::string                             getHttpResponse() const;
-    std::string&                            getStatusMsg(int code);
+    // geter                                
+    std::string                                         getHttpResponse() const;
+    std::string&                                        getStatusMsg(int code);
     
   
 

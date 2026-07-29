@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/22 10:02:50 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/07/29 22:08:32 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/29 23:24:55 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,11 +20,9 @@ Request::Request(Client* _client, std::string& Rq ,size_t request_size)
 
 {
     size_t          LineEnd = 0;
-    size_t          header_end = std::string::npos;   
-
+    size_t          header_end = std::string::npos;
     try
     {
-       
         LineEnd = Rq.find("\r\n");
         if (LineEnd != std::string::npos && LineEnd < request_size)
         {
@@ -34,14 +32,11 @@ Request::Request(Client* _client, std::string& Rq ,size_t request_size)
             else    throw HttpError(BAD_REQUEST);
             if (connection == "keep-alive")
                 client->keep_alive = true;//check init
-            if ((header_end + 4) <  request_size &&  RequestLine.Method == "POST")
+            if ((header_end + 4) <  request_size &&  requestLine.Method == "POST")
             {
                 check_Post();
                 pars_Body(Rq, header_end + 4,request_size);
             }
-            // if (RequestLine.Method == "POST" && body.empty() && !isChunked)
-            //     throw(HttpError(BAD_REQUEST));
-            // ==> check content lenth => check if it passs in cgi
         }
         else   throw(HttpError(BAD_REQUEST));  
     }
@@ -55,7 +50,7 @@ size_t  Request::pars_lineRequest(std::string& Rq, size_t LineEnd)
 {  
     std::stringstream str(Rq.substr(0, LineEnd));
     check_valid_nbr_space(Rq, LineEnd);
-    str >> RequestLine.Method >> RequestLine.URI >> RequestLine.HttpVers;
+    str >> requestLine.Method >> requestLine.URI >> requestLine.HttpVers;
     check_valid_line();
     store_path_query();
     return (Rq.find("\r\n\r\n",LineEnd + 2));
@@ -217,3 +212,4 @@ std::string Request::find_boundry_body(std::string& part)
     return(part.substr(body_start + 4));
 }
 
+Request::~Request(){}

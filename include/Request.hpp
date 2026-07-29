@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 19:54:51 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/07/29 22:09:59 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/29 23:40:55 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,7 @@
 
 
 #define Buffer_Size 4096
-#define MAX_BODY_SIZE 1048576 //1Mb default in ngx 
+#define MAX_BODY_SIZE 1048576 
 
 struct reqLine
 {
@@ -34,9 +34,9 @@ class Request
 {
     private:
         std::map<std::string , std::string>                 headerMap;
-        reqLine                                             RequestLine;
+        reqLine                                             requestLine;
         int                                                 port;
-        std::string                                         Host;
+        std::string                                         host;
         size_t                                              content_lenght;
         std::string                                         body;
         std::string                                         connection;
@@ -46,16 +46,16 @@ class Request
         std::map<std::string, std::string>                  boundry_map;
         std::string                                         cookies_header;
         Client*                                             client;
-        // Request();
+        
+        Request();
+        Request(Request& other);
+        Request& operator=(Request& other);
     public:
-        bool                                                is_boundry;
-        Request(Client* client, std::string& rq, size_t request_size);
-        // Request(Request& other);
        
-        // Request& operator=(Request& other);
-        // ~Request(); 
-    //geters
-    
+        Request(Client* client, std::string& rq, size_t request_size);
+        ~Request(); 
+
+        bool                                                is_boundry;
         std::map<std::string , std::string>                 getHeaderMap() const ;
         reqLine                                             getRequestLine() const;
         int                                                 getPort() const;
@@ -70,16 +70,16 @@ class Request
         std::map<std::string, std::string>&                 getBoundryMap() ;
         void                                                setCookeisHeader(std::string str);
         
-    //pars
+
         size_t                                              pars_lineRequest(std::string  &header, size_t LineEnd);
         void                                                pars_Headers(std::string  &Map, size_t HeadersSrart,size_t HeadersEnd);
         void                                                pars_Body(std::string &body, size_t HeaderStart,size_t req_size);
         void                                                pars_boundry(size_t& pos);
         void                                                pars_chunked_body(const std::string& chunck_body,size_t bodyStart, size_t req_size);
-       std::vector<std::string>                             split_boundary_part(std::string& boundary);
+        std::vector<std::string>                             split_boundary_part(std::string& boundary);
         std::string                                         find_file_name(std::string& part);
         std::string                                         find_boundry_body(std::string& part);
-        //stor varible
+      
        
         void                                                store_path_query();
         void                                                store_variable(std::string& key, std::string& value);
@@ -87,7 +87,7 @@ class Request
         void                                                store_host_port(std::string &str);
         void                                                define_session_id();
     
-        //
+   
         void                                                check_valid_nbr_space(std::string  &Rqline, size_t EndLine);
         void                                                check_valid_line();
         void                                                check_valid_Method();
@@ -100,17 +100,12 @@ class Request
         bool                                                is_reserved(char c);
         std::string                                         normalize_URI(std::string& url);
         
-        // utils
-    // util
   
         std::string                                         remove_white_space( std::string str);
         int                                                 strIsDigits(const std::string& str);
-        
-      
-    ///////////////////////////////////////////////////////////
-       
 };
-  std::string                                        generateSessionId();
+        std::string                                         generateSessionId();
+
 class HttpError : public std::exception
 {
     private:
