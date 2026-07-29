@@ -120,7 +120,10 @@ void Server::createSockets() {
 
       int sockfd = socket(AF_INET, SOCK_STREAM, 0);
       if (sockfd < 0)
+      {
+        closeListenFds();
         _logger.error("socket creation failed");
+      }
 
       int opt = 1;
       if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
