@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   PollDispatcher.hpp                                 :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: zatais <zatais@student.1337.ma>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/07/29 15:13:00 by zatais            #+#    #+#             */
+/*   Updated: 2026/07/29 15:13:01 by zatais           ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #ifndef POLLDISPATCHER_HPP
 #define POLLDISPATCHER_HPP
 
@@ -21,8 +33,9 @@ private:
   void removeListenFd(int fd);
 
   PollDispatcher();
-  PollDispatcher(const PollDispatcher&);
-  PollDispatcher& operator=(const PollDispatcher&);
+  PollDispatcher(const PollDispatcher &);
+  PollDispatcher &operator=(const PollDispatcher &);
+
 public:
   PollDispatcher(std::vector<struct pollfd> &poll_fds,
                  std::map<int, Client *> &clients,

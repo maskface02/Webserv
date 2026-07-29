@@ -1,15 +1,25 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   ClientHandler.hpp                                  :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: zatais <zatais@student.1337.ma>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/07/29 15:12:40 by zatais            #+#    #+#             */
+/*   Updated: 2026/07/29 15:12:42 by zatais           ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #ifndef CLIENTHANDLER_HPP
 #define CLIENTHANDLER_HPP
 
-#include "WebServ.hpp"
 #include "RequestDelimiter.hpp"
+#include "WebServ.hpp"
 
-struct Session
-{
-    time_t                                  last_activity;
-    int                                     counter;
+struct Session {
+  time_t last_activity;
+  int counter;
 };
-
 
 class ClientHandler {
 private:
@@ -22,17 +32,15 @@ private:
   std::vector<int> &_listen_fds;
   RequestDelimiter _delimiter;
 
-  Client *initClient(int client_fd, int listen_fd,
-                     const std::string &client_ip, int client_port);
+  Client *initClient(int client_fd, int listen_fd, const std::string &client_ip,
+                     int client_port);
 
-std::map<std::string, Session>                   sessions;
+  std::map<std::string, Session> sessions;
+
 public:
   ClientHandler(std::map<int, Client *> &clients,
-                std::vector<struct pollfd> &poll_fds,
-                Config &config,
-                Logger &logger,
-                Cgi *cgi,
-                std::map<int, int> &fd_to_server_idx,
+                std::vector<struct pollfd> &poll_fds, Config &config,
+                Logger &logger, Cgi *cgi, std::map<int, int> &fd_to_server_idx,
                 std::vector<int> &listen_fds);
   ~ClientHandler();
 

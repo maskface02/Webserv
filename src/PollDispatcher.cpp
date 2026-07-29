@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   PollDispatcher.cpp                                 :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: zatais <zatais@student.1337.ma>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/07/29 15:11:56 by zatais            #+#    #+#             */
+/*   Updated: 2026/07/29 15:11:56 by zatais           ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "../include/WebServ.hpp"
 
 PollDispatcher::PollDispatcher(std::vector<struct pollfd> &poll_fds,
@@ -111,6 +123,8 @@ void PollDispatcher::handleCgiStdinWrite() {
                            client->cgi_stdin_fd);
       }
     }
+    else
+      return;
   }
 }
 
@@ -121,10 +135,9 @@ void PollDispatcher::handleCgiPipePollError(int fd) {
     Client *client = it->second;
     for (size_t i = 0; i < _poll_fds.size(); ++i) {
       if (_poll_fds[i].fd == fd) {
-        if (fd == client->cgi_stdout_fd && !(_poll_fds[i].revents & POLLERR))
+        if (fd == client->cgi_stdout_fd && !(_poll_fds[i].revents & POLLERR))//
           break;
-        if (client->cgi_pid != -1)
-          _cgi->killCgi(client, SIGKILL);
+        _cgi->killCgi(client, SIGKILL);
         client->state = STATE_CGI_ERROR;
         break;
       }

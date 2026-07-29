@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/13 10:00:00 by zatais            #+#    #+#             */
-/*   Updated: 2026/07/26 16:34:19 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/29 16:30:23 by zatais           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -129,7 +129,8 @@ void Cgi::handleCgiRead(std::map<int, int>::iterator pipe_it,
         return;
       else
         cleanupCgi(client, -1);
-    } else
+    }
+    else
       return;
   }
 }

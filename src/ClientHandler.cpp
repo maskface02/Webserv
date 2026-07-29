@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   ClientHandler.cpp                                  :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: zatais <zatais@student.1337.ma>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/07/29 15:12:11 by zatais            #+#    #+#             */
+/*   Updated: 2026/07/29 15:12:17 by zatais           ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "../include/WebServ.hpp"
 
 ClientHandler::ClientHandler(std::map<int, Client *> &clients,
@@ -53,8 +65,7 @@ void ClientHandler::acceptConnection(int listen_fd) {
   _clients[client_fd] = client;
   Server::addToPoll(client_fd, POLLIN, _poll_fds);
 
-  int srv_idx = _fd_to_server_idx[listen_fd];
-  ServerConfig &srv = _config.getServers()[srv_idx];
+  ServerConfig &srv = _config.getServers()[client->server_idx];
   std::ostringstream server_name;
   server_name << srv.listens[0].host << ":" << srv.listens[0].port;
   _logger.logConnection(client_ip, client_port, true, server_name.str());
@@ -120,7 +131,8 @@ bool ClientHandler::readClientData(Client *client) {
       client->read_buffer.append(buffer, bytes);
       client->last_activity = time(NULL);
       if (client->read_buffer.size() > max_size) {
-        ParsedRequestLine line = _delimiter.parseRequestLine(client->read_buffer);
+        ParsedRequestLine line =
+            _delimiter.parseRequestLine(client->read_buffer);
         client->write_buffer = "HTTP/1.1 400 Bad Request\r\nContent-Length: "
                                "0\r\nConnection: close\r\n\r\n";
         client->write_offset = 0;
@@ -141,9 +153,9 @@ bool ClientHandler::readClientData(Client *client) {
 
 void ClientHandler::processCompleteRequest(Client *client) {
   size_t request_size = _delimiter.getRequestSize(client->read_buffer);
-  client->request = new Request(client, client->read_buffer,request_size);
+  client->request = new Request(client, client->read_buffer, request_size);
   client->read_buffer.erase(0, request_size);
-  SessionManager(client,sessions);
+  SessionManager(client, sessions);
   client->processRq =
       new ProcessRequest(client, _config.getServers()[client->server_idx]);
   if (!client->processRq->is_CgiRq) {
@@ -159,8 +171,7 @@ void ClientHandler::processCompleteRequest(Client *client) {
                        client->write_buffer.size());
     switchClientToSending(client, _poll_fds);
   } else {
-    ProcessCgi *procCgi =
-        new ProcessCgi(client, *client->processRq, sessions);
+    ProcessCgi *procCgi = new ProcessCgi(client, *client->processRq, sessions);
     std::string script = client->processRq->getResourcePath();
     _cgi->startCgi(client, procCgi->getCgiPath(), script, procCgi->getEnv());
   }
@@ -185,7 +196,7 @@ void ClientHandler::sendResponse(int client_fd) {
   if (bytes > 0) {
     client->write_offset += bytes;
     client->last_activity = time(NULL);
-  } else if (bytes < 0)
+  } else if (bytes <= 0)// check for 0
     return;
 
   if (client->write_offset == client->write_buffer.size()) {

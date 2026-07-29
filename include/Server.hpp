@@ -6,18 +6,18 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 21:39:15 by zatais            #+#    #+#             */
-/*   Updated: 2026/07/26 15:20:45 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/29 15:13:27 by zatais           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef SERVER_HPP
 #define SERVER_HPP
 
-#include "WebServ.hpp"
 #include "RequestDelimiter.hpp"
+#include "WebServ.hpp"
 
 #define BACKLOG 128
-#define POLL_TIMEOUT  -1 //5000
+#define POLL_TIMEOUT -1 // 5000
 #define CLIENT_TIMEOUT 60
 #define CGI_TIMEOUT 60
 #define CGI_CHUNK_SIZE 65536
@@ -58,7 +58,7 @@ struct Client {
   Request *request;
   ProcessCgi *processCgi;
   ProcessRequest *processRq;
- 
+
   std::string session_id;
   bool is_new;
 };
@@ -66,8 +66,6 @@ struct Client {
 class Cgi;
 class ClientHandler;
 class PollDispatcher;
-
-
 
 class Server {
 private:
@@ -82,7 +80,6 @@ private:
   ClientHandler *_clientHandler;
   PollDispatcher *_pollDispatcher;
   static bool running;
- 
 
   void createSockets();
   void checkTimeouts();

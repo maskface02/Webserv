@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 21:39:15 by zatais            #+#    #+#             */
-/*   Updated: 2026/07/26 16:32:15 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/29 15:19:55 by zatais           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,8 +77,7 @@ void Server::checkTimeouts() {
     if (it->second->state == STATE_CGI_RUNNING && it->second->cgi_pid != -1) {
       if (difftime(now, it->second->cgi_start_time) > CGI_TIMEOUT)
         handleCgiTimeout(it->second);
-    }
-    else if (difftime(now, it->second->last_activity) > CLIENT_TIMEOUT) {
+    } else if (difftime(now, it->second->last_activity) > CLIENT_TIMEOUT) {
       std::ostringstream oss;
       oss << "Client timeout: " << it->second->ip << ":" << it->second->port;
       _logger.warn(oss.str());
@@ -90,8 +89,7 @@ void Server::checkTimeouts() {
     _clientHandler->closeClient(to_close[i]);
 }
 
-void Server::handleCgiTimeout(Client *client)
-{
+void Server::handleCgiTimeout(Client *client) {
   std::ostringstream oss;
   oss << "CGI timeout: " << client->ip << ":" << client->port;
   _logger.warn(oss.str());
@@ -102,8 +100,7 @@ void Server::handleCgiTimeout(Client *client)
   res << "HTTP/1.1 504 Gateway Timeout\r\n"
       << "Content-Length: " << body.size() << "\r\n\r\n"
       << body;
-  _logger.logRequest(client->ip,
-                     client->request->getRequestLine().Method,
+  _logger.logRequest(client->ip, client->request->getRequestLine().Method,
                      client->request->getRequestLine().Path,
                      client->request->getRequestLine().HttpVers,
                      client->processRq->getStatusCode(),
