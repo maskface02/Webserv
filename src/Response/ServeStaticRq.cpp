@@ -14,9 +14,8 @@
 #include "../../include/WebServ.hpp"
 
 ServeStaticRq::ServeStaticRq(Client *_client, ServerConfig &srv)
-    : client(_client), serv(srv) {
-
-  // init_variable();
+    : client(_client), serv(srv) 
+{
   try {
     if (client->processRq->getStatusCode() != 0)
       throw HttpError(client->processRq->getStatusCode());
@@ -27,7 +26,9 @@ ServeStaticRq::ServeStaticRq(Client *_client, ServerConfig &srv)
     else if (client->request->getRequestLine().Method == "POST")
       _ServePostRq();
     client->processRq->setStatusCode(OK);
-  } catch (HttpError &e) {
+  } 
+  catch (HttpError &e) 
+  {
     int status_code = e.getErrorCode();
     client->processRq->setStatusCode(status_code);
   }
@@ -35,8 +36,10 @@ ServeStaticRq::ServeStaticRq(Client *_client, ServerConfig &srv)
 
 void ServeStaticRq::_ServeGetRequest(std::string resource_path) {
   std::string path_indexFile;
-  if (client->processRq->is_dir) {
-    if ((path_indexFile = client->processRq->getIndexFile()) != "") {
+  if (client->processRq->is_dir) 
+  {
+    if ((path_indexFile = client->processRq->getIndexFile()) != "")
+    {
       path_indexFile = resource_path + path_indexFile;
       resp_body = servFile(path_indexFile);
     } else

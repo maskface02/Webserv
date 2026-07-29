@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 19:54:39 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/07/26 18:17:55 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/29 22:09:43 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,7 +58,7 @@ void Request::check_valid_URI()
     RequestLine.URI = normalize_URI(RequestLine.URI);
     is_valid_char(RequestLine.URI);
 }
-//fix normalization
+
 std::string   Request::normalize_URI(std::string& url)
 {
     std::string new_URI;
@@ -66,6 +66,11 @@ std::string   Request::normalize_URI(std::string& url)
 
     while(i  < url.size())
     {
+        if (i + 1 < url.size() && url[i] == '.' && url[i + 1] == '/')
+        {
+            i += 2;
+            continue;
+        }
         while ( url.size() > i + 2 && url[i] == '.' 
             && url[i + 1] == '.' && url[i + 2] == '/')
         {
@@ -91,7 +96,7 @@ void    Request::is_valid_char(std::string& URI)
 
 bool Request::is_reserved(char c)
 {
-    std::string reserved_chars = "_-.:/?#[]@!$&'()*+,;=%~"; // Banned:  < > " \ ^ ` { } |
+    std::string reserved_chars = "_-.:/?#[]@!$&'()*+,;=%~"; 
     size_t j = 0;
     while (j < reserved_chars.size())
     {
@@ -134,16 +139,16 @@ std::string Request::remove_white_space(std::string str)
 void Request::check_duplic(std::string& key)
 {
   
-    std::map<std::string, std::string>::iterator it = HeaderMap.find(key.c_str());
-    if (it != HeaderMap.end())
+    std::map<std::string, std::string>::iterator it = headerMap.find(key.c_str());
+    if (it != headerMap.end())
         throw HttpError(BAD_REQUEST);
 }
 
 void Request::check_existe(std::string key)
 {
   
-    std::map<std::string, std::string>::iterator it = HeaderMap.find(key.c_str());
-    if (it == HeaderMap.end())
+    std::map<std::string, std::string>::iterator it = headerMap.find(key.c_str());
+    if (it == headerMap.end())
         throw HttpError(BAD_REQUEST);
 }
 
@@ -232,14 +237,14 @@ void        Request::define_session_id()
 
 void Request::check_Post()
 {
-    std::map<std::string, std::string>::iterator it1 = HeaderMap.find("Content-Length");
-    std::map<std::string, std::string>::iterator it2 = HeaderMap.find("Content-Type");
-    std::map<std::string, std::string>::iterator it3 = HeaderMap.find("Transfer-Encoding");
-    if (it1 != HeaderMap.end() && it3 != HeaderMap.end())
+    std::map<std::string, std::string>::iterator it1 = headerMap.find("Content-Length");
+    std::map<std::string, std::string>::iterator it2 = headerMap.find("Content-Type");
+    std::map<std::string, std::string>::iterator it3 = headerMap.find("Transfer-Encoding");
+    if (it1 != headerMap.end() && it3 != headerMap.end())
         throw HttpError(BAD_REQUEST);
-    if ( it1 == HeaderMap.end() &&  it3 == HeaderMap.end())
+    if ( it1 == headerMap.end() &&  it3 == headerMap.end())
         throw HttpError(BAD_REQUEST);
-    if (it2 ==  HeaderMap.end())
+    if (it2 ==  headerMap.end())
         throw HttpError(BAD_REQUEST);
 }
 
@@ -265,7 +270,7 @@ int HttpError::getErrorCode()
 
 std::map<std::string , std::string>  Request::getHeaderMap() const
 {
-    return(HeaderMap);
+    return(headerMap);
 }
 
 reqLine Request::getRequestLine() const
