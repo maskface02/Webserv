@@ -71,7 +71,7 @@ void PollDispatcher::handleCgiPipeRead() {
       if (client_it != _clients.end() &&
           (client_it->second->state == STATE_WRITING_RESPONSE ||
            client_it->second->state == STATE_CGI_ERROR)) {
-        client_it->second->processCgi->GeneretCgiResponse();
+        client_it->second->processCgi->generetCgiResponse();
         _logger.logRequest(
             client_it->second->ip,
             client_it->second->request->getRequestLine().Method,

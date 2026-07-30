@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/15 13:28:58 by zatais            #+#    #+#             */
-/*   Updated: 2026/07/29 15:12:56 by zatais           ###   ########.fr       */
+/*   Updated: 2026/07/30 11:29:19 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,8 +26,7 @@ private:
 public:
   Logger();
   ~Logger();
-  static std::string
-  statusText(int status); // change it to  static + public => Lalla
+  static std::string statusText(int status);
   void info(const std::string &message);
   void warn(const std::string &message);
   void error(const std::string &message);

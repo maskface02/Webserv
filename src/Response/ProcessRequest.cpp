@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/16 12:06:38 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/07/27 08:33:06 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/30 11:13:17 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,9 +29,9 @@ request(client->request),is_CgiRq(false)
         extract_file_extension();
         check_Cgi();
         if(!is_CgiRq && code != 0)
-            throw HttpError(code);
+            throw HttpStatus(code);
     }
-    catch( HttpError& e)
+    catch(HttpStatus& e)
     {
         status_code = e.getErrorCode();
     }
@@ -40,7 +40,7 @@ request(client->request),is_CgiRq(false)
 void ProcessRequest::check_status()
 {
     if (request->getStatusCode() != 0)
-       throw HttpError(request->getStatusCode());
+       throw HttpStatus(request->getStatusCode());
 }
 
 void ProcessRequest::match_location(ServerConfig& server)
@@ -80,7 +80,7 @@ void ProcessRequest::match_location(ServerConfig& server)
     if ( !found)
     {
         if (location.empty()) 
-           throw HttpError(404);
+           throw HttpStatus(NOT_FOUND );
         target_location = location.rbegin()->second; 
     }
 
@@ -112,7 +112,7 @@ void ProcessRequest::check_redirction()
     {
       is_RedirecRq = true;
       redirect_url = target_location.redirect.url;
-      throw HttpError(target_location.redirect.code);
+      throw HttpStatus(target_location.redirect.code);
     }
 }
 
@@ -124,7 +124,7 @@ void    ProcessRequest::check_max_body_size(ServerConfig& srv)
         if (!max_size)
             max_size = srv.client_max_body_size;
         if (request->getBody().size() > max_size)
-            throw HttpError(CONTENT_TOO_LARGE );
+            throw HttpStatus(CONTENT_TOO_LARGE );
     }
 }
 
@@ -138,7 +138,7 @@ void ProcessRequest::check_allowed_method()
             return;
         i++;
     }
-   throw HttpError(METHOD_NOT_ALLOWED);
+   throw HttpStatus(METHOD_NOT_ALLOWED);
 }
 
 int ProcessRequest::define_type()
@@ -164,7 +164,9 @@ int ProcessRequest::define_type()
                             return(NOT_FOUND);
                         std::stringstream port_ss;
                         port_ss << request->getPort();
-                        redirect_url = "http://" + request->getHost() + ":" + port_ss.str() + request->getPath() + "/";
+                        is_RedirecRq = true;
+                        redirect_url = "http://" + request->getHost() + ":" + port_ss.str() 
+                                            + request->getPath() + "/";
                         return(MOVED_PERMANENTLY);
                     } 
                 }
@@ -185,8 +187,8 @@ int ProcessRequest::define_type()
 
 void ProcessRequest::check_index_file()
 {
-   size_t i = 0;
-   size_t j = 0;
+    size_t i = 0;
+    size_t j = 0;
     std::vector<std::string> IndexVect = target_location.index;
     std::vector<std::string> files;
     DIR* op_dir;
@@ -194,7 +196,7 @@ void ProcessRequest::check_index_file()
 
     op_dir = opendir(resource_path.c_str());
     if (!op_dir)
-       throw HttpError(FORBIDDEN);
+       throw HttpStatus(FORBIDDEN);
     while ((read_dir = readdir(op_dir)) != NULL)
     {
         files.push_back(read_dir->d_name);
@@ -235,7 +237,7 @@ void    ProcessRequest::extract_file_extension()
     extension = lowerString(extension);
 }
 
-std::string ProcessRequest::lowerString(std::string& extension)
+std::string lowerString(std::string& extension)
 {
     std::string new_str;
     size_t i = 0;
@@ -331,3 +333,5 @@ void        ProcessRequest::setRedirctUrl(std::string& url)
 {
     redirect_url = url;
 }
+
+ProcessRequest::~ProcessRequest(){}
