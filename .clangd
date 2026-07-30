@@ -1,5 +1,0 @@
-- CompileFlags:
-    Add:
-      - -std=c++98
-      - -I
-      - /home/maskface/Desktop/Projects/Webserv/include

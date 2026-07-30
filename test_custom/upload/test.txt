@@ -1,0 +1,3 @@
+Hello from Webserv!
+This is a static text file for testing GET requests.
+
