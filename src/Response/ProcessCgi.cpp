@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/17 12:24:10 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/07/29 23:21:05 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/30 11:18:13 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -109,6 +109,7 @@ void ProcessCgi::errorResponse(int status_code,std::string status_messg)
     std::string addHeader;
     std::string addLine;
     std::string &cgi_output = _client->cgi_output_buffer;
+    std::string lower_header;
     
     addLine = "HTTP/1.1 200 OK\r\n";  
     _client->processRq->setStatusCode(200);
@@ -124,19 +125,20 @@ void ProcessCgi::errorResponse(int status_code,std::string status_messg)
       return;
     }
     addHeader = cgi_output.substr(0, p_body) + "\r\n";
+    lower_header = lowerString(addHeader);
     defineStatusHeader(addHeader,addLine); 
     
     if(_client->is_new)
     addHeader +=  "Set-Cookie: session_id=" + _client->session_id + "; Path=/; HttpOnly;" + "\r\n";
     if (cgi_output.size() > p_body + 4) 
     {
-      if (cgi_output.find("Content-Type") == std::string::npos)
+      if (lower_header.find("content-type") == std::string::npos)
       {
         errorResponse(BAD_GATEWAY,"Bad Gateway");
         return;
       }
       _client->write_buffer.append(cgi_output.substr(p_body + 4));
-      if (cgi_output.find("Content-Length") == std::string::npos) 
+      if (lower_header.find("content-length") == std::string::npos) 
       { 
         std::stringstream str;
         str << "Content-Length: " << _client->write_buffer.size() << "\r\n";

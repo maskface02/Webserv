@@ -27,7 +27,7 @@ class ServeStaticRq
     static std::string                 html_Error_page(int status_code, std::string stat);
     void                               upload_files();
     std::vector<std::string>           directory_files(std::string& path);
-    void                               check_exist_file(std::string path, std::vector<std::string>& files);
+    int                               check_exist_file(std::string path, std::vector<std::string>& files);
     std::string                        last_modif_time(struct stat s);
    
     std::string                        getRespBody() const;

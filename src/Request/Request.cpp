@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/22 10:02:50 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/07/29 23:24:55 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/30 10:35:59 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,7 +29,7 @@ Request::Request(Client* _client, std::string& Rq ,size_t request_size)
             header_end = pars_lineRequest(Rq, LineEnd);
             if (header_end !=  std::string::npos && header_end < request_size)
                 pars_Headers(Rq, LineEnd + 2,header_end + 2);
-            else    throw HttpError(BAD_REQUEST);
+            else    throw HttpStatus(BAD_REQUEST);
             if (connection == "keep-alive")
                 client->keep_alive = true;//check init
             if ((header_end + 4) <  request_size &&  requestLine.Method == "POST")
@@ -38,9 +38,9 @@ Request::Request(Client* _client, std::string& Rq ,size_t request_size)
                 pars_Body(Rq, header_end + 4,request_size);
             }
         }
-        else   throw(HttpError(BAD_REQUEST));  
+        else   throw(HttpStatus(BAD_REQUEST));  
     }
-    catch( HttpError& e)
+    catch( HttpStatus& e)
     {
         status_code = e.getErrorCode();
     }
@@ -69,7 +69,7 @@ void  Request::pars_Headers(std::string& Rq, size_t HeadersSrart ,size_t Headers
     std::string Value;
     std::string Headers = Rq.substr(HeadersSrart,HeadersEnd - HeadersSrart);
     if (Headers.empty())
-        throw HttpError(BAD_REQUEST);
+        throw HttpStatus(BAD_REQUEST);
     while ((lineEnd = Headers.find("\r\n", lineStart)) != std::string::npos)
     { 
         line = Headers.substr(lineStart, lineEnd - lineStart);
@@ -88,11 +88,11 @@ void  Request::pars_Headers(std::string& Rq, size_t HeadersSrart ,size_t Headers
             it = headerMap.begin();
         }
         else
-            throw HttpError(BAD_REQUEST);
+            throw HttpStatus(BAD_REQUEST);
         lineStart = lineEnd + 2;
         countHead++;
         if (countHead > 100)
-            throw HttpError(BAD_REQUEST);
+            throw HttpStatus(BAD_REQUEST);
     }
     check_existe("Host");
     define_session_id();
@@ -105,7 +105,7 @@ void Request::pars_Body(std::string& RqBody, size_t bodyStart,size_t req_size)
     size_t pos = 0; 
 
     if (isChunked == false && (req_size - bodyStart) < content_lenght)
-        throw(HttpError(BAD_REQUEST));     
+        throw(HttpStatus(BAD_REQUEST));     
     if (isChunked)
     {
         pars_chunked_body(RqBody,bodyStart,req_size);
@@ -140,7 +140,7 @@ void Request::pars_chunked_body(const std::string& chnk_body,size_t body_start, 
         if (Val == 0)
             break;
         if (indx + Val + 2 > req_size)
-            throw HttpError(BAD_REQUEST);
+            throw HttpStatus(BAD_REQUEST);
         indx+= 2;
         body.append(chnk_body, indx, Val);
         indx += Val;
@@ -148,7 +148,7 @@ void Request::pars_chunked_body(const std::string& chnk_body,size_t body_start, 
         if (indx  < req_size && chnk_body[indx] == '\r'  && chnk_body[indx + 1] == '\n')
             indx+= 2;
         else 
-            throw(HttpError( BAD_REQUEST));
+            throw(HttpStatus( BAD_REQUEST));
     }
 }
 
@@ -208,7 +208,7 @@ std::string Request::find_boundry_body(std::string& part)
 {
     size_t body_start = part.find("\r\n\r\n");
     if (body_start == std::string::npos)
-          throw(HttpError(BAD_REQUEST));
+          throw(HttpStatus(BAD_REQUEST));
     return(part.substr(body_start + 4));
 }
 
