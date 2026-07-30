@@ -89,11 +89,18 @@ run_test 10 "CGI Error 500"         "500" curl -s -o /dev/null -w "%{http_code}"
 run_test 11 "CGI Not Found (404)"   "404" curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/cgi/nonexistent.py"
 echo ""
 
+echo -e "${YELLOW}--- Server Sessions ---${NC}"
+run_test 12 "Session Access (With Cookie)"  "200" curl -s -o /dev/null -w "%{http_code}" -b "session_id=test123" "$BASE_URL/sessions/access.py"
+run_test 13 "Session Access (No Cookie)"    "403" curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/sessions/access.py"
+run_test 14 "Session Logout"                "200" curl -s -o /dev/null -w "%{http_code}" -X POST -b "session_id=test123" "$BASE_URL/sessions/logout.py"
+run_test 15 "Session Logout (No Session)"   "400" curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE_URL/sessions/logout.py"
+echo ""
+
 echo -e "${YELLOW}--- PHP CGI ---${NC}"
 if command -v php-cgi &>/dev/null; then
-    run_test 12 "PHP Info"           "200" curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/php/info.php"
-    run_test 13 "PHP POST Form"      "200" curl -s -o /dev/null -w "%{http_code}" -X POST -d "name=test" "$BASE_URL/php/form_handler.php"
-    run_test 14 "PHP Session"        "200" curl -s -o /dev/null -w "%{http_code}" -c /tmp/cookies.txt -b /tmp/cookies.txt "$BASE_URL/php/session_test.php"
+    run_test 16 "PHP Info"           "200" curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/php/info.php"
+    run_test 17 "PHP POST Form"      "200" curl -s -o /dev/null -w "%{http_code}" -X POST -d "name=test" "$BASE_URL/php/form_handler.php"
+    run_test 18 "PHP Session"        "200" curl -s -o /dev/null -w "%{http_code}" -c /tmp/cookies.txt -b /tmp/cookies.txt "$BASE_URL/php/session_test.php"
 else
     echo -e "  ${YELLOW}[SKIP]${NC} PHP CGI tests (php-cgi not installed)"
 fi
@@ -101,34 +108,33 @@ echo ""
 
 echo -e "${YELLOW}--- Upload & POST ---${NC}"
 rm -rf upload/* 2>/dev/null
-run_test 15 "Upload Form (GET)"      "200" curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/upload"
-run_test 16 "File Upload (POST)"     "201" curl -s -o /dev/null -w "%{http_code}" -X POST -F "file=@html/static/test.txt" "$BASE_URL/upload"
-run_test 17 "Upload Dir Listing"     "200" curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/upload/"
-run_test 18 "POST Static Page"       "200" curl -s -o /dev/null -w "%{http_code}" -X POST -d "name=test" "$BASE_URL/post"
+run_test 19 "Upload Form (GET)"      "200" curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/upload"
+run_test 20 "File Upload (POST)"     "201" curl -s -o /dev/null -w "%{http_code}" -X POST -F "file=@html/static/test.txt" "$BASE_URL/upload"
+run_test 21 "Upload Dir Listing"     "200" curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/upload/"
 echo ""
 
 echo -e "${YELLOW}--- DELETE ---${NC}"
 cp static_files/file2.txt /tmp/file2_backup.txt 2>/dev/null
-run_test 19 "Delete File"            "200" curl -s -o /dev/null -w "%{http_code}" -X DELETE "$BASE_URL/delete/file2.txt"
-run_test 20 "Delete Nonexistent"     "404" curl -s -o /dev/null -w "%{http_code}" -X DELETE "$BASE_URL/delete/nonexistent.txt"
+run_test 22 "Delete File"            "200" curl -s -o /dev/null -w "%{http_code}" -X DELETE "$BASE_URL/delete/file2.txt"
+run_test 23 "Delete Nonexistent"     "404" curl -s -o /dev/null -w "%{http_code}" -X DELETE "$BASE_URL/delete/nonexistent.txt"
 cp /tmp/file2_backup.txt static_files/file2.txt 2>/dev/null
 echo ""
 
 echo -e "${YELLOW}--- Redirects ---${NC}"
-run_test 21 "301 Redirect"           "301" curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/redirect"
+run_test 24 "301 Redirect"           "301" curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/redirect"
 echo ""
 
 echo -e "${YELLOW}--- Error Pages ---${NC}"
-run_test 22 "404 Not Found"          "404" curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/nonexistent"
-run_test 23 "413 Payload Too Large"  "413" curl -s -o /dev/null -w "%{http_code}" -X POST -d "$(python3 -c 'print("A"*200)')" "$BASE_URL/small_only"
+run_test 25 "404 Not Found"          "404" curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/nonexistent"
+run_test 26 "413 Payload Too Large"  "413" curl -s -o /dev/null -w "%{http_code}" -X POST -d "$(python3 -c 'print("A"*200)')" "$BASE_URL/small_only"
 echo ""
 
 echo -e "${YELLOW}--- HTTP Compliance & Security ---${NC}"
-run_test_raw 24 "Missing Host Header"    "400" printf '"GET / HTTP/1.1\r\n\r\n"' '|' nc -w 2 localhost 8080
-run_test 25 "HTTP/1.0 Request"           "200" curl -s -o /dev/null -w "%{http_code}" --http1.0 "$BASE_URL/"
-run_test 26 "POST with data"             "200" curl -s -o /dev/null -w "%{http_code}" -X POST -d "test=data" "$BASE_URL/post"
-run_test 27 "Keep-Alive"                 "200" curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/" "$BASE_URL/static/test.txt"
-run_test_raw 28 "Chunked Transfer"       "400" printf '"POST /post HTTP/1.1\r\nHost: localhost\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nhello\r\n0\r\n\r\n"' '|' nc -w 2 localhost 8080
+run_test_raw 27 "Missing Host Header"    "400" printf '"GET / HTTP/1.1\r\n\r\n"' '|' nc -w 2 localhost 8080
+run_test 28 "HTTP/1.0 Request"           "200" curl -s -o /dev/null -w "%{http_code}" --http1.0 "$BASE_URL/"
+run_test 29 "POST Method Not Allowed"  "405" curl -s -o /dev/null -w "%{http_code}" -X POST -d "test=data" "$BASE_URL/post"
+run_test 30 "Keep-Alive"                 "200" curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/" "$BASE_URL/static/test.txt"
+run_test_raw 31 "Chunked Transfer"       "400" printf '"POST /post HTTP/1.1\r\nHost: localhost\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nhello\r\n0\r\n\r\n"' '|' nc -w 2 localhost 8080
 echo ""
 
 echo -e "${CYAN}========================================${NC}"

@@ -137,17 +137,52 @@
         </div>
 
         <div class="section">
+            <div class="section-title cgi-py">Server Sessions</div>
+            <div class="grid">
+                <div class="card">
+                    <h3>11. Session Access (With Cookie)</h3>
+                    <div class="endpoint">GET /sessions/access.py (with session cookie)</div>
+                    <div class="expected">Expected: 200 OK | Access Granted with session counter</div>
+                    <div class="curl">curl -i -b "session_id=test123" http://localhost:8080/sessions/access.py</div>
+                    <a class="btn btn-cgi" href="/sessions/access.py">Test</a>
+                    <button class="btn-copy" onclick="copyCurl(this)">Copy curl</button>
+                </div>
+                <div class="card">
+                    <h3>12. Session Access (No Cookie)</h3>
+                    <div class="endpoint">GET /sessions/access.py (without session cookie)</div>
+                    <div class="expected">Expected: 403 Forbidden | Access Denied</div>
+                    <div class="curl">curl -i http://localhost:8080/sessions/access.py</div>
+                    <button class="btn-copy" onclick="copyCurl(this)">Copy curl</button>
+                </div>
+                <div class="card">
+                    <h3>13. Session Logout</h3>
+                    <div class="endpoint">POST /sessions/logout.py</div>
+                    <div class="expected">Expected: 200 OK | Session cleared with Set-Cookie header</div>
+                    <div class="curl">curl -i -X POST -b "session_id=test123" http://localhost:8080/sessions/logout.py</div>
+                    <button class="btn-copy" onclick="copyCurl(this)">Copy curl</button>
+                </div>
+                <div class="card">
+                    <h3>14. Session Logout (No Session)</h3>
+                    <div class="endpoint">POST /sessions/logout.py (without session cookie)</div>
+                    <div class="expected">Expected: 400 Bad Request | No session found</div>
+                    <div class="curl">curl -i -X POST http://localhost:8080/sessions/logout.py</div>
+                    <button class="btn-copy" onclick="copyCurl(this)">Copy curl</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
             <div class="section-title cgi-php">PHP CGI</div>
             <div class="grid">
                 <div class="card">
-                    <h3>11. PHP Info (phpinfo)</h3>
+                    <h3>15. PHP Info (phpinfo)</h3>
                     <div class="endpoint">GET /php/info.php</div>
                     <div class="expected">Expected: 200 OK | PHP configuration info</div>
                     <div class="curl">curl -i http://localhost:8080/php/info.php</div>
                     <a class="btn btn-php" href="/php/info.php">Test</a>
                 </div>
                 <div class="card">
-                    <h3>12. PHP POST Form</h3>
+                    <h3>16. PHP POST Form</h3>
                     <div class="endpoint">POST /php/form_handler.php</div>
                     <div class="expected">Expected: 200 OK | Echoed POST data</div>
                     <div class="curl">curl -i -X POST -d "name=webserv&lang=php" http://localhost:8080/php/form_handler.php</div>
@@ -155,7 +190,7 @@
                     <button class="btn-copy" onclick="copyCurl(this)">Copy curl</button>
                 </div>
                 <div class="card">
-                    <h3>13. PHP Session Test</h3>
+                    <h3>17. PHP Session Test</h3>
                     <div class="endpoint">GET /php/session_test.php</div>
                     <div class="expected">Expected: 200 OK | Session counter with cookies</div>
                     <div class="curl">curl -i -c cookies.txt -b cookies.txt http://localhost:8080/php/session_test.php</div>
@@ -169,32 +204,25 @@
             <div class="section-title upload">Upload & POST</div>
             <div class="grid">
                 <div class="card">
-                    <h3>14. File Upload Form</h3>
+                    <h3>18. File Upload Form</h3>
                     <div class="endpoint">GET /upload</div>
                     <div class="expected">Expected: 200 OK | Upload form page</div>
                     <div class="curl">curl -i http://localhost:8080/upload</div>
                     <a class="btn btn-upload" href="/upload">Test (Form)</a>
                 </div>
                 <div class="card">
-                    <h3>15. File Upload (POST)</h3>
+                    <h3>19. File Upload (POST)</h3>
                     <div class="endpoint">POST /upload (multipart)</div>
                     <div class="expected">Expected: 201 Created | File saved to disk</div>
                     <div class="curl">curl -i -X POST -F "file=@test_custom/html/static/test.txt" http://localhost:8080/upload</div>
                     <button class="btn-copy" onclick="copyCurl(this)">Copy curl</button>
                 </div>
                 <div class="card">
-                    <h3>16. Upload Directory Listing</h3>
+                    <h3>20. Upload Directory Listing</h3>
                     <div class="endpoint">GET /upload/</div>
                     <div class="expected">Expected: 200 OK | Autoindex with uploaded files</div>
                     <div class="curl">curl -i http://localhost:8080/upload/</div>
                     <a class="btn btn-get" href="/upload/">Test</a>
-                </div>
-                <div class="card">
-                    <h3>17. POST Static Page</h3>
-                    <div class="endpoint">POST /post</div>
-                    <div class="expected">Expected: 200 OK | Form response</div>
-                    <div class="curl">curl -i -X POST -d "name=test&msg=hello" http://localhost:8080/post</div>
-                    <a class="btn btn-post" href="/post">Test (Form)</a>
                 </div>
             </div>
         </div>
@@ -203,14 +231,14 @@
             <div class="section-title delete">DELETE</div>
             <div class="grid">
                 <div class="card">
-                    <h3>18. Delete File</h3>
+                    <h3>21. Delete File</h3>
                     <div class="endpoint">DELETE /delete/file1.txt</div>
                     <div class="expected">Expected: 200 OK or 204 No Content | File removed</div>
                     <div class="curl">curl -i -X DELETE http://localhost:8080/delete/file1.txt</div>
                     <button class="btn-copy" onclick="copyCurl(this)">Copy curl</button>
                 </div>
                 <div class="card">
-                    <h3>19. Delete Nonexistent File</h3>
+                    <h3>22. Delete Nonexistent File</h3>
                     <div class="endpoint">DELETE /delete/nonexistent.txt</div>
                     <div class="expected">Expected: 404 Not Found</div>
                     <div class="curl">curl -i -X DELETE http://localhost:8080/delete/nonexistent.txt</div>
@@ -223,7 +251,7 @@
             <div class="section-title redirect">Redirects</div>
             <div class="grid">
                 <div class="card">
-                    <h3>20. 301 Redirect</h3>
+                    <h3>23. 301 Redirect</h3>
                     <div class="endpoint">GET /redirect</div>
                     <div class="expected">Expected: 301 Moved Permanently | Location: http://localhost:8080/</div>
                     <div class="curl">curl -i http://localhost:8080/redirect</div>
@@ -236,28 +264,28 @@
             <div class="section-title error">Error Pages</div>
             <div class="grid">
                 <div class="card">
-                    <h3>21. 404 Not Found</h3>
+                    <h3>24. 404 Not Found</h3>
                     <div class="endpoint">GET /nonexistent</div>
                     <div class="expected">Expected: 404 | Custom 404.html error page</div>
                     <div class="curl">curl -i http://localhost:8080/nonexistent</div>
                     <a class="btn btn-error" href="/nonexistent">Test</a>
                 </div>
                 <div class="card">
-                    <h3>22. 405 Method Not Allowed</h3>
+                    <h3>25. 404 Not Found</h3>
                     <div class="endpoint">DELETE / (root)</div>
-                    <div class="expected">Expected: 405 | Custom 405.html error page</div>
+                    <div class="expected">Expected: 404 | Custom 404.html error page</div>
                     <div class="curl">curl -i -X DELETE http://localhost:8080/</div>
                     <button class="btn-copy" onclick="copyCurl(this)">Copy curl</button>
                 </div>
                 <div class="card">
-                    <h3>23. 413 Payload Too Large</h3>
+                    <h3>26. 413 Payload Too Large</h3>
                     <div class="endpoint">POST /small_only (body > 100 bytes)</div>
                     <div class="expected">Expected: 413 | Custom 413.html error page</div>
                     <div class="curl">curl -i -X POST -d "$(python3 -c 'print("A"*200)')" http://localhost:8080/small_only</div>
                     <button class="btn-copy" onclick="copyCurl(this)">Copy curl</button>
                 </div>
                 <div class="card">
-                    <h3>24. 404 CGI Not Found</h3>
+                    <h3>27. 404 CGI Not Found</h3>
                     <div class="endpoint">GET /cgi/missing.py</div>
                     <div class="expected">Expected: 404 | Custom error page for missing CGI</div>
                     <div class="curl">curl -i http://localhost:8080/cgi/missing.py</div>
@@ -270,35 +298,35 @@
             <div class="section-title http">HTTP Compliance & Security</div>
             <div class="grid">
                 <div class="card">
-                    <h3>25. Missing Host Header</h3>
+                    <h3>28. Missing Host Header</h3>
                     <div class="endpoint">Raw HTTP without Host header</div>
                     <div class="expected">Expected: 400 Bad Request</div>
                     <div class="curl">printf "GET / HTTP/1.1\r\n\r\n" | nc localhost 8080</div>
                     <button class="btn-copy" onclick="copyCurl(this)">Copy curl</button>
                 </div>
                 <div class="card">
-                    <h3>26. HTTP/1.0 Request</h3>
+                    <h3>29. HTTP/1.0 Request</h3>
                     <div class="endpoint">GET / HTTP/1.0</div>
                     <div class="expected">Expected: 200 OK | Backward compatible</div>
                     <div class="curl">curl -i --http1.0 http://localhost:8080/</div>
                     <button class="btn-copy" onclick="copyCurl(this)">Copy curl</button>
                 </div>
                 <div class="card">
-                    <h3>27. POST with data</h3>
-                    <div class="endpoint">POST /post with form data</div>
-                    <div class="expected">Expected: 200 OK</div>
+                    <h3>30. POST Method Not Allowed</h3>
+                    <div class="endpoint">POST /post (method not allowed)</div>
+                    <div class="expected">Expected: 405 Method Not Allowed</div>
                     <div class="curl">curl -i -X POST -d "test=data" http://localhost:8080/post</div>
                     <button class="btn-copy" onclick="copyCurl(this)">Copy curl</button>
                 </div>
                 <div class="card">
-                    <h3>28. Keep-Alive (Multiple Requests)</h3>
+                    <h3>31. Keep-Alive (Multiple Requests)</h3>
                     <div class="endpoint">Two requests on same connection</div>
                     <div class="expected">Expected: Both return 200 OK</div>
                     <div class="curl">curl -i http://localhost:8080/ http://localhost:8080/static/test.txt</div>
                     <button class="btn-copy" onclick="copyCurl(this)">Copy curl</button>
                 </div>
                 <div class="card">
-                    <h3>29. Chunked Transfer Encoding</h3>
+                    <h3>32. Chunked Transfer Encoding</h3>
                     <div class="endpoint">POST with Transfer-Encoding: chunked</div>
                     <div class="expected">Expected: 400 Bad Request | Chunked encoding not supported</div>
                     <div class="curl">printf "POST /post HTTP/1.1\r\nHost: localhost\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nhello\r\n0\r\n\r\n" | nc localhost 8080</div>
