@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/22 10:02:50 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/07/30 10:35:59 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/30 13:52:01 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,7 +31,7 @@ Request::Request(Client* _client, std::string& Rq ,size_t request_size)
                 pars_Headers(Rq, LineEnd + 2,header_end + 2);
             else    throw HttpStatus(BAD_REQUEST);
             if (connection == "keep-alive")
-                client->keep_alive = true;//check init
+                client->keep_alive = true;
             if ((header_end + 4) <  request_size &&  requestLine.Method == "POST")
             {
                 check_Post();
@@ -148,7 +148,7 @@ void Request::pars_chunked_body(const std::string& chnk_body,size_t body_start, 
         if (indx  < req_size && chnk_body[indx] == '\r'  && chnk_body[indx + 1] == '\n')
             indx+= 2;
         else 
-            throw(HttpStatus( BAD_REQUEST));
+            throw(HttpStatus(BAD_REQUEST));
     }
 }
 
@@ -180,7 +180,7 @@ std::vector<std::string> Request:: split_boundary_part(std::string& boundary)
     size_t end = 0;
     while((end = body.find(boundary,start)) != std::string::npos)
     {
-       split_part.push_back(body.substr(start,end - start));
+        split_part.push_back(body.substr(start,end - start));
         start = end + boundary.length();
     }
     return(split_part);

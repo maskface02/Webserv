@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/17 12:24:10 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/07/30 11:18:13 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/30 13:44:22 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,6 +48,7 @@ void ProcessCgi::envMap()
   env_map["SERVER_NAME"] = _client->request->getHost();
   env_map["SERVER_PROTOCOL"] = _client->request->getRequestLine().HttpVers;
   env_map["SERVER_SOFTWARE"] = "Webserver/1.1";
+  env_map["REDIRECT_STATUS"] = "200";
   std::map<std::string, Session>::iterator it;
   it = sessions->find(_client->session_id);
   if (it != sessions->end())
@@ -112,10 +113,10 @@ void ProcessCgi::errorResponse(int status_code,std::string status_messg)
     std::string lower_header;
     
     addLine = "HTTP/1.1 200 OK\r\n";  
-    _client->processRq->setStatusCode(200);
-    
+    _client->processRq->setStatusCode(OK);
+  
     if (_client->state == STATE_CGI_ERROR) {
-      errorResponse(500,"Internal Server Error");
+      errorResponse(INTERNAL_SERVER_ERROR ,"Internal Server Error");
       return;
     }
     size_t p_body = 0;
@@ -233,4 +234,4 @@ char env_meta_data(char c)
   
   char **ProcessCgi::getEnv() const { return (env); }
   std::string &ProcessCgi::getCgiPath() { return (cgi_path); }
-  
+

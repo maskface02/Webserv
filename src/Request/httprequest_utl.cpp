@@ -6,7 +6,7 @@
 /*   By: lasoubai <lasoubai@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 19:54:39 by lasoubai          #+#    #+#             */
-/*   Updated: 2026/07/30 11:15:52 by lasoubai         ###   ########.fr       */
+/*   Updated: 2026/07/30 12:44:06 by lasoubai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -163,7 +163,7 @@ void Request::store_variable(std::string& key, std::string& value)
         isChunked = true;
     if (key_lower == "host")
         store_host_port(value);
-    if (key_lower == "content-Type")
+    if (key_lower == "content-type")
         content_type = value;
     if (key_lower == "cookie")
          cookies_header = value;

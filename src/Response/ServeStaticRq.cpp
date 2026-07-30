@@ -168,9 +168,16 @@ void ServeStaticRq::servePostRq() {
     file_path = client->processRq->getLocation().upload_store;
     if ((pos = file_path.rfind("/")) != file_path.length() - 1)
       file_path += "/";
+     struct stat pathStat;
 
+    if (stat(file_path.c_str(),&pathStat) )
+    {
+      throw HttpStatus(INTERNAL_SERVER_ERROR);
+    } 
     if (client->request->is_boundry)
+    {
       upload_files();
+    }
     else {
       if (!client->processRq->is_dir)
       {
@@ -200,7 +207,7 @@ void ServeStaticRq::upload_files() {
   std::vector<std::string> files = directory_files(file_path);
   it = boundry.begin();
   if (boundry.empty())
-    throw HttpStatus(NOT_FOUND );
+    throw HttpStatus(NOT_FOUND);
   while (it != boundry.end()) {
     path += it->first;
     if (check_exist_file(it->first, files))
