@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Webserv Test Dashboard</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Courier New', monospace; background: #1a1a2e; color: #eee; min-height: 100vh; }
+        .header { background: #16213e; padding: 30px; text-align: center; border-bottom: 3px solid #e94560; }
+        .header h1 { font-size: 36px; color: #e94560; margin-bottom: 10px; }
+        .header p { color: #aaa; font-size: 14px; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .section { margin: 30px 0; }
+        .section-title { font-size: 20px; padding: 10px 15px; margin-bottom: 15px; border-radius: 5px; }
+        .section-title.static { background: #1b5e20; border-left: 4px solid #4CAF50; }
+        .section-title.cgi-py { background: #0d47a1; border-left: 4px solid #2196F3; }
+        .section-title.cgi-php { background: #4a148c; border-left: 4px solid #9C27B0; }
+        .section-title.upload { background: #e65100; border-left: 4px solid #FF9800; }
+        .section-title.delete { background: #b71c1c; border-left: 4px solid #ef5350; }
+        .section-title.redirect { background: #006064; border-left: 4px solid #00BCD4; }
+        .section-title.error { background: #880e4f; border-left: 4px solid #e91e63; }
+        .section-title.http { background: #f57f17; border-left: 4px solid #FFEB3B; color: #333; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 15px; }
+        .card { background: #16213e; border-radius: 8px; padding: 15px; border: 1px solid #0f3460; transition: transform 0.2s, border-color 0.2s; }
+        .card:hover { transform: translateY(-2px); border-color: #e94560; }
+        .card h3 { font-size: 14px; margin-bottom: 8px; }
+        .card .endpoint { color: #aaa; font-size: 12px; margin-bottom: 8px; }
+        .card .expected { font-size: 11px; color: #4CAF50; margin-bottom: 10px; }
+        .card .curl { background: #0a0a1a; padding: 8px; border-radius: 4px; font-size: 11px; color: #80cbc4; word-break: break-all; margin-bottom: 10px; }
+        .card .btn { display: inline-block; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-size: 12px; font-weight: bold; margin-right: 5px; margin-bottom: 5px; }
+        .btn-get { background: #4CAF50; color: white; }
+        .btn-post { background: #2196F3; color: white; }
+        .btn-delete { background: #ef5350; color: white; }
+        .btn-redirect { background: #00BCD4; color: white; }
+        .btn-error { background: #e91e63; color: white; }
+        .btn-cgi { background: #FF9800; color: white; }
+        .btn-php { background: #9C27B0; color: white; }
+        .btn-upload { background: #FF9800; color: white; }
+        .btn-copy { background: #607D8B; color: white; cursor: pointer; border: none; padding: 8px 16px; border-radius: 4px; font-size: 12px; font-weight: bold; margin-right: 5px; margin-bottom: 5px; }
+        .btn-copy:hover { background: #455A64; }
+        .btn-copy.copied { background: #4CAF50; }
+        .status-200 { color: #4CAF50; }
+        .status-301 { color: #00BCD4; }
+        .status-4xx { color: #FF9800; }
+        .status-5xx { color: #ef5350; }
+        .footer { text-align: center; padding: 20px; color: #555; font-size: 12px; border-top: 1px solid #0f3460; margin-top: 30px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Webserv Test Dashboard</h1>
+        <p>42 Webserv - Comprehensive Test Suite | All tests run on http://localhost:8080</p>
+    </div>
+    <div class="container">
+
+        <div class="section">
+            <div class="section-title static">Static Files (GET)</div>
+            <div class="grid">
+                <div class="card">
+                    <h3>1. Static Text File</h3>
+                    <div class="endpoint">GET /static/test.txt</div>
+                    <div class="expected">Expected: 200 OK | Content-Type: text/plain</div>
+                    <div class="curl">curl -i http://localhost:8080/static/test.txt</div>
+                    <a class="btn btn-get" href="/static/test.txt">Test</a>
+                </div>
+                <div class="card">
+                    <h3>2. Static JSON File</h3>
+                    <div class="endpoint">GET /static/data.json</div>
+                    <div class="expected">Expected: 200 OK | Content-Type: application/json</div>
+                    <div class="curl">curl -i http://localhost:8080/static/data.json</div>
+                    <a class="btn btn-get" href="/static/data.json">Test</a>
+                </div>
+                <div class="card">
+                    <h3>3. Binary File Download</h3>
+                    <div class="endpoint">GET /static/binary.dat</div>
+                    <div class="expected">Expected: 200 OK | Content-Type: application/octet-stream</div>
+                    <div class="curl">curl -i http://localhost:8080/static/binary.dat</div>
+                    <a class="btn btn-get" href="/static/binary.dat">Test</a>
+                </div>
+                <div class="card">
+                    <h3>4. Directory Listing (Autoindex)</h3>
+                    <div class="endpoint">GET /files/</div>
+                    <div class="expected">Expected: 200 OK | HTML directory listing</div>
+                    <div class="curl">curl -i http://localhost:8080/files/</div>
+                    <a class="btn btn-get" href="/files/">Test</a>
+                </div>
+                <div class="card">
+                    <h3>5. Nested Directory Listing</h3>
+                    <div class="endpoint">GET /files/subfolder/</div>
+                    <div class="expected">Expected: 200 OK | Nested autoindex</div>
+                    <div class="curl">curl -i http://localhost:8080/files/subfolder/</div>
+                    <a class="btn btn-get" href="/files/subfolder/">Test</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title cgi-py">Python CGI</div>
+            <div class="grid">
+                <div class="card">
+                    <h3>6. CGI Environment Variables</h3>
+                    <div class="endpoint">GET /cgi/echo.py</div>
+                    <div class="expected">Expected: 200 OK | HTML table with env vars</div>
+                    <div class="curl">curl -i http://localhost:8080/cgi/echo.py</div>
+                    <a class="btn btn-cgi" href="/cgi/echo.py">Test</a>
+                </div>
+                <div class="card">
+                    <h3>7. CGI Query String</h3>
+                    <div class="endpoint">GET /cgi/query_test.py?name=webserv&lang=C++</div>
+                    <div class="expected">Expected: 200 OK | Parsed query parameters</div>
+                    <div class="curl">curl -i "http://localhost:8080/cgi/query_test.py?name=webserv&lang=C++"</div>
+                    <a class="btn btn-cgi" href="/cgi/query_test.py?name=webserv&lang=C++">Test</a>
+                </div>
+                <div class="card">
+                    <h3>8. CGI Error 500</h3>
+                    <div class="endpoint">GET /cgi/error_cgi.py</div>
+                    <div class="expected">Expected: 500 Internal Server Error</div>
+                    <div class="curl">curl -i http://localhost:8080/cgi/error_cgi.py</div>
+                    <a class="btn btn-error" href="/cgi/error_cgi.py">Test</a>
+                </div>
+                <div class="card">
+                    <h3>9. CGI Not Found (404)</h3>
+                    <div class="endpoint">GET /cgi/nonexistent.py</div>
+                    <div class="expected">Expected: 404 Not Found | Custom error page</div>
+                    <div class="curl">curl -i http://localhost:8080/cgi/nonexistent.py</div>
+                    <a class="btn btn-error" href="/cgi/nonexistent.py">Test</a>
+                </div>
+                <div class="card">
+                    <h3>10. CGI Slow (Timeout Test)</h3>
+                    <div class="endpoint">GET /cgi/slow_cgi.py</div>
+                    <div class="expected">Expected: 504 Gateway Timeout or killed</div>
+                    <div class="curl">curl -i --max-time 5 http://localhost:8080/cgi/slow_cgi.py</div>
+                    <a class="btn btn-error" href="/cgi/slow_cgi.py">Test</a>
+                    <button class="btn-copy" onclick="copyCurl(this)">Copy curl</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title cgi-php">PHP CGI</div>
+            <div class="grid">
+                <div class="card">
+                    <h3>11. PHP Info (phpinfo)</h3>
+                    <div class="endpoint">GET /php/info.php</div>
+                    <div class="expected">Expected: 200 OK | PHP configuration info</div>
+                    <div class="curl">curl -i http://localhost:8080/php/info.php</div>
+                    <a class="btn btn-php" href="/php/info.php">Test</a>
+                </div>
+                <div class="card">
+                    <h3>12. PHP POST Form</h3>
+                    <div class="endpoint">POST /php/form_handler.php</div>
+                    <div class="expected">Expected: 200 OK | Echoed POST data</div>
+                    <div class="curl">curl -i -X POST -d "name=webserv&lang=php" http://localhost:8080/php/form_handler.php</div>
+                    <a class="btn btn-php" href="/php/form_handler.php">Test (GET)</a>
+                    <button class="btn-copy" onclick="copyCurl(this)">Copy curl</button>
+                </div>
+                <div class="card">
+                    <h3>13. PHP Session Test</h3>
+                    <div class="endpoint">GET /php/session_test.php</div>
+                    <div class="expected">Expected: 200 OK | Session counter with cookies</div>
+                    <div class="curl">curl -i -c cookies.txt -b cookies.txt http://localhost:8080/php/session_test.php</div>
+                    <a class="btn btn-php" href="/php/session_test.php">Test</a>
+                    <button class="btn-copy" onclick="copyCurl(this)">Copy curl</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title upload">Upload & POST</div>
+            <div class="grid">
+                <div class="card">
+                    <h3>14. File Upload Form</h3>
+                    <div class="endpoint">GET /upload</div>
+                    <div class="expected">Expected: 200 OK | Upload form page</div>
+                    <div class="curl">curl -i http://localhost:8080/upload</div>
+                    <a class="btn btn-upload" href="/upload">Test (Form)</a>
+                </div>
+                <div class="card">
+                    <h3>15. File Upload (POST)</h3>
+                    <div class="endpoint">POST /upload (multipart)</div>
+                    <div class="expected">Expected: 201 Created | File saved to disk</div>
+                    <div class="curl">curl -i -X POST -F "file=@test_custom/html/static/test.txt" http://localhost:8080/upload</div>
+                    <button class="btn-copy" onclick="copyCurl(this)">Copy curl</button>
+                </div>
+                <div class="card">
+                    <h3>16. Upload Directory Listing</h3>
+                    <div class="endpoint">GET /upload/</div>
+                    <div class="expected">Expected: 200 OK | Autoindex with uploaded files</div>
+                    <div class="curl">curl -i http://localhost:8080/upload/</div>
+                    <a class="btn btn-get" href="/upload/">Test</a>
+                </div>
+                <div class="card">
+                    <h3>17. POST Static Page</h3>
+                    <div class="endpoint">POST /post</div>
+                    <div class="expected">Expected: 200 OK | Form response</div>
+                    <div class="curl">curl -i -X POST -d "name=test&msg=hello" http://localhost:8080/post</div>
+                    <a class="btn btn-post" href="/post">Test (Form)</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title delete">DELETE</div>
+            <div class="grid">
+                <div class="card">
+                    <h3>18. Delete File</h3>
+                    <div class="endpoint">DELETE /delete/file1.txt</div>
+                    <div class="expected">Expected: 200 OK or 204 No Content | File removed</div>
+                    <div class="curl">curl -i -X DELETE http://localhost:8080/delete/file1.txt</div>
+                    <button class="btn-copy" onclick="copyCurl(this)">Copy curl</button>
+                </div>
+                <div class="card">
+                    <h3>19. Delete Nonexistent File</h3>
+                    <div class="endpoint">DELETE /delete/nonexistent.txt</div>
+                    <div class="expected">Expected: 404 Not Found</div>
+                    <div class="curl">curl -i -X DELETE http://localhost:8080/delete/nonexistent.txt</div>
+                    <button class="btn-copy" onclick="copyCurl(this)">Copy curl</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title redirect">Redirects</div>
+            <div class="grid">
+                <div class="card">
+                    <h3>20. 301 Redirect</h3>
+                    <div class="endpoint">GET /redirect</div>
+                    <div class="expected">Expected: 301 Moved Permanently | Location: http://localhost:8080/</div>
+                    <div class="curl">curl -i http://localhost:8080/redirect</div>
+                    <a class="btn btn-redirect" href="/redirect">Test</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title error">Error Pages</div>
+            <div class="grid">
+                <div class="card">
+                    <h3>21. 404 Not Found</h3>
+                    <div class="endpoint">GET /nonexistent</div>
+                    <div class="expected">Expected: 404 | Custom 404.html error page</div>
+                    <div class="curl">curl -i http://localhost:8080/nonexistent</div>
+                    <a class="btn btn-error" href="/nonexistent">Test</a>
+                </div>
+                <div class="card">
+                    <h3>22. 405 Method Not Allowed</h3>
+                    <div class="endpoint">DELETE / (root)</div>
+                    <div class="expected">Expected: 405 | Custom 405.html error page</div>
+                    <div class="curl">curl -i -X DELETE http://localhost:8080/</div>
+                    <button class="btn-copy" onclick="copyCurl(this)">Copy curl</button>
+                </div>
+                <div class="card">
+                    <h3>23. 413 Payload Too Large</h3>
+                    <div class="endpoint">POST /small_only (body > 100 bytes)</div>
+                    <div class="expected">Expected: 413 | Custom 413.html error page</div>
+                    <div class="curl">curl -i -X POST -d "$(python3 -c 'print("A"*200)')" http://localhost:8080/small_only</div>
+                    <button class="btn-copy" onclick="copyCurl(this)">Copy curl</button>
+                </div>
+                <div class="card">
+                    <h3>24. 404 CGI Not Found</h3>
+                    <div class="endpoint">GET /cgi/missing.py</div>
+                    <div class="expected">Expected: 404 | Custom error page for missing CGI</div>
+                    <div class="curl">curl -i http://localhost:8080/cgi/missing.py</div>
+                    <a class="btn btn-error" href="/cgi/missing.py">Test</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title http">HTTP Compliance & Security</div>
+            <div class="grid">
+                <div class="card">
+                    <h3>25. Missing Host Header</h3>
+                    <div class="endpoint">Raw HTTP without Host header</div>
+                    <div class="expected">Expected: 400 Bad Request</div>
+                    <div class="curl">printf "GET / HTTP/1.1\r\n\r\n" | nc localhost 8080</div>
+                    <button class="btn-copy" onclick="copyCurl(this)">Copy curl</button>
+                </div>
+                <div class="card">
+                    <h3>26. HTTP/1.0 Request</h3>
+                    <div class="endpoint">GET / HTTP/1.0</div>
+                    <div class="expected">Expected: 200 OK | Backward compatible</div>
+                    <div class="curl">curl -i --http1.0 http://localhost:8080/</div>
+                    <button class="btn-copy" onclick="copyCurl(this)">Copy curl</button>
+                </div>
+                <div class="card">
+                    <h3>27. POST with data</h3>
+                    <div class="endpoint">POST /post with form data</div>
+                    <div class="expected">Expected: 200 OK</div>
+                    <div class="curl">curl -i -X POST -d "test=data" http://localhost:8080/post</div>
+                    <button class="btn-copy" onclick="copyCurl(this)">Copy curl</button>
+                </div>
+                <div class="card">
+                    <h3>28. Keep-Alive (Multiple Requests)</h3>
+                    <div class="endpoint">Two requests on same connection</div>
+                    <div class="expected">Expected: Both return 200 OK</div>
+                    <div class="curl">curl -i http://localhost:8080/ http://localhost:8080/static/test.txt</div>
+                    <button class="btn-copy" onclick="copyCurl(this)">Copy curl</button>
+                </div>
+                <div class="card">
+                    <h3>29. Chunked Transfer Encoding</h3>
+                    <div class="endpoint">POST with Transfer-Encoding: chunked</div>
+                    <div class="expected">Expected: 400 Bad Request | Chunked encoding not supported</div>
+                    <div class="curl">printf "POST /post HTTP/1.1\r\nHost: localhost\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nhello\r\n0\r\n\r\n" | nc localhost 8080</div>
+                    <button class="btn-copy" onclick="copyCurl(this)">Copy curl</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <div class="footer">
+        <p>Webserv Test Dashboard | 42 Project | Run: ./webserv test_custom/conf/test.conf</p>
+    </div>
+    <script>
+        function copyCurl(btn) {
+            const curlText = btn.parentElement.querySelector('.curl').textContent;
+            navigator.clipboard.writeText(curlText).then(() => {
+                btn.textContent = 'Copied!';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = 'Copy curl';
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

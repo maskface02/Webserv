@@ -153,11 +153,14 @@ void Cgi::cleanupCgi(Client *client, int exit_status) {
   if (WIFEXITED(exit_status) && WEXITSTATUS(exit_status) == 0)
     client->state = STATE_WRITING_RESPONSE;
   else if (WIFEXITED(exit_status) && WEXITSTATUS(exit_status) == 2) {
+    std::string body = ServeStaticRq::serveError(404, _config.getServers()[client->server_idx], client);
+    std::stringstream cl;
+    cl << body.size();
     client->write_buffer =
-        "HTTP/1.1 404  Not Found\r\n"
-        "Content-Length: 0\r\n\r\n" +
-        ServeStaticRq::serveError(404, _config.getServers()[client->server_idx],
-                                  client);
+        "HTTP/1.1 404 Not Found\r\n"
+        "Content-Length: " + cl.str() + "\r\n"
+        "Content-Type: text/html\r\n\r\n" +
+        body;
     switchClientToSending(client, _poll_fds);
     _logger.logRequest(client->ip, client->request->getRequestLine().Method,
                        client->request->getRequestLine().URI,

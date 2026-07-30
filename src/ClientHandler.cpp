@@ -134,11 +134,16 @@ bool ClientHandler::readClientData(Client *client) {
         ParsedRequestLine line =
             _delimiter.parseRequestLine(client->read_buffer);
 
+        std::string body = ServeStaticRq::serveError(
+            400, _config.getServers()[client->server_idx], client);
+        std::stringstream cl;
+        cl << body.size();
         client->write_buffer =
-            "HTTP/1.1 400 Bad Request\r\nContent-Length: "
-            "0\r\nConnection: close\r\n\r\n" +
-            ServeStaticRq::serveError(
-                400, _config.getServers()[client->server_idx], client);
+            "HTTP/1.1 400 Bad Request\r\n"
+            "Content-Length: " + cl.str() + "\r\n"
+            "Content-Type: text/html\r\n"
+            "Connection: close\r\n\r\n" +
+            body;
         client->write_offset = 0;
         _logger.logRequest(client->ip, line.method, line.uri, line.httpVers,
                            400, client->write_buffer.size());
