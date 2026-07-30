@@ -154,7 +154,7 @@ void ServeStaticRq::delete_files(std::vector<std::string> files) {
   std::string path = client->processRq->getResourcePath();
   while (i < files.size()) {
     path += files[i];
-  std::remove(path.c_str()) == -1;
+  std::remove(path.c_str());
     path.clear();
     path = client->processRq->getResourcePath();
     i++;
